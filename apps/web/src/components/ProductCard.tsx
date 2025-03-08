@@ -9,11 +9,17 @@ import Image from "next/image";
 
 interface ProductCardProps {
   product: Product;
+  salesPageId: string;
   showBuyButton?: boolean;
   onAddToCart?: () => void;
 }
 
-export default function ProductCard({ product, showBuyButton = true, onAddToCart }: ProductCardProps) {
+export default function ProductCard({ 
+  product, 
+  salesPageId, 
+  showBuyButton = true, 
+  onAddToCart 
+}: ProductCardProps) {
   const isAvailable = isAvailableForSale(product.launchTime, product.expiresAt);
   
   return (
@@ -48,7 +54,7 @@ export default function ProductCard({ product, showBuyButton = true, onAddToCart
                 Add to Cart
               </Button>
               <Link
-                href={`/products/${product.id}`}
+                href={`/products/${product.id}?salesPageId=${salesPageId}`}
                 className="flex-1"
               >
                 <Button variant="outline" className="w-full">
@@ -58,7 +64,7 @@ export default function ProductCard({ product, showBuyButton = true, onAddToCart
             </div>
           ) : (
             <Link
-              href={`/products/${product.id}`}
+              href={`/products/${product.id}?salesPageId=${salesPageId}`}
               className="w-full"
             >
               <Button className="w-full">

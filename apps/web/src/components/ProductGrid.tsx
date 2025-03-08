@@ -5,10 +5,11 @@ import ProductCard from "./ProductCard";
 
 interface ProductGridProps {
   products: Product[];
+  salesPageId: string;
   onAddToCart?: (product: Product) => void;
 }
 
-export default function ProductGrid({ products, onAddToCart }: ProductGridProps) {
+export default function ProductGrid({ products, salesPageId, onAddToCart }: ProductGridProps) {
   if (!products || products.length === 0) {
     return (
       <div className="text-center p-8">
@@ -22,7 +23,8 @@ export default function ProductGrid({ products, onAddToCart }: ProductGridProps)
       {products.map((product) => (
         <ProductCard 
           key={product.id} 
-          product={product} 
+          product={product}
+          salesPageId={salesPageId}
           onAddToCart={() => onAddToCart && onAddToCart(product)}
         />
       ))}

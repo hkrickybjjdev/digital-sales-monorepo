@@ -6,8 +6,8 @@ import { CartProvider } from "@/context/CartContext";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Digital Product Sales Platform",
-  description: "A temporary sales platform for independent creators, freelancers, and small businesses",
+  title: "Digital Product Sales",
+  description: "Purchase digital products with secure, time-limited access",
 };
 
 export default function RootLayout({
@@ -21,11 +21,10 @@ export default function RootLayout({
         <CartProvider>
           <div className="min-h-screen flex flex-col">
             <header className="border-b">
-              <div className="container mx-auto py-4 px-4 flex justify-between items-center">
-                <a href="/" className="text-xl font-bold">DigitalSales</a>
-                <nav className="flex items-center gap-4">
-                  <a href="/cart" className="hover:underline">Cart</a>
-                </nav>
+              <div className="container mx-auto py-4 px-4 flex justify-end items-center">
+                <a href="/cart" className="hover:underline flex items-center gap-1">
+                  <span>Cart</span>
+                </a>
               </div>
             </header>
             <main className="flex-1 container mx-auto py-8 px-4">
@@ -33,7 +32,7 @@ export default function RootLayout({
             </main>
             <footer className="border-t py-6">
               <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
-                &copy; {new Date().getFullYear()} DigitalSales. All rights reserved.
+                &copy; {new Date().getFullYear()} All rights reserved.
               </div>
             </footer>
           </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import type { Product } from "@/types";
 import { formatCurrency, isAvailableForSale, isExpired } from "@/lib/utils";
 import CountdownTimer from "@/components/CountdownTimer";
@@ -9,6 +9,7 @@ import { useCart } from "@/context/CartContext";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ArrowLeft, ShoppingCart } from "lucide-react";
+import Image from "next/image";
 
 // Mock data - in a real app, this would come from an API
 const getMockProduct = (id: string): Product => {
@@ -44,10 +45,14 @@ const getMockProduct = (id: string): Product => {
 
 export default function ProductPage() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const router = useRouter();
   const { addToCart } = useCart();
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
+  
+  // Get the sales page ID from the query params
+  const salesPageId = searchParams.get("salesPageId");
   
   useEffect(() => {
     // In a real app, this would be an API call
@@ -83,9 +88,11 @@ export default function ProductPage() {
       <div className="flex flex-col items-center justify-center min-h-[50vh] space-y-4">
         <h1 className="text-2xl font-bold">Product Not Found</h1>
         <p>The product you're looking for doesn't exist or has been removed.</p>
-        <Link href="/">
-          <Button>Return Home</Button>
-        </Link>
+        {salesPageId && (
+          <Link href={`/s/${salesPageId}`}>
+            <Button>Return to Sales Page</Button>
+          </Link>
+        )}
       </div>
     );
   }
@@ -104,18 +111,21 @@ export default function ProductPage() {
   
   return (
     <div className="space-y-8">
-      <Link href="/" className="flex items-center text-muted-foreground hover:text-foreground">
-        <ArrowLeft className="mr-2 h-4 w-4" />
-        Back to Home
-      </Link>
+      {salesPageId && (
+        <Link href={`/s/${salesPageId}`} className="flex items-center text-muted-foreground hover:text-foreground">
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back to All Products
+        </Link>
+      )}
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {product.imageUrl && (
           <div className="relative aspect-video overflow-hidden rounded-lg">
-            <img
+            <Image
               src={product.imageUrl}
               alt={product.name}
-              className="object-cover w-full h-full"
+              fill
+              className="object-cover"
             />
           </div>
         )}
