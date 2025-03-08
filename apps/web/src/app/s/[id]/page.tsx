@@ -13,6 +13,49 @@ import Image from "next/image";
 // Mock data - in a real app, this would come from an API
 const getMockSalesPage = (id: string): SalesPage => {
   const now = new Date();
+
+  // For sales-page-4, create an expired page
+  if (id === "sales-page-4") {
+    const expiredLaunchTime = new Date(now);
+    expiredLaunchTime.setHours(expiredLaunchTime.getHours() - 48); // 48 hours ago
+    
+    const expiredExpiresAt = new Date(now);
+    expiredExpiresAt.setHours(expiredExpiresAt.getHours() - 4); // 4 hours ago
+    
+    return {
+      id,
+      title: "Email Marketing Templates",
+      description: "Ready-to-use email marketing templates for your campaigns.",
+      sellerId: "seller-4",
+      products: [],
+      createdAt: new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000), // 5 days ago
+      launchTime: expiredLaunchTime,
+      expiresAt: expiredExpiresAt,
+      isActive: false,
+    };
+  }
+
+  // For sales-page-3, create a not-yet-available page
+  if (id === "sales-page-3") {
+    const futureLaunchTime = new Date(now);
+    futureLaunchTime.setHours(futureLaunchTime.getHours() + 2); // 2 hours in the future
+    
+    const futureExpiresAt = new Date(now);
+    futureExpiresAt.setHours(futureExpiresAt.getHours() + 26); // 26 hours from now
+    
+    return {
+      id,
+      title: "Content Creation Masterclass",
+      description: "Learn how to create engaging content for your audience.",
+      sellerId: "seller-3",
+      products: [],
+      createdAt: new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000), // 1 day ago
+      launchTime: futureLaunchTime,
+      expiresAt: futureExpiresAt,
+      isActive: true,
+    };
+  }
+
   const launchTime = new Date(now);
   launchTime.setHours(launchTime.getHours() - 1); // 1 hour ago
   
@@ -131,7 +174,7 @@ export default function SalesPage() {
   
   // Check if the sales page is expired
   if (isExpired(salesPage.expiresAt)) {
-    router.push("/expired");
+     router.push(`/expired?id=${salesPage.id}`);
     return null;
   }
   
