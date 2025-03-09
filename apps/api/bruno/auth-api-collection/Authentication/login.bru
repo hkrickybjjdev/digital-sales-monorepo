@@ -1,0 +1,52 @@
+meta {
+  name: Login
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/auth/login
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "username": "{{username}}",
+    "password": "{{password}}"
+  }
+}
+
+script:pre-request {
+  // You can add pre-request scripts here
+  // For example, to generate a timestamp
+  bru.setVar("timestamp", new Date().toISOString());
+}
+
+script:post-response {
+  // Store the token in a variable for later use
+  if (res.status === 200 && res.body.token) {
+    bru.setVar("authToken", res.body.token);
+    console.log("Token saved successfully");
+  }
+}
+
+tests {
+  test("Status code should be 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("Response should have a token", function() {
+    expect(res.body.token).to.be.a('string');
+    expect(res.body.token.length).to.be.greaterThan(10);
+  });
+
+  test("Response should have user information", function() {
+    expect(res.body.user).to.be.an('object');
+    expect(res.body.user.username).to.equal(bru.getVar("username"));
+  });
+} 

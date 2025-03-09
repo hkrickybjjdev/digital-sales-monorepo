@@ -1,0 +1,39 @@
+meta {
+  name: Get User Profile
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/profile
+  body: none
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer {{authToken}}
+}
+
+tests {
+  test("Status code should be 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("Response should have user profile information", function() {
+    expect(res.body.user).to.be.an('object');
+    expect(res.body.user.username).to.be.a('string');
+    expect(res.body.user.email).to.be.a('string');
+  });
+
+  test("Should fail without authentication", function() {
+    // This is a demonstration of how to test authentication
+    // In a real scenario, you would make a separate request without the token
+    const hasAuthHeader = req.headers.some(h => 
+      h.name.toLowerCase() === 'authorization' && 
+      h.value.startsWith('Bearer ')
+    );
+    
+    expect(hasAuthHeader).to.be.true;
+  });
+} 

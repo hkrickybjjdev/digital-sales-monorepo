@@ -1,0 +1,35 @@
+meta {
+  name: Logout
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/auth/logout
+  body: none
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer {{authToken}}
+}
+
+script:post-response {
+  // Clear the tokens after logout
+  if (res.status === 200) {
+    bru.setVar("authToken", "");
+    bru.setVar("refreshToken", "");
+    console.log("Tokens cleared after logout");
+  }
+}
+
+tests {
+  test("Status code should be 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("Response should have a success message", function() {
+    expect(res.body.message).to.be.a('string');
+  });
+} 
