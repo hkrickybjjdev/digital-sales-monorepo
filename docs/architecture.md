@@ -44,8 +44,7 @@ The platform employs a modular monolith approach for the following reasons:
 ### Data Storage
 
 - **Cloudflare R2**: Object storage for digital products (PDFs, images, etc.)
-- **Database Layer**: For structured data storage (user accounts, page configurations, etc.)
-  - Options include: Cloudflare D1, Prisma with PlanetScale, or Supabase
+- **Cloudflare D1**: For structured data storage (user accounts, page configurations, etc.)
   - Separation of read and write models for scalability
 
 ### Authentication & Security
