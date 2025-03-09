@@ -15,9 +15,31 @@ The Temporary Pages Platform is designed as a modern, serverless architecture le
 
 ### Backend Architecture (Cloudflare Workers)
 
-- **Edge Functions**: Serverless JavaScript executed at Cloudflare's edge locations
+- **Modular Monolith Approach**: A single worker with modular internal organization rather than separate microservices
+- **Domain-Driven Modules**: Organized into distinct functional modules:
+  - `auth`: User authentication and authorization
+  - `pages`: Page creation, management, and delivery
+  - `products`: Digital product handling
+  - `payments`: Stripe integration and transaction processing
+  - `storage`: File upload and secure delivery
+  - `analytics`: Usage and performance tracking
+- **Shared Core Services**: Common utilities and middleware used across modules:
+  - Security (HMAC, rate limiting)
+  - Logging and monitoring
+  - Error handling
+  - Database adapters
+
 - **Workers KV**: For fast access to frequently accessed metadata and configuration
 - **Durable Objects**: For managing state that requires strong consistency (e.g., download counts, registration counts)
+
+#### Rationale for Modular Monolith vs. Microservices
+
+The platform employs a modular monolith approach for the following reasons:
+- **Simplified Deployment**: Single worker deployment reduces operational complexity
+- **Reduced Cold Starts**: Avoids multiple cold starts across separate workers
+- **Lower Latency**: Eliminates cross-worker communication overhead
+- **Cost Efficiency**: More economical use of Cloudflare Worker resources
+- **Future Flexibility**: Modular design allows extraction into separate workers if needed later
 
 ### Data Storage
 
@@ -169,6 +191,7 @@ stateDiagram-v2
 - Separation of read and write paths
 - Asynchronous processing for non-critical operations
 - Optimized database access patterns for high-traffic periods
+- **Selective Extraction Strategy**: Design modules to be extractable into separate workers if specific components need independent scaling
 
 ## Monitoring and Observability
 
@@ -183,9 +206,11 @@ stateDiagram-v2
 - Separate staging and production environments
 - Feature flags for gradual rollout of new capabilities
 - Blue-green deployments for zero-downtime updates
+- Module-based testing to ensure isolated components work correctly
 
 ## Future Architecture Expansion
 
+- Extraction of high-load modules into dedicated workers if needed
 - WebSocket integration for real-time collaborative features
 - Multi-region database strategy for global expansion
 - Event-driven architecture for complex workflows

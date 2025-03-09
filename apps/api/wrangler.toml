@@ -1,0 +1,35 @@
+name = "temporary-pages-api"
+main = "src/index.ts"
+compatibility_date = "2023-10-25"
+
+# KV Namespace bindings
+kv_namespaces = [
+  { binding = "PAGES_METADATA", id = "your-kv-namespace-id-here", preview_id = "your-preview-kv-namespace-id-here" }
+]
+
+# R2 bucket binding
+[[r2_buckets]]
+binding = "STORAGE_BUCKET"
+bucket_name = "temporary-pages-storage"
+preview_bucket_name = "temporary-pages-storage-dev"
+
+# D1 Database
+[[d1_databases]]
+binding = "DB"
+database_name = "temporary-pages-db"
+database_id = "your-d1-database-id-here"
+preview_database_id = "your-preview-d1-database-id-here"
+
+# Environment variables
+[vars]
+ENVIRONMENT = "production"
+
+# Development environment variables
+[env.development]
+ENVIRONMENT = "development"
+
+# Secret environment variables (not included in source control)
+# Set these using `wrangler secret put VAR_NAME`
+# - JWT_SECRET
+# - STRIPE_SECRET_KEY
+# - STRIPE_WEBHOOK_SECRET
