@@ -65,229 +65,286 @@ The platform uses Shadcn UI as its component library foundation with the followi
 
 ## User Interfaces
 
-### Customer-Facing Interfaces
+### Temporary Page Type Interfaces
 
-#### 1. Sales Page
+#### 1. Countdown Landing Page
 
-![Sales Page Wireframe](https://via.placeholder.com/800x600?text=Sales+Page+Wireframe)
-
-**Key Elements**:
-- Hero section with product name and description
-- Prominent countdown timer showing time remaining
-- Product details section with rich media support
-- Clear pricing information
-- Prominent "Buy Now" CTA
-- Trust indicators (secure payment, money-back guarantee)
-- Optional social proof elements
-
-**Responsive Behavior**:
-- Desktop: Two-column layout with product details on left, purchase info on right
-- Tablet: Stacked layout with purchase info below product details
-- Mobile: Full-width elements with optimized touch targets
-
-#### 2. Pre-Launch Registration Page
+![Countdown Page Wireframe](https://via.placeholder.com/800x600?text=Countdown+Page+Wireframe)
 
 **Key Elements**:
-- Compelling headline and value proposition
-- Prominent countdown to launch date
-- Email capture form (minimal friction)
-- Benefits of registering early
-- Optional lead magnet offer
-- Social sharing buttons
+- Hero section with compelling headline and subheading
+- Large, prominent countdown timer synchronized with server time
+- Optional email/SMS capture form with minimal fields
+- Clear messaging about what happens when the countdown ends
+- Strong visual hierarchy focusing on the countdown and call-to-action
+- Optional background video or animated elements for engagement
 
 **States**:
-- Initial state: Registration form visible
-- Success state: Confirmation message with share prompts
-- Error state: Validation errors with clear resolution guidance
+- Active: Shows countdown and registration form
+- Zero Reached: Displays configured post-countdown content (message, redirect, or new form)
+- Expired: If accessed after the countdown period has fully ended
 
-#### 3. Multi-Item Product Grid
+**Mobile Optimization**:
+- Full-screen countdown on initial load
+- Sticky form that remains visible during scroll
+- Touch-friendly input fields and buttons
+
+#### 2. Flash Sale Page
+
+![Flash Sale Wireframe](https://via.placeholder.com/800x600?text=Flash+Sale+Wireframe)
 
 **Key Elements**:
-- Grid of product cards (3 columns on desktop, 2 on tablet, 1 on mobile)
-- Product thumbnail images
-- Product name, brief description, and price
-- Individual "Add to Cart" buttons
-- Shared countdown timer for the entire page
+- Sale announcement banner with countdown timer
+- Product grid or featured product display
+- Original and discounted price comparison
+- Product details with rich media support
+- Urgency indicators (e.g., "only 5 left", "30% sold")
+- Add to cart and quick checkout options
+- Trust badges and security indicators
+
+**States**:
+- Active: Full sale experience with live countdown
+- Ending Soon: Enhanced urgency UI elements when <1 hour remains
+- Expired: "Sale Ended" messaging with alternative actions
+- Sold Out: Displays when inventory is depleted before time expires
+
+**Special Features**:
+- Real-time inventory updates
+- Price strike-through animation
+- Micro-animations for urgency (pulsing timer, etc.)
+- Social proof notifications ("X people purchased this")
+
+#### 3. Event Registration Page
+
+![Event Registration Wireframe](https://via.placeholder.com/800x600?text=Event+Registration+Wireframe)
+
+**Key Elements**:
+- Event banner with date, time, and type (virtual/physical)
+- Compelling event description and agenda
+- Speaker/host information with credentials
+- Registration form with customizable fields
+- Countdown to registration deadline
+- Capacity indicators (e.g., "85% full")
+- Event location details or virtual attendance information
+
+**States**:
+- Open Registration: Standard registration experience
+- Limited Spots: Enhanced urgency UI when capacity is nearly reached
+- Waitlist Mode: When capacity is reached but waitlist is enabled
+- Registration Closed: When deadline has passed
+- Post-Event: After event has concluded
+
+**Registration Form Components**:
+- Progressive disclosure for optional fields
+- Real-time field validation
+- Multi-step form for complex registrations
+- Payment integration for paid events
+
+#### 4. Limited-Time Offer Page
+
+![Limited Offer Wireframe](https://via.placeholder.com/800x600?text=Limited+Offer+Wireframe)
+
+**Key Elements**:
+- Headline emphasizing exclusivity and limited availability
+- Clear offer details and benefits
+- Prominent discount code in copy-to-clipboard format
+- Countdown timer to offer expiration
+- Visual representation of the offer (product image, bonus content preview)
+- Strong call-to-action to redeem offer
+- Social sharing options to extend reach
+
+**States**:
+- Active: Full offer details with live countdown
+- Almost Expired: Enhanced urgency UI when <1 hour remains
+- Expired: "Offer Ended" messaging with alternative actions
+- Limited Quantity Reached: When quantity limit is reached before time expires
 
 **Interactions**:
-- Hover states with subtle elevation change
-- Click to view detailed product page
-- Quick-add to cart functionality
+- Discount code copying with visual feedback
+- Click-to-redeem buttons for direct application
+- Animated reveal of bonus content previews
+- Confetti animation on successful redemption
 
-#### 4. Checkout Flow
-
-**Stages**:
-1. Cart review with item details
-2. Shipping information (if physical products)
-3. Payment details via Stripe Elements
-4. Order confirmation
-
-**Principles**:
-- Minimize form fields to reduce friction
-- Clear progress indicators
-- Persistent order summary
-- Secure payment indicators
-
-#### 5. Success Page
-
-**Key Elements**:
-- Order confirmation message
-- Order summary
-- Download button(s) for digital products
-- Countdown to link expiration
-- Share options and referral incentives
-- Related products (if applicable)
-
-#### 6. Expired/Not Available Pages
-
-**Expired Page**:
-- Clear messaging about content expiration
-- Optional contact form for inquiries
-- Related creator content (if available)
-
-**Not Yet Available Page**:
-- Coming soon messaging
-- Countdown to availability
-- Pre-registration option
-- Clear next steps for the visitor
-
-### Creator Console Interfaces
+### User Management Console
 
 #### 1. Dashboard Overview
 
 **Key Elements**:
-- Summary metrics (active sales pages, total sales, conversion rate)
-- Recent sales activity
-- Expiring content alerts
-- Quick action buttons for common tasks
-- Performance trends charts
+- Summary metrics by page type (active pages, conversion rates, etc.)
+- Quick action buttons for creating new pages
+- Recent activity feed (new registrations, sales, etc.)
+- Performance overview charts
+- Upcoming expirations and launches
 
-**Personalization**:
-- Configurable widgets and metric cards
-- Customizable date ranges for analytics
-- Saved filters and views
+**Organization**:
+- Tab/filter system to view metrics by page type
+- Date range selector for historical data
+- Saved views for frequently accessed metrics
+- Export functionality for reports
 
-#### 2. Product Management
-
-**Key Elements**:
-- Tabular list of products with key metadata
-- Search and filter capabilities
-- Bulk action tools
-- Quick edit functionality
-- Status indicators (active, expired, scheduled)
-
-**CRUD Operations**:
-- Create: Multi-step form with progress indicator
-- Read: Detailed view with all product information
-- Update: Inline editing for quick changes, modal for complex edits
-- Delete: Confirmation dialog with clear consequences
-
-#### 3. Sales Page Builder
+#### 2. Page Type Selector
 
 **Key Elements**:
-- Visual editor for page layout
-- Theme selection and customization
-- Content blocks for different media types
-- Preview mode with device simulation
-- Publishing controls with scheduling options
+- Visual cards representing each page type
+- Brief description of each page's purpose
+- Recommended use cases
+- Quick-start templates
+- Preview thumbnails of example pages
 
-**Customization Options**:
-- Color scheme adjustments
-- Typography selection
-- Layout templates
-- Custom CSS injection (advanced mode)
+**Organization**:
+- Grid layout for desktop
+- Carousel for mobile devices
+- Search/filter by goal (collect leads, sell products, etc.)
+- Sorting by popularity or relevance
 
-#### 4. Analytics & Reporting
+#### 3. Page Builder Interface
 
-**Key Metrics**:
-- Page views and unique visitors
-- Conversion rate and funnel performance
+**Common Elements Across Page Types**:
+- Page title and URL configuration
+- Launch and expiration settings
+- Design customization (colors, fonts, images)
+- SEO metadata configuration
+- Tracking and analytics integration
+
+**Type-Specific Builders**:
+
+**Countdown Builder**:
+- Date/time picker for countdown target
+- Post-countdown action selector
+- Registration form builder
+- Notification message configuration
+
+**Flash Sale Builder**:
+- Product selector/uploader
+- Pricing and discount configuration
+- Inventory management
+- Sale duration settings
+
+**Event Registration Builder**:
+- Event details configuration
+- Registration form builder
+- Capacity and waitlist settings
+- Event reminder configuration
+
+**Limited Offer Builder**:
+- Offer details and description
+- Discount code generation
+- Quantity limitation settings
+- Offer duration configuration
+
+#### 4. Analytics & Reporting by Page Type
+
+**Countdown Analytics**:
+- View/visitor count
+- Registration conversion rate
+- Registration source breakdown
+- Engagement time metrics
+
+**Flash Sale Analytics**:
+- Sales volume and revenue
+- Conversion rate by product
+- Cart abandonment rate
 - Average order value
-- Registration to purchase rate
-- Geographic and device distribution
 
-**Visualization**:
-- Time-series charts for trend analysis
-- Funnel visualization for conversion paths
-- Heatmaps for engagement analysis
-- Exportable reports in multiple formats
+**Event Registration Analytics**:
+- Registration counts and conversion rate
+- Attendance prediction
+- Waitlist conversion rate
+- Registration source breakdown
+
+**Limited Offer Analytics**:
+- Offer view count
+- Discount code usage rate
+- Conversion path analysis
+- Referral source breakdown
 
 ## User Flows
 
-### Customer Experience Flows
+### Visitor Experience Flows
 
-#### Single Product Purchase Flow
+#### Countdown Landing Page Flow
 
 ```mermaid
 graph TD
-    A[Visit Sales Page] --> B{Is Page Active?}
-    B -- Yes --> C[View Product Details]
-    B -- No --> D[See Not Available Page]
-    C --> E[Click Buy Now]
-    E --> F[Stripe Checkout]
-    F -- Success --> G[View Success Page]
-    G --> H[Download Product]
-    F -- Failure --> I[Return to Sales Page]
+    A[Visit Countdown Page] --> B[View Countdown Timer]
+    B --> C{Register for Updates?}
+    C -- Yes --> D[Complete Registration Form]
+    C -- No --> E[Continue Browsing]
+    D --> F[Receive Confirmation]
+    F --> G[Await Notifications]
+    B --> H{Countdown Reaches Zero}
+    H -- Redirect Action --> I[Navigate to Destination]
+    H -- Message Action --> J[View Revealed Content]
+    H -- Form Action --> K[View New Form]
 ```
 
-#### Multi-Product Purchase Flow
+#### Flash Sale Page Flow
 
 ```mermaid
 graph TD
-    A[Visit Sales Page] --> B[Browse Product Grid]
-    B --> C[View Individual Product]
-    C --> D[Add to Cart]
-    D --> E{Continue Shopping?}
-    E -- Yes --> B
-    E -- No --> F[View Cart]
-    F --> G[Proceed to Checkout]
-    G --> H[Stripe Checkout]
-    H -- Success --> I[View Success Page]
-    I --> J[Download Products]
-    H -- Failure --> F
+    A[Visit Flash Sale Page] --> B{Is Sale Active?}
+    B -- Yes --> C[Browse Products]
+    B -- No --> D[See "Sale Ended" Page]
+    C --> E[View Product Details]
+    E --> F[Add to Cart]
+    F --> G{Continue Shopping?}
+    G -- Yes --> C
+    G -- No --> H[Proceed to Checkout]
+    H --> I[Complete Stripe Payment]
+    I -- Success --> J[Access Digital Products]
+    I -- Failure --> K[Return to Checkout]
 ```
 
-#### Pre-Launch Registration Flow
+#### Event Registration Flow
 
 ```mermaid
 graph TD
-    A[Visit Pre-Launch Page] --> B[View Offer & Countdown]
-    B --> C[Complete Registration Form]
-    C -- Success --> D[See Confirmation]
-    D --> E[Receive Notification at Launch]
-    E --> F[Visit Active Sales Page]
-    C -- Error --> G[See Validation Errors]
-    G --> C
+    A[Visit Event Page] --> B{Registration Open?}
+    B -- Yes --> C[View Event Details]
+    B -- No --> D[See "Registration Closed"]
+    C --> E{Register for Event?}
+    E -- Yes --> F[Complete Registration Form]
+    E -- No --> G[Exit Page]
+    F --> H[Process Registration]
+    H -- Free Event --> I[Receive Confirmation]
+    H -- Paid Event --> J[Complete Payment]
+    J --> I
+    I --> K[Receive Event Reminders]
+    K --> L[Attend Event]
 ```
 
-### Creator Experience Flows
-
-#### Sales Page Creation Flow
+#### Limited-Time Offer Flow
 
 ```mermaid
 graph TD
-    A[Log In to Creator Console] --> B[Navigate to Create New]
-    B --> C[Upload Product File]
-    C --> D[Fill Product Details]
-    D --> E[Configure Sales Page Settings]
-    E --> F[Set Expiration Parameters]
-    F --> G[Preview Sales Page]
-    G -- Approved --> H[Publish Sales Page]
-    G -- Needs Changes --> E
-    H --> I[Copy Shareable URL]
+    A[Visit Offer Page] --> B{Is Offer Active?}
+    B -- Yes --> C[View Offer Details]
+    B -- No --> D[See "Offer Expired" Page]
+    C --> E[Copy Discount Code]
+    E --> F{Redeem Now?}
+    F -- Yes --> G[Navigate to Redemption Site]
+    F -- No --> H[Save for Later]
+    G --> I[Apply Discount Code]
+    I --> J[Complete Purchase]
 ```
 
-#### Analytics Review Flow
+### User Management Flows
+
+#### Page Creation Flow
 
 ```mermaid
 graph TD
-    A[Access Dashboard] --> B[View Summary Metrics]
-    B --> C[Select Time Period]
-    C --> D[Analyze Performance]
-    D --> E{Take Action?}
-    E -- Extend Expiry --> F[Update Settings]
-    E -- Promote Page --> G[Copy URL for Sharing]
-    E -- Export Data --> H[Download Reports]
+    A[Access Console] --> B[Select "Create Page"]
+    B --> C[Choose Page Type]
+    C --> D[Configure Basic Settings]
+    D --> E[Design Page Content]
+    E --> F[Set Timing Parameters]
+    F --> G[Configure Follow-up Actions]
+    G --> H[Preview Page]
+    H -- Approved --> I[Publish Page]
+    H -- Needs Changes --> E
+    I --> J[Copy Shareable URL]
+    J --> K[Monitor Performance]
 ```
 
 ## Accessibility Standards

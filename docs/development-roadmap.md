@@ -2,14 +2,14 @@
 
 ## Overview
 
-This document outlines the phased development approach for building the Temporary Pages Platform. The roadmap is structured to deliver incremental value while managing complexity and risk. Each phase builds on the previous one, gradually expanding the platform's capabilities.
+This document outlines the phased development approach for building the Temporary Pages Platform. The roadmap is structured to deliver incremental value while managing complexity and risk. Each phase focuses on specific page types and features to provide a complete solution for creating time-sensitive, temporary web pages.
 
-## Phase 1: Core Infrastructure (Weeks 1-4)
+## Phase 1: Core Infrastructure & Countdown Pages (Weeks 1-4)
 
 ### Goals
 - Establish foundational architecture
-- Implement basic file upload and storage
-- Create simple sales page generation
+- Implement user authentication and management
+- Develop the Countdown Landing Page type
 
 ### Technical Milestones
 
@@ -23,124 +23,127 @@ This document outlines the phased development approach for building the Temporar
 #### Week 2: Backend Infrastructure
 - [ ] Set up Cloudflare R2 bucket structure
 - [ ] Create database schema and migrations
-- [ ] Implement authentication system for creators
-- [ ] Develop file upload service with direct-to-R2 uploads
+- [ ] Implement authentication system for users
 - [ ] Create secure URL generation service with HMAC signing
+- [ ] Develop basic page management APIs
 
-#### Week 3: Core Frontend Components
-- [ ] Build creator dashboard layout
-- [ ] Develop file upload interface
-- [ ] Create sales page configuration UI
-- [ ] Implement product metadata editor
-- [ ] Design basic customer-facing sales page template
+#### Week 3: Countdown Page Development
+- [ ] Build user dashboard layout
+- [ ] Develop countdown page creation interface
+- [ ] Implement server-synchronized countdown timer component
+- [ ] Create visitor-facing countdown page template
+- [ ] Develop email/SMS capture form component
 
 #### Week 4: Integration & Testing
-- [ ] Integrate frontend and backend systems
-- [ ] Implement end-to-end testing for core user flows
+- [ ] Integrate WebSocket/SSE for real-time countdown updates
+- [ ] Implement end-to-end testing for countdown page flows
+- [ ] Add post-countdown actions (redirect, show message, show form)
 - [ ] Set up monitoring and error tracking
-- [ ] Conduct security review of file access mechanisms
 - [ ] Deploy to staging environment
 
-## Phase 2: Sales & Expiration Features (Weeks 5-8)
+## Phase 2: Flash Sale Pages (Weeks 5-8)
 
 ### Goals
-- Implement time-based expiration functionality
+- Implement product management features
+- Develop Flash Sale page type
 - Add payment processing with Stripe
 - Create customer-facing checkout experience
 
 ### Technical Milestones
 
-#### Week 5: Time-Based Features
-- [ ] Develop countdown timer component
-- [ ] Implement server-side timestamp validation
-- [ ] Create expiration enforcement middleware
-- [ ] Build "Expired" and "Not Available" pages
-- [ ] Set up WebSocket/SSE for real-time countdown updates
+#### Week 5: Product Management
+- [ ] Build product upload interface
+- [ ] Implement direct-to-R2 file uploads
+- [ ] Create product metadata editor
+- [ ] Develop file preview generation
+- [ ] Add product listing and management features
 
-#### Week 6: Payment Processing
+#### Week 6: Flash Sale Page Builder
+- [ ] Design flash sale page template
+- [ ] Implement product grid component
+- [ ] Create sale configuration interface
+- [ ] Add inventory management features
+- [ ] Develop price comparison display
+
+#### Week 7: Payment Processing
 - [ ] Integrate Stripe Checkout
 - [ ] Implement payment webhook handlers
 - [ ] Create order management system
 - [ ] Develop success page with download delivery
 - [ ] Build secure download token generation
 
-#### Week 7: Customer Experience
+#### Week 8: Shopping Experience
 - [ ] Design and implement cart functionality
-- [ ] Create multi-item product grid
-- [ ] Develop detailed product pages
+- [ ] Create product detail views
 - [ ] Implement IP-based download restrictions
 - [ ] Add download attempt tracking and limiting
-
-#### Week 8: Testing & Optimization
-- [ ] Conduct load testing of payment flows
-- [ ] Implement error handling for failed payments
-- [ ] Optimize page load performance
-- [ ] Add analytics for conversion tracking
 - [ ] Deploy to production environment
 
-## Phase 3: Pre-Launch & Advanced Features (Weeks 9-12)
+## Phase 3: Event Registration & Limited-Time Offer Pages (Weeks 9-12)
 
 ### Goals
-- Build pre-launch registration system
-- Add creator analytics dashboard
-- Implement advanced security features
-- Enhance customization options
+- Develop Event Registration page type
+- Implement Limited-Time Offer page type
+- Add advanced analytics and customization
+- Enhance security features
 
 ### Technical Milestones
 
-#### Week 9: Pre-Launch Registration
-- [ ] Design registration form components
-- [ ] Create pre-launch page templates
-- [ ] Implement email collection and storage
-- [ ] Add registration management for creators
-- [ ] Build notification system for launch alerts
+#### Week 9: Event Registration Pages
+- [ ] Design event registration page templates
+- [ ] Create customizable registration form builder
+- [ ] Implement capacity management and waitlist features
+- [ ] Add virtual event platform integrations
+- [ ] Develop event reminder notification system
 
-#### Week 10: Analytics & Reporting
-- [ ] Develop creator analytics dashboard
-- [ ] Implement sales reporting features
-- [ ] Create registration conversion metrics
-- [ ] Build export functionality for data
+#### Week 10: Limited-Time Offer Pages
+- [ ] Design limited-time offer page templates
+- [ ] Create discount code generation and management
+- [ ] Implement copy-to-clipboard functionality
+- [ ] Add limited quantity tracking
+- [ ] Develop redirection configuration
+
+#### Week 11: Advanced Analytics
+- [ ] Develop user analytics dashboard by page type
+- [ ] Implement conversion tracking for all page types
+- [ ] Create export functionality for registration/sales data
 - [ ] Add real-time visitor tracking
+- [ ] Build page performance comparison tools
 
-#### Week 11: Advanced Security
-- [ ] Implement rate limiting for all API endpoints
-- [ ] Add file scanning for malicious content
-- [ ] Create GDPR/CCPA compliance features
-- [ ] Enhance access control for downloads
-- [ ] Improve fraud detection for payments
-
-#### Week 12: Customization & Polish
-- [ ] Add theme customization for sales pages
+#### Week 12: Customization & Security
+- [ ] Add theme customization for all page types
 - [ ] Implement custom domain support
-- [ ] Create template system for sales pages
-- [ ] Add mobile optimization features
+- [ ] Create template system for quick page creation
+- [ ] Add rate limiting for all API endpoints
+- [ ] Enhance access control for downloads and registrations
 - [ ] Conduct final security and performance review
 
 ## Phase 4: Platform Expansion (Future Roadmap)
 
-### Multi-Product Sales Pages
-- [ ] Bulk upload functionality
-- [ ] Product bundling features
-- [ ] Discounting and promotion tools
-- [ ] Inventory management for limited items
+### Enhanced Page Types and Features
+- [ ] Hybrid pages combining multiple page type features
+- [ ] Advanced customization options and page builder
+- [ ] Additional integration options (email marketing, CRM, etc.)
+- [ ] Custom page templates marketplace
 
-### Creator Growth Tools
-- [ ] Affiliate tracking and management
-- [ ] Advanced analytics and reporting
-- [ ] A/B testing for sales pages
-- [ ] Email marketing integration
+### Page Performance Optimization
+- [ ] A/B testing for all page types
+- [ ] Conversion optimization recommendations
+- [ ] Automated performance insights
+- [ ] Behavior analytics and heatmaps
 
 ### Enterprise Features
-- [ ] Multi-user accounts
 - [ ] Team collaboration tools
-- [ ] Advanced access controls
-- [ ] Custom branding options
+- [ ] Role-based access controls
+- [ ] Brand management across pages
+- [ ] Advanced security options
+- [ ] Audit logs and compliance features
 
 ### International Expansion
 - [ ] Multi-currency support
 - [ ] Language localization
 - [ ] Regional payment methods
-- [ ] Tax compliance for global markets
+- [ ] Time zone optimization for campaigns
 
 ## Technical Debt & Maintenance
 
@@ -158,11 +161,13 @@ Throughout all phases, allocate 20% of development time to:
 
 | Risk | Impact | Probability | Mitigation |
 |------|--------|------------|------------|
+| WebSocket synchronization issues | High | Medium | Implement fallback to SSE or polling |
 | Stripe API changes | High | Low | Implement abstraction layer for payment processing |
 | Cloudflare service disruptions | High | Low | Create fallback mechanisms for critical paths |
 | Next.js version compatibility | Medium | Medium | Thorough testing before upgrading dependencies |
 | Security vulnerabilities in file handling | High | Medium | Regular security audits and penetration testing |
 | Database scalability issues | Medium | Medium | Design for horizontal scaling from the beginning |
+| Real-time performance bottlenecks | High | Medium | Implement caching and optimization strategies early |
 
 ### Contingency Planning
 
@@ -170,25 +175,27 @@ Throughout all phases, allocate 20% of development time to:
 - Create disaster recovery procedures for data loss scenarios
 - Implement feature flags for quick rollback of problematic features
 - Establish support escalation paths for critical issues
+- Develop degraded mode functionality for core features
 
 ## Success Metrics
 
 ### Phase 1
-- Successfully upload and serve files securely
-- Generate functional sales pages with unique URLs
+- Successfully implement and deploy countdown landing pages
+- Achieve server-side countdown synchronization with <50ms drift
 - Complete core infrastructure with 90%+ test coverage
 
 ### Phase 2
-- Process test payments end-to-end successfully
-- Correctly enforce time-based expiration
-- Achieve sub-2 second page load times for sales pages
+- Process flash sale purchases end-to-end successfully
+- Correctly enforce inventory and time-based limitations
+- Achieve sub-2 second page load times for product grids
 
 ### Phase 3
-- Convert 30%+ of pre-launch registrations to sales
-- Deliver comprehensive analytics to creators
-- Pass security audit with no critical findings
+- Successfully collect and process event registrations
+- Generate and track limited-time offer usage
+- Deliver comprehensive analytics for all page types
 
 ### Long-term
 - Platform uptime of 99.9%+
 - Payment processing success rate of 98%+
-- Customer satisfaction score of 4.5/5 or higher
+- User satisfaction score of 4.5/5 or higher
+- Cross-page conversion improvement of 15%+ for returning users

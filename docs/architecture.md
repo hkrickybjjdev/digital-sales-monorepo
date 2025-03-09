@@ -8,21 +8,21 @@ The Temporary Pages Platform is designed as a modern, serverless architecture le
 
 ### Frontend Architecture (Next.js 15)
 
-- **Client-Side Rendering**: For dynamic user interfaces in the creator console
+- **Client-Side Rendering**: For dynamic user interfaces in the user console
 - **Static Site Generation (SSG)**: For landing pages and marketing content
-- **Server-Side Rendering (SSR)**: For dynamic sales pages with real-time availability checks
+- **Server-Side Rendering (SSR)**: For dynamic temporary pages with real-time availability checks
 - **Incremental Static Regeneration (ISR)**: For semi-dynamic content that changes infrequently
 
 ### Backend Architecture (Cloudflare Workers)
 
 - **Edge Functions**: Serverless JavaScript executed at Cloudflare's edge locations
 - **Workers KV**: For fast access to frequently accessed metadata and configuration
-- **Durable Objects**: For managing state that requires strong consistency (e.g., download counts)
+- **Durable Objects**: For managing state that requires strong consistency (e.g., download counts, registration counts)
 
 ### Data Storage
 
 - **Cloudflare R2**: Object storage for digital products (PDFs, images, etc.)
-- **Database Layer**: For structured data storage (user accounts, sales records, etc.)
+- **Database Layer**: For structured data storage (user accounts, page configurations, etc.)
   - Options include: Cloudflare D1, Prisma with PlanetScale, or Supabase
   - Separation of read and write models for scalability
 
@@ -37,33 +37,97 @@ The Temporary Pages Platform is designed as a modern, serverless architecture le
 
 ```mermaid
 graph TD
-    A[Customer Browser] --> B[Next.js Frontend]
+    A[Visitor Browser] --> B[Next.js Frontend]
     B -- API Calls --> C[Cloudflare Workers]
     C -- Object Storage --> D[Cloudflare R2]
     C -- Data Operations --> E[Database]
     C -- Payment Processing --> F[Stripe API]
     B -- Static Assets --> G[Vercel Edge Network]
-    C -- Email Notifications --> H[Email Service]
+    C -- Email/SMS Notifications --> H[Communication Service]
+    
+    subgraph "Page Types"
+    I[Countdown Pages]
+    J[Flash Sale Pages]
+    K[Event Registration Pages]
+    L[Limited-Time Offer Pages]
+    end
+    
+    B --> I
+    B --> J
+    B --> K
+    B --> L
 ```
 
 ## Request Flow
 
-### Sales Page Generation
+### Page Creation
 
-1. Creator uploads product through console frontend
-2. Next.js API routes process metadata and generate a unique shortened UUID
-3. File is uploaded directly to R2 with presigned URL
-4. Metadata stored in database with expiration parameters
-5. Unique sales page URL generated and returned to creator
+1. User creates a temporary page through the console frontend
+2. Selects page type (countdown, flash sale, event registration, limited-time offer)
+3. Configures page-specific settings and customizations
+4. For product-based pages, associates products or uploads new products
+5. Next.js API routes process configuration and generate a unique shortened UUID
+6. Any files are uploaded directly to R2 with presigned URL
+7. Page metadata stored in database with expiration parameters
+8. Unique page URL generated and returned to user
 
-### Customer Purchase Flow
+### Page Visitor Flow
 
-1. Customer visits unique sales page URL
-2. Server validates page expiration status before rendering
-3. Customer initiates checkout via Stripe Checkout
-4. On successful payment, Cloudflare Worker generates a signed download URL
-5. Download URL is time-limited and IP-restricted
-6. Customer receives access to digital product
+#### Countdown Landing Page
+1. Visitor accesses the countdown page URL
+2. Server validates page status (active, expired, not yet launched)
+3. If active, renders the countdown timer synced via WebSocket/SSE
+4. Processes any email/SMS registrations for notifications
+5. After countdown reaches zero, performs configured action (redirect, show message, etc.)
+
+#### Flash Sale Page
+1. Visitor accesses the flash sale URL
+2. Server validates sale status and remaining time
+3. If active, displays products with discounted prices and countdown
+4. Customer initiates checkout via Stripe Checkout
+5. On successful payment, generates download links or fulfillment information
+6. When sale ends, page automatically switches to expired state
+
+#### Event Registration Page
+1. Visitor accesses the event registration URL
+2. Server validates registration status (open, closed, waitlist)
+3. Visitor completes registration form
+4. System processes registration and sends confirmation
+5. As event approaches, automated reminders are sent
+6. After event concludes, page shows post-event content
+
+#### Limited-Time Offer Page
+1. Visitor accesses the limited offer URL
+2. Server validates offer status and remaining time/quantity
+3. Displays offer details with countdown and discount code
+4. Visitor can copy code or proceed directly to purchase
+5. After expiration, redirects to configured destination
+
+## Page Lifecycle Management
+
+```mermaid
+stateDiagram-v2
+    [*] --> Draft
+    Draft --> Scheduled
+    Draft --> Active
+    Scheduled --> Active
+    Active --> Expired
+    Expired --> [*]
+    
+    state Active {
+        [*] --> Running
+        Running --> Paused
+        Paused --> Running
+    }
+```
+
+### Lifecycle States
+- **Draft**: Page configuration in progress
+- **Scheduled**: Page configured but not yet launched
+- **Active**: Page is live and accessible
+  - **Running**: Actively accepting visitors/orders/registrations
+  - **Paused**: Temporarily paused but not expired
+- **Expired**: Page has reached its expiration time or limit
 
 ## Security Architecture
 
@@ -87,19 +151,31 @@ graph TD
 - Rate limiting on sensitive endpoints
 - Browser fingerprinting for suspicious activity detection
 - Cloudflare's built-in DDoS protection
+- Captcha for registration forms to prevent spam
+
+## Real-Time Features
+
+### WebSocket/SSE Integration
+
+- **Countdown Synchronization**: Server-synced countdown timers to prevent client-side manipulation
+- **Inventory Updates**: Real-time inventory level updates for limited quantity offers
+- **Registration Counters**: Live attendee/registration counts for social proof
+- **Price Changes**: Ability to update pricing in real-time for flash sales
 
 ## Scalability Considerations
 
-- Edge caching for sales page metadata
+- Edge caching for page metadata
 - Horizontal scaling through serverless architecture
 - Separation of read and write paths
 - Asynchronous processing for non-critical operations
+- Optimized database access patterns for high-traffic periods
 
 ## Monitoring and Observability
 
 - Cloudflare Analytics for edge function performance
 - Custom metrics collection for business KPIs
 - Error tracking and alerting via Sentry or similar service
+- Real-time dashboard for active pages and conversion metrics
 
 ## Deployment Strategy
 
@@ -110,7 +186,8 @@ graph TD
 
 ## Future Architecture Expansion
 
-- WebSocket integration for real-time features
+- WebSocket integration for real-time collaborative features
 - Multi-region database strategy for global expansion
 - Event-driven architecture for complex workflows
 - Integration with additional payment processors beyond Stripe
+- Advanced analytics with machine learning for conversion optimization

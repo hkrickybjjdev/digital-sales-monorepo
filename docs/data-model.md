@@ -8,7 +8,7 @@ This document outlines the core data structures, relationships, and storage solu
 
 ```mermaid
 erDiagram
-    CREATOR {
+    USER {
         string id PK
         string email
         string name
@@ -19,7 +19,7 @@ erDiagram
     
     PRODUCT {
         string id PK
-        string creatorId FK
+        string userId FK
         string name
         string description
         int priceInCents
@@ -40,21 +40,33 @@ erDiagram
         timestamp uploadedAt
     }
     
-    SALES_PAGE {
+    PAGE {
         string id PK
         string shortId
-        string productId FK
-        string creatorId FK
+        string userId FK
+        string type
         timestamp createdAt
         timestamp expiresAt
         timestamp launchAt
-        boolean isPreLaunch
+        boolean isActive
         object customization
+        object settings
+    }
+    
+    PAGE_CONTENT {
+        string id PK
+        string pageId FK
+        string contentType
+        string title
+        string description
+        int priceInCents
+        string currency
+        object metadata
     }
     
     ORDER {
         string id PK
-        string salesPageId FK
+        string pageId FK
         string productId FK
         string customerId
         string paymentId
@@ -68,25 +80,27 @@ erDiagram
     
     REGISTRATION {
         string id PK
-        string salesPageId FK
+        string pageId FK
         string email
         string name
+        string phone
         timestamp registeredAt
         object customFields
     }
     
-    CREATOR ||--o{ PRODUCT : creates
+    USER ||--o{ PRODUCT : creates
+    USER ||--o{ PAGE : owns
     PRODUCT ||--|| FILE : contains
-    PRODUCT ||--o{ SALES_PAGE : sells_via
-    SALES_PAGE ||--o{ ORDER : generates
-    SALES_PAGE ||--o{ REGISTRATION : collects
+    PAGE ||--o{ PAGE_CONTENT : displays
+    PAGE ||--o{ ORDER : generates
+    PAGE ||--o{ REGISTRATION : collects
 ```
 
 ## Core Entities
 
-### Creator
+### User
 
-Represents platform users who create and sell digital products.
+Represents platform users who create and sell digital products or collect registrations.
 
 | Field | Type | Description |
 |-------|------|-------------|
@@ -99,12 +113,12 @@ Represents platform users who create and sell digital products.
 
 ### Product
 
-Digital items that creators upload and sell through the platform.
+Digital items that users upload and sell through the platform.
 
 | Field | Type | Description |
 |-------|------|-------------|
 | id | UUID | Primary identifier |
-| creatorId | UUID (FK) | Reference to creator |
+| userId | UUID (FK) | Reference to user |
 | name | String | Product name |
 | description | String | Product details |
 | priceInCents | Integer | Price in smallest currency unit |
@@ -128,21 +142,37 @@ Represents the actual digital asset being sold.
 | fileSizeBytes | Integer | File size |
 | uploadedAt | Timestamp | Upload date |
 
-### Sales Page
+### Page
 
-A temporary page that sells one or more products.
+A temporary page that can be of various types (sales, countdown, registration, etc.)
 
 | Field | Type | Description |
 |-------|------|-------------|
 | id | UUID | Primary identifier |
 | shortId | String | Short URL identifier |
-| productId | UUID (FK) | Reference to product |
-| creatorId | UUID (FK) | Reference to creator |
+| userId | UUID (FK) | Reference to user |
+| type | Enum | 'countdown', 'flash-sale', 'event-registration', 'limited-offer', etc. |
 | createdAt | Timestamp | Creation date |
 | expiresAt | Timestamp | Expiration date/time |
 | launchAt | Timestamp | Launch date for pre-launch pages |
-| isPreLaunch | Boolean | Whether this is a pre-launch page |
+| isActive | Boolean | Whether page is currently active |
 | customization | JSON | Page style and content customizations |
+| settings | JSON | Page-specific settings (e.g., redirect URLs, confirmation messages) |
+
+### Page Content
+
+Content items displayed on a page (can be products, offers, event details, etc.)
+
+| Field | Type | Description |
+|-------|------|-------------|
+| id | UUID | Primary identifier |
+| pageId | UUID (FK) | Reference to page |
+| contentType | String | Type of content ('product', 'event', 'offer', etc.) |
+| title | String | Content title |
+| description | String | Content description |
+| priceInCents | Integer | Price if applicable (0 for free) |
+| currency | String | ISO currency code (if priced) |
+| metadata | JSON | Content-specific additional data |
 
 ### Order
 
@@ -151,8 +181,8 @@ Records of purchases made through the platform.
 | Field | Type | Description |
 |-------|------|-------------|
 | id | UUID | Primary identifier |
-| salesPageId | UUID (FK) | Reference to sales page |
-| productId | UUID (FK) | Reference to product purchased |
+| pageId | UUID (FK) | Reference to page |
+| productId | UUID (FK) | Reference to product purchased (if applicable) |
 | customerId | String | Buyer identifier (may be anonymous) |
 | paymentId | String | Stripe payment ID |
 | amountPaid | Integer | Amount paid in cents |
@@ -164,16 +194,83 @@ Records of purchases made through the platform.
 
 ### Registration
 
-Pre-launch signups and leads collected before product launch.
+Signups collected from pre-launch, event registration, or other capture pages.
 
 | Field | Type | Description |
 |-------|------|-------------|
 | id | UUID | Primary identifier |
-| salesPageId | UUID (FK) | Reference to sales page |
+| pageId | UUID (FK) | Reference to page |
 | email | String | Registrant's email |
 | name | String | Registrant's name |
+| phone | String | Registrant's phone number (optional) |
 | registeredAt | Timestamp | Registration date |
 | customFields | JSON | Additional collected information |
+
+## Page Types and Their Specific Attributes
+
+### Countdown Landing Page
+
+```json
+{
+  "type": "countdown",
+  "settings": {
+    "countdownTarget": "ISO-timestamp",
+    "postCountdownAction": "redirect|show-message|show-form",
+    "redirectUrl": "https://example.com/destination",
+    "messageTitle": "We're live!",
+    "messageContent": "The wait is over..."
+  }
+}
+```
+
+### Flash Sale Page
+
+```json
+{
+  "type": "flash-sale",
+  "settings": {
+    "saleEndTime": "ISO-timestamp",
+    "discountPercentage": 20,
+    "originalPriceDisplay": true,
+    "inventoryLimit": 100,
+    "soldOutAction": "redirect|show-message",
+    "postSaleRedirectUrl": "https://example.com/expired"
+  }
+}
+```
+
+### Event Registration Page
+
+```json
+{
+  "type": "event-registration",
+  "settings": {
+    "eventStartTime": "ISO-timestamp",
+    "eventEndTime": "ISO-timestamp",
+    "eventLocation": "virtual|physical",
+    "physicalAddress": "123 Main St, City, Country",
+    "virtualPlatform": "zoom|meet|teams|custom",
+    "platformLink": "https://zoom.us/j/123456",
+    "maxAttendees": 500,
+    "waitlistEnabled": true
+  }
+}
+```
+
+### Limited-Time Offer Page
+
+```json
+{
+  "type": "limited-offer",
+  "settings": {
+    "offerEndTime": "ISO-timestamp",
+    "discountCode": "SPECIAL20",
+    "bonusDescription": "Free e-book with purchase",
+    "limitedQuantity": 50,
+    "postOfferAction": "redirect|show-alternate"
+  }
+}
+```
 
 ## Storage Solutions
 
@@ -195,59 +292,66 @@ Digital products are stored in Cloudflare R2 with the following organization:
 
 ```
 r2://
-  ├── products/
-  │   ├── {creatorId}/
-  │   │   ├── {productId}/
-  │   │   │   ├── original/{fileName}
-  │   │   │   ├── preview/{fileName}
+  ├── users/
+  │   ├── {userId}/
+  │   │   ├── products/
+  │   │   │   ├── {productId}/
+  │   │   │   │   ├── original/{fileName}
+  │   │   │   │   ├── preview/{fileName}
+  │   │   ├── pages/
+  │   │   │   ├── {pageId}/
+  │   │   │   │   ├── assets/{assetName}
 ```
 
 ### Metadata Caching (Cloudflare KV)
 
 Frequently accessed read-only data is cached at the edge:
 
-- Active sales page metadata
+- Active page metadata and settings
 - Product information for active sales
 - Download token validity
+- Page expiration status
 
 ### Transactional Workflow
 
-1. **Pre-Purchase**:
-   - Sales page visits are anonymous
-   - Minimal data collection before purchase
+1. **Pre-Purchase/Registration**:
+   - Page visits are anonymous
+   - Minimal data collection before user action
 
-2. **Purchase Process**:
+2. **Purchase Process** (for sales pages):
    - Order created with 'processing' status
    - Payment processed via Stripe
    - On success, order status updated to 'completed'
    - Download token generated with security constraints
 
-3. **Post-Purchase**:
-   - Download attempts tracked
-   - Order metadata updated with download history
+3. **Registration Process** (for signup/event pages):
+   - Validate form data
+   - Store registration information
+   - Send confirmation email/SMS
+   - Update registration count metrics
 
 ## Data Retention and Compliance
 
 - Customer IP addresses: Stored for 30 days (compliance with GDPR/CCPA)
 - Order data: Retained for 7 years (tax compliance)
-- Registration data: Retained until explicitly deleted by creator or registrant
+- Registration data: Retained until explicitly deleted by user or registrant
 - Security logs: Retained for 180 days
 
 ## Indexing Strategy
 
 ### Primary Indices
 
-- `creator.email`: For authentication and lookup
-- `salesPage.shortId`: For public URL resolution
+- `user.email`: For authentication and lookup
+- `page.shortId`: For public URL resolution
 - `order.customerId`: For customer order history
 - `registration.email`: For lead management
 
 ### Secondary Indices
 
-- `product.creatorId`: For listing creator's products
-- `order.createdAt`: For date-range queries
-- `salesPage.expiresAt`: For expiration checks
-- `registration.salesPageId`: For campaign performance analysis
+- `product.userId`: For listing user's products
+- `page.userId`: For listing user's pages
+- `page.expiresAt`: For expiration checks
+- `registration.pageId`: For campaign performance analysis
 
 ## Data Migration and Versioning
 
