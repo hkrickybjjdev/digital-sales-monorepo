@@ -44,6 +44,12 @@ export function PageBuilderSteps() {
     }
   };
 
+  // Create a separate handler for mobile page type selection
+  const handleMobilePageTypeSelection = (pageType: string) => {
+    // Just update the selected page type, don't navigate to next step
+    setSelectedPageType(pageType);
+  };
+
   const currentStepLabel = steps.find(step => step.id === currentStep)?.label || "";
   const currentIndex = steps.findIndex(step => step.id === currentStep);
 
@@ -109,7 +115,7 @@ export function PageBuilderSteps() {
 
         {/* Content */}
         <div className="flex-1 pb-20"> {/* Add padding at bottom for fixed navigation */}
-          {currentStep === "type-selection" && <PageTypeSelection onNext={handleNextStep} />}
+          {currentStep === "type-selection" && <PageTypeSelection onNext={handleMobilePageTypeSelection} />}
           {currentStep === "general-settings" && <GeneralSettings pageType={selectedPageType} onNext={handleNextStep} />}
           {currentStep === "content" && (
             <div className="p-6 border rounded-lg">

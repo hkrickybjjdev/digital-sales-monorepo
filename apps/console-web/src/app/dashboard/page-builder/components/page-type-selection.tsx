@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CheckCircle } from "lucide-react";
@@ -10,7 +10,7 @@ type PageType = {
   title: string;
   description: string;
   useCases: string[];
-  icon: JSX.Element;
+  icon: React.ReactNode;
 };
 
 interface PageTypeSelectionProps {
@@ -116,6 +116,12 @@ const pageTypes: PageType[] = [
 export function PageTypeSelection({ onNext }: PageTypeSelectionProps) {
   const [selectedType, setSelectedType] = useState<string | null>(null);
 
+  const handleTypeSelection = (typeId: string) => {
+    setSelectedType(typeId);
+    // Call onNext immediately to update the parent component's state
+    onNext(typeId);
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -134,7 +140,7 @@ export function PageTypeSelection({ onNext }: PageTypeSelectionProps) {
                 ? "border-primary shadow-md" 
                 : "hover:border-primary/50"
             }`}
-            onClick={() => setSelectedType(pageType.id)}
+            onClick={() => handleTypeSelection(pageType.id)}
           >
             <CardHeader className="relative flex flex-row items-start justify-between space-y-0 pb-2 px-4 pt-4">
               <div className="space-y-1">
@@ -169,7 +175,7 @@ export function PageTypeSelection({ onNext }: PageTypeSelectionProps) {
                 className="w-full min-h-[2.5rem]" // Ensure touch target size is adequate
                 onClick={(e) => {
                   e.stopPropagation();
-                  setSelectedType(pageType.id);
+                  handleTypeSelection(pageType.id);
                 }}
               >
                 {selectedType === pageType.id ? "Selected" : "Select"}
