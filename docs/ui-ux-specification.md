@@ -205,6 +205,7 @@ The platform uses Shadcn UI as its component library foundation with the followi
 - Design customization (colors, fonts, images)
 - SEO metadata configuration
 - Tracking and analytics integration
+- Product selection and association (for product-based pages)
 
 **Type-Specific Builders**:
 
@@ -216,6 +217,7 @@ The platform uses Shadcn UI as its component library foundation with the followi
 
 **Flash Sale Builder**:
 - Product selector/uploader
+- Product display configuration
 - Pricing and discount configuration
 - Inventory management
 - Sale duration settings
@@ -338,13 +340,17 @@ graph TD
     B --> C[Choose Page Type]
     C --> D[Configure Basic Settings]
     D --> E[Design Page Content]
-    E --> F[Set Timing Parameters]
-    F --> G[Configure Follow-up Actions]
-    G --> H[Preview Page]
-    H -- Approved --> I[Publish Page]
-    H -- Needs Changes --> E
-    I --> J[Copy Shareable URL]
-    J --> K[Monitor Performance]
+    E --> F1{Is Product-Based Page?}
+    F1 -- Yes --> F2[Select Products]
+    F2 --> F3[Configure Product Display]
+    F3 --> G
+    F1 -- No --> G[Set Timing Parameters]
+    G --> H[Configure Follow-up Actions]
+    H --> I[Preview Page]
+    I -- Approved --> J[Publish Page]
+    I -- Needs Changes --> E
+    J --> K[Copy Shareable URL]
+    K --> L[Monitor Performance]
 ```
 
 ## Accessibility Standards

@@ -26,6 +26,7 @@ This document outlines the phased development approach for building the Temporar
 - [ ] Implement authentication system for users
 - [ ] Create secure URL generation service with HMAC signing
 - [ ] Develop basic page management APIs
+- [ ] Define relationships between products and page content
 
 #### Week 3: Countdown Page Development
 - [ ] Build user dashboard layout
@@ -64,6 +65,7 @@ This document outlines the phased development approach for building the Temporar
 - [ ] Create sale configuration interface
 - [ ] Add inventory management features
 - [ ] Develop price comparison display
+- [ ] Implement product selection and association with page content
 
 #### Week 7: Payment Processing
 - [ ] Integrate Stripe Checkout

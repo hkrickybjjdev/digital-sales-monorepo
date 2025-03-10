@@ -90,7 +90,8 @@ graph TD
 5. Next.js API routes process configuration and generate a unique shortened UUID
 6. Any files are uploaded directly to R2 with presigned URL
 7. Page metadata stored in database with expiration parameters
-8. Unique page URL generated and returned to user
+8. For product-based pages, PAGE_CONTENT records are created with references to the associated products
+9. Unique page URL generated and returned to user
 
 ### Page Visitor Flow
 

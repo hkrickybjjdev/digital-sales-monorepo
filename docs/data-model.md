@@ -57,6 +57,7 @@ erDiagram
         string id PK
         string pageId FK
         string contentType
+        string productId FK
         string title
         string description
         int priceInCents
@@ -92,6 +93,7 @@ erDiagram
     USER ||--o{ PAGE : owns
     PRODUCT ||--|| FILE : contains
     PAGE ||--o{ PAGE_CONTENT : displays
+    PRODUCT ||--o{ PAGE_CONTENT : referenced_by
     PAGE ||--o{ ORDER : generates
     PAGE ||--o{ REGISTRATION : collects
 ```
@@ -168,6 +170,7 @@ Content items displayed on a page (can be products, offers, event details, etc.)
 | id | UUID | Primary identifier |
 | pageId | UUID (FK) | Reference to page |
 | contentType | String | Type of content ('product', 'event', 'offer', etc.) |
+| productId | UUID (FK) | Reference to product (when contentType is 'product', otherwise NULL) |
 | title | String | Content title |
 | description | String | Content description |
 | priceInCents | Integer | Price if applicable (0 for free) |
