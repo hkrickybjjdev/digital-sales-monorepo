@@ -16,7 +16,7 @@ headers {
 
 body:json {
   {
-    "username": "{{username}}",
+    "email": "{{email}}",
     "password": "{{password}}"
   }
 }
@@ -39,14 +39,14 @@ tests {
   test("Status code should be 200", function() {
     expect(res.status).to.equal(200);
   });
-
+  
   test("Response should have a token", function() {
     expect(res.body.token).to.be.a('string');
     expect(res.body.token.length).to.be.greaterThan(10);
   });
-
+  
   test("Response should have user information", function() {
     expect(res.body.user).to.be.an('object');
     expect(res.body.user.username).to.equal(bru.getVar("username"));
   });
-} 
+}

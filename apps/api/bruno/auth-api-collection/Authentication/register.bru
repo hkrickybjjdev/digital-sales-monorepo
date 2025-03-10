@@ -16,10 +16,9 @@ headers {
 
 body:json {
   {
-    "username": "{{username}}",
+    "name": "{{username}}",
     "password": "{{password}}",
-    "email": "test@example.com",
-    "fullName": "Test User"
+    "email": "test@example.com"
   }
 }
 
@@ -27,14 +26,14 @@ tests {
   test("Status code should be 201", function() {
     expect(res.status).to.equal(201);
   });
-
+  
   test("Response should have user information", function() {
     expect(res.body.user).to.be.an('object');
     expect(res.body.user.username).to.equal(bru.getVar("username"));
     expect(res.body.user.email).to.equal("test@example.com");
   });
-
+  
   test("Response should have a success message", function() {
     expect(res.body.message).to.be.a('string');
   });
-} 
+}

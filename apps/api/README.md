@@ -20,6 +20,15 @@ The backend follows a modular monolith architecture pattern, organizing function
 # Install dependencies
 npm install
 
+# Set up local environment variables
+# Create a .dev.vars file with the following content:
+# JWT_SECRET=your_jwt_secret_for_local_development
+# STRIPE_SECRET_KEY=sk_test_placeholder
+# STRIPE_WEBHOOK_SECRET=whsec_placeholder
+
+# Initialize the database (required before first run)
+npx wrangler d1 execute DB --local --file=./src/database/schema.sql
+
 # Start development server
 npm run dev
 
@@ -46,7 +55,69 @@ modules/
   └── analytics/       # Usage tracking and reporting
 ```
 
+## Database
+
+The API uses Cloudflare D1 (SQLite) for data storage. The database schema is defined in `src/database/schema.sql`.
+
+### Database Initialization
+
+Before running the application for the first time, you need to initialize the database with the schema:
+
+```bash
+# Initialize the local development database
+npx wrangler d1 execute DB --local --file=./src/database/schema.sql
+# or
+npm run db:init
+
+# Initialize the production database (when deploying)
+npx wrangler d1 execute DB --file=./src/database/schema.sql
+```
+
+### Database Management
+
+#### Clearing Tables
+
+To clear all data from the users and sessions tables (useful for testing):
+
+```bash
+# Clear tables in the local development database
+npx wrangler d1 execute DB --local --file=./src/database/clear_tables.sql
+# or
+npm run db:clear
+
+# Clear tables in the production database
+npx wrangler d1 execute DB --file=./src/database/clear_tables.sql
+```
+
 ## Environment Variables
+
+### Local Development
+
+For local development, create a `.dev.vars` file in the root of the API project with the following variables:
+
+```
+# Required for JWT authentication
+JWT_SECRET=your_jwt_secret_for_local_development
+
+# Required for Stripe integration (can use placeholders for local dev)
+STRIPE_SECRET_KEY=sk_test_placeholder
+STRIPE_WEBHOOK_SECRET=whsec_placeholder
+```
+
+### Production
+
+For production deployment, set these environment variables using Wrangler secrets:
+
+```bash
+# Set JWT secret
+wrangler secret put JWT_SECRET
+
+# Set Stripe keys
+wrangler secret put STRIPE_SECRET_KEY
+wrangler secret put STRIPE_WEBHOOK_SECRET
+```
+
+Other environment variables:
 
 ```
 # Auth

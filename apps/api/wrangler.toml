@@ -16,8 +16,8 @@ preview_bucket_name = "temporary-pages-storage-dev"
 # D1 Database
 [[d1_databases]]
 binding = "DB"
-database_name = "temporary-pages-db"
-database_id = "your-d1-database-id-here"
+database_name = "db"
+database_id = "665acad6-a0eb-425e-a0e3-4b6d1834f7c5"
 preview_database_id = "your-preview-d1-database-id-here"
 
 # Environment variables
