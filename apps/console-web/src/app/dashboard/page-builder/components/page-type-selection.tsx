@@ -107,7 +107,7 @@ const pageTypes: PageType[] = [
         strokeLinejoin="round"
         className="text-red-500"
       >
-        <path d="M10.1 2.182a1 1 0 0 1 1.819 0l1.726 3.497a1 1 0 0 0 .754.547l3.857.56a1 1 0 0 1 .555 1.705l-2.792 2.72a1 1 0 0 0-.288.885l.659 3.842a1 1 0 0 1-1.451 1.054L12 14.856l-3.448 1.812a1 1 0 0 1-1.452-1.054l.66-3.842a1 1 0 0 0-.288-.885l-2.792-2.72a1 1 0 0 1 .555-1.705l3.857-.56a1 1 0 0 0 .753-.547l1.726-3.497z"></path>
+        <path d="M10.1 2.182a1 1 0 0 1 1.819 0l1.726 3.497a1 1 0 0 0 .754.547l3.857.56a1 1 0 0 1 .555 1.705l-2.792 2.72a1 1 0 0 0-.288.885l.659 3.842a1 1 0 0 1-1.451 1.054L12 14.856l-3.448 1.812a1 1 0 0 1-1.452-1.054l.66-3.842a1 1 0 0 0-.288-.885l-2.792-2.72a1 0 0 1 .555-1.705l3.857-.56a1 0 0 0 .753-.547l1.726-3.497z"></path>
       </svg>
     ),
   },
@@ -125,35 +125,35 @@ export function PageTypeSelection({ onNext }: PageTypeSelectionProps) {
         </p>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
         {pageTypes.map((pageType) => (
           <Card 
             key={pageType.id}
-            className={`cursor-pointer border-2 transition-all ${
+            className={`cursor-pointer border-2 transition-all touch-manipulation ${
               selectedType === pageType.id 
                 ? "border-primary shadow-md" 
                 : "hover:border-primary/50"
             }`}
             onClick={() => setSelectedType(pageType.id)}
           >
-            <CardHeader className="relative flex flex-row items-start justify-between space-y-0 pb-2">
+            <CardHeader className="relative flex flex-row items-start justify-between space-y-0 pb-2 px-4 pt-4">
               <div className="space-y-1">
-                <CardTitle className="text-lg">{pageType.title}</CardTitle>
-                <CardDescription>{pageType.description}</CardDescription>
+                <CardTitle className="text-base md:text-lg">{pageType.title}</CardTitle>
+                <CardDescription className="text-xs md:text-sm">{pageType.description}</CardDescription>
               </div>
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10">
+              <div className="flex h-8 w-8 md:h-10 md:w-10 shrink-0 items-center justify-center rounded-full bg-primary/10">
                 {pageType.icon}
               </div>
               {selectedType === pageType.id && (
                 <div className="absolute -right-2 -top-2">
-                  <CheckCircle className="h-6 w-6 text-primary" />
+                  <CheckCircle className="h-5 w-5 md:h-6 md:w-6 text-primary" />
                 </div>
               )}
             </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <h4 className="text-sm font-medium">Recommended for:</h4>
-                <ul className="text-sm text-muted-foreground space-y-1">
+            <CardContent className="px-4">
+              <div className="space-y-1 md:space-y-2">
+                <h4 className="text-xs md:text-sm font-medium">Recommended for:</h4>
+                <ul className="text-xs md:text-sm text-muted-foreground space-y-1">
                   {pageType.useCases.map((useCase, index) => (
                     <li key={index} className="flex items-center">
                       <span className="mr-2 h-1 w-1 rounded-full bg-muted-foreground"></span>
@@ -163,10 +163,10 @@ export function PageTypeSelection({ onNext }: PageTypeSelectionProps) {
                 </ul>
               </div>
             </CardContent>
-            <CardFooter>
+            <CardFooter className="px-4 pb-4">
               <Button 
                 variant={selectedType === pageType.id ? "default" : "outline"}
-                className="w-full"
+                className="w-full min-h-[2.5rem]" // Ensure touch target size is adequate
                 onClick={(e) => {
                   e.stopPropagation();
                   setSelectedType(pageType.id);
@@ -179,11 +179,11 @@ export function PageTypeSelection({ onNext }: PageTypeSelectionProps) {
         ))}
       </div>
       
-      <div className="pt-6 flex justify-end">
+      <div className="pt-4 md:pt-6 sticky bottom-0 bg-background pb-4 z-10">
         <Button 
           size="lg"
           disabled={!selectedType} 
-          className="w-full sm:w-auto"
+          className="w-full min-h-[2.75rem]" // Larger touch target
           onClick={() => selectedType && onNext(selectedType)}
         >
           Continue to General Settings
