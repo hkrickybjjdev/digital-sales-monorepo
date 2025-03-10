@@ -13,6 +13,10 @@ type PageType = {
   icon: JSX.Element;
 };
 
+interface PageTypeSelectionProps {
+  onNext: (pageType: string) => void;
+}
+
 const pageTypes: PageType[] = [
   {
     id: "flash-sale",
@@ -109,7 +113,7 @@ const pageTypes: PageType[] = [
   },
 ];
 
-export function PageTypeSelection() {
+export function PageTypeSelection({ onNext }: PageTypeSelectionProps) {
   const [selectedType, setSelectedType] = useState<string | null>(null);
 
   return (
@@ -180,8 +184,9 @@ export function PageTypeSelection() {
           size="lg"
           disabled={!selectedType} 
           className="w-full sm:w-auto"
+          onClick={() => selectedType && onNext(selectedType)}
         >
-          Continue to Content
+          Continue to General Settings
         </Button>
       </div>
     </div>
