@@ -13,4 +13,7 @@ export interface Env {
   
   // D1 Database
   DB: D1Database;
+  
+  // Add index signature to satisfy Hono's Env constraint
+  [key: string]: any;
 }

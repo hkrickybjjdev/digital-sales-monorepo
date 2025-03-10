@@ -1,6 +1,86 @@
-# Temporary Pages Platform API
+# TempPages API
 
-This is the backend API for the Temporary Pages Platform, built as a modular monolith using Cloudflare Workers.
+This is the backend API for TempPages, a digital sales platform.
+
+## API Versioning
+
+The API uses versioning to ensure backward compatibility as the API evolves. All API endpoints are prefixed with a version identifier.
+
+### Version Format
+
+API versions follow this format:
+```
+/api/v{MAJOR_VERSION}/{resource}
+```
+
+For example:
+- `/api/v1/auth/login`
+- `/api/v2/auth/login`
+- `/api/v1/pages/123`
+
+### Available Versions
+
+- **v1** - Initial API version (current stable version)
+- **v2** - Enhanced API with additional security features (beta)
+
+### Version Differences
+
+#### v1 to v2 Changes
+
+The v2 API includes several enhancements:
+
+**Auth Module:**
+- Added multi-factor authentication (MFA) support
+- Enhanced security with device tracking
+- Improved JWT handling with shorter expiration times
+- Added support for social login providers
+
+**Endpoints:**
+- `/api/v2/auth/login` - Enhanced login with MFA support
+- `/api/v2/auth/mfa/verify` - New endpoint for MFA verification
+
+### Latest Version
+
+You can also use the `/api/latest` endpoint to always access the most recent stable version:
+```
+/api/latest/{resource}
+```
+
+### Version Headers
+
+All API responses include the following headers:
+- `X-API-Version`: The version of the API that processed the request
+- `X-API-Latest-Version`: The latest available API version
+
+### Deprecation Notices
+
+When an API version is deprecated, responses will include a `Warning` header with information about when the version will be removed and which version to migrate to.
+
+## Documentation
+
+For full API documentation, visit [https://docs.tempopages.com/api](https://docs.tempopages.com/api)
+
+## Development
+
+### Environment Variables
+
+The API requires the following environment variables:
+- `ENVIRONMENT`: The current environment (development, staging, production)
+- `JWT_SECRET`: Secret for JWT token generation
+- `STRIPE_SECRET_KEY`: Stripe API key
+- `STRIPE_WEBHOOK_SECRET`: Stripe webhook secret
+
+### Running Locally
+
+```bash
+npm run dev
+```
+
+### Building for Production
+
+```bash
+npm run build
+```
 
 ## Architecture
 
@@ -47,6 +127,7 @@ modules/
   │   ├── services/    # Business logic
   │   ├── models/      # Data models
   │   ├── utils/       # Module-specific utilities
+  │   ├── v2/          # v2 API implementation
   │   └── index.ts     # Public API of the module
   ├── pages/           # Page management
   ├── products/        # Digital product handling

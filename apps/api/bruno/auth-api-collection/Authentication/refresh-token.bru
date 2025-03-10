@@ -5,7 +5,7 @@ meta {
 }
 
 post {
-  url: {{baseUrl}}/auth/refresh-token
+  url: {{baseUrl}}/api/v1/auth/refresh-token
   body: json
   auth: none
 }
@@ -39,13 +39,13 @@ tests {
   test("Status code should be 200", function() {
     expect(res.status).to.equal(200);
   });
-
+  
   test("Response should have a new token", function() {
     expect(res.body.token).to.be.a('string');
     expect(res.body.token.length).to.be.greaterThan(10);
   });
-
+  
   test("Response should have a refresh token", function() {
     expect(res.body.refreshToken).to.be.a('string');
   });
-} 
+}

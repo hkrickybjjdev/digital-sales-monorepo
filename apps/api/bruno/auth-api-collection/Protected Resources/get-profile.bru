@@ -5,27 +5,27 @@ meta {
 }
 
 get {
-  url: {{baseUrl}}/api/profile
+  url: {{baseUrl}}/api/v1/profile
   body: none
   auth: none
 }
 
 headers {
   Content-Type: application/json
-  Authorization: Bearer {{authToken}}
+  Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJyc0xDS0dDcjNCSjh4OFczME92cTEiLCJzaWQiOiIzbHYtd1JMS2NuenpDcUNidjVYd3AiLCJpYXQiOjE3NDE1NzYxNzQsImV4cCI6MTc0MjE4MDk3NH0.GMVmaj1OJn427xCWAmXgwSG6pTKiRf4njZ18gYEj8Xc
 }
 
 tests {
   test("Status code should be 200", function() {
     expect(res.status).to.equal(200);
   });
-
+  
   test("Response should have user profile information", function() {
     expect(res.body.user).to.be.an('object');
     expect(res.body.user.username).to.be.a('string');
     expect(res.body.user.email).to.be.a('string');
   });
-
+  
   test("Should fail without authentication", function() {
     // This is a demonstration of how to test authentication
     // In a real scenario, you would make a separate request without the token
@@ -36,4 +36,4 @@ tests {
     
     expect(hasAuthHeader).to.be.true;
   });
-} 
+}
