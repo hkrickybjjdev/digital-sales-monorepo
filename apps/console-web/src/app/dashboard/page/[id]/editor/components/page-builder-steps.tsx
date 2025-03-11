@@ -140,7 +140,7 @@ export function PageBuilderSteps() {
           ) : (
             <>
               {currentStep === "type-selection" && <PageTypeSelection onNext={handleMobilePageTypeSelection} />}
-              {currentStep === "general-settings" && <GeneralSettings pageType={pageData.pageType} onNext={handleNextStep} onDataChange={handlePageDataChange} />}
+              {currentStep === "general-settings" && <GeneralSettings pageType={pageData.pageType || null} onNext={handleNextStep} onDataChange={handlePageDataChange} />}
               {currentStep === "content" && (
                 <div className="p-6 border rounded-lg">
                   <h2 className="text-lg font-semibold">Content</h2>
@@ -181,7 +181,7 @@ export function PageBuilderSteps() {
               <h3 className="font-medium">Page Preview</h3>
             </div>
             <div className="p-4 h-[calc(100%-60px)] overflow-auto">
-              <PagePreview pageType={pageData.pageType} pageData={pageData} />
+              <PagePreview pageType={pageData.pageType || null} pageData={pageData} />
             </div>
           </SheetContent>
         </Sheet>
@@ -283,31 +283,13 @@ export function PageBuilderSteps() {
                       <Save className="h-4 w-4 mr-1" />
                       Save
                     </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className="h-8"
-                      onClick={() => setShowPreview(!showPreview)}
-                    >
-                      {showPreview ? (
-                        <>
-                          <EyeOff className="h-4 w-4 mr-1" />
-                          Hide Preview
-                        </>
-                      ) : (
-                        <>
-                          <Eye className="h-4 w-4 mr-1" />
-                          Show Preview
-                        </>
-                      )}
-                    </Button>
                   </div>
                 </div>
                 
                 <div className="flex-1 overflow-auto pb-20">
                   {currentStep === "general-settings" && (
                     <GeneralSettings 
-                      pageType={pageData.pageType} 
+                      pageType={pageData.pageType || null} 
                       onNext={handleNextStep} 
                       onDataChange={handlePageDataChange}
                     />
@@ -337,7 +319,7 @@ export function PageBuilderSteps() {
               {showPreview && (
                 <div className="w-1/2 flex flex-col">
                   <div className="h-full">
-                    <PagePreview pageType={pageData.pageType} pageData={pageData} />
+                    <PagePreview pageType={pageData.pageType || null} pageData={pageData} />
                   </div>
                 </div>
               )}
