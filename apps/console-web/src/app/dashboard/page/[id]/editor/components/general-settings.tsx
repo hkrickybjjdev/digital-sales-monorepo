@@ -17,9 +17,10 @@ import { format } from "date-fns";
 interface GeneralSettingsProps {
   pageType: string | null;
   onNext: () => void;
+  onDataChange?: (data: any) => void;
 }
 
-export function GeneralSettings({ pageType, onNext }: GeneralSettingsProps) {
+export function GeneralSettings({ pageType, onNext, onDataChange }: GeneralSettingsProps) {
   // State for form fields
   const [pageTitle, setPageTitle] = useState("");
   const [pageSlug, setPageSlug] = useState("");
@@ -46,6 +47,41 @@ export function GeneralSettings({ pageType, onNext }: GeneralSettingsProps) {
       .replace(/\s+/g, '-')
       .replace(/[^\w\-]+/g, '');
     setPageSlug(slug);
+    
+    // Update parent component with new data
+    if (onDataChange) {
+      onDataChange({
+        title,
+        slug,
+        primaryColor,
+        secondaryColor
+      });
+    }
+  };
+
+  // Function to update colors and notify parent
+  const handleColorChange = (color: string, isPrimary: boolean) => {
+    if (isPrimary) {
+      setPrimaryColor(color);
+      if (onDataChange) {
+        onDataChange({
+          title: pageTitle,
+          slug: pageSlug,
+          primaryColor: color,
+          secondaryColor
+        });
+      }
+    } else {
+      setSecondaryColor(color);
+      if (onDataChange) {
+        onDataChange({
+          title: pageTitle,
+          slug: pageSlug,
+          primaryColor,
+          secondaryColor: color
+        });
+      }
+    }
   };
 
   // Page type display name
@@ -219,12 +255,12 @@ export function GeneralSettings({ pageType, onNext }: GeneralSettingsProps) {
                       id="primary-color"
                       type="color"
                       value={primaryColor}
-                      onChange={(e) => setPrimaryColor(e.target.value)}
+                      onChange={(e) => handleColorChange(e.target.value, true)}
                       className="w-14 h-10 p-0 m-0 touch-manipulation"
                     />
                     <Input 
                       value={primaryColor}
-                      onChange={(e) => setPrimaryColor(e.target.value)}
+                      onChange={(e) => handleColorChange(e.target.value, true)}
                       className="flex-1 min-h-[2.75rem] text-base md:text-sm md:min-h-[2.25rem]"
                     />
                   </div>
@@ -241,12 +277,12 @@ export function GeneralSettings({ pageType, onNext }: GeneralSettingsProps) {
                       id="secondary-color"
                       type="color"
                       value={secondaryColor}
-                      onChange={(e) => setSecondaryColor(e.target.value)}
+                      onChange={(e) => handleColorChange(e.target.value, false)}
                       className="w-14 h-10 p-0 m-0 touch-manipulation"
                     />
                     <Input 
                       value={secondaryColor}
-                      onChange={(e) => setSecondaryColor(e.target.value)}
+                      onChange={(e) => handleColorChange(e.target.value, false)}
                       className="flex-1 min-h-[2.75rem] text-base md:text-sm md:min-h-[2.25rem]"
                     />
                   </div>

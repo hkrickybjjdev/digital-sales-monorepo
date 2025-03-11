@@ -22,8 +22,8 @@ export const navItems: NavItem[] = [
     items: [] // Empty array as there are no child items for Dashboard
   },
   {
-    title: 'Page Builder',
-    url: '/dashboard/page-builder',
+    title: 'Page',
+    url: '/dashboard/page/new/editor',
     icon: 'page',
     shortcut: ['p', 'b'],
     isActive: false,

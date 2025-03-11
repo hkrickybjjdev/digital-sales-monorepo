@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CheckCircle } from "lucide-react";
+import { usePageEditor } from "../../context";
 
 type PageType = {
   id: string;
@@ -59,9 +60,9 @@ const pageTypes: PageType[] = [
         className="text-blue-500"
       >
         <rect width="18" height="18" x="3" y="4" rx="2" ry="2"></rect>
-        <line x1="16" x2="16" y1="2" y2="6"></line>
-        <line x1="8" x2="8" y1="2" y2="6"></line>
-        <line x1="3" x2="21" y1="10" y2="10"></line>
+        <line x1="16" x2="16" y1="2" y1="6"></line>
+        <line x1="8" x2="8" y1="2" y1="6"></line>
+        <line x1="3" x2="21" y1="10" y1="10"></line>
         <path d="m9 16 2 2 4-4"></path>
       </svg>
     ),
@@ -114,11 +115,16 @@ const pageTypes: PageType[] = [
 ];
 
 export function PageTypeSelection({ onNext }: PageTypeSelectionProps) {
-  const [selectedType, setSelectedType] = useState<string | null>(null);
+  const { pageData, updatePageData } = usePageEditor();
+  const [selectedType, setSelectedType] = useState<string | null>(pageData.pageType || null);
 
   const handleTypeSelection = (typeId: string) => {
     setSelectedType(typeId);
-    // Call onNext immediately to update the parent component's state
+    
+    // Update context with selected page type
+    updatePageData({ pageType: typeId });
+    
+    // Call onNext to update the parent component's state
     onNext(typeId);
   };
 
@@ -126,7 +132,8 @@ export function PageTypeSelection({ onNext }: PageTypeSelectionProps) {
     <div className="space-y-6">
       <div className="text-center">
         <h2 className="text-xl font-semibold mb-2">Choose a page type to get started</h2>
-        <p className="text-muted-foreground">          
+        <p className="text-muted-foreground">
+          Select a template that best matches your goals
         </p>
       </div>
       
