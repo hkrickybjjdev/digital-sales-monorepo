@@ -126,7 +126,7 @@ export function PageTypeSelection({ onNext }: PageTypeSelectionProps) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-10">
       <div className="text-center">
         <h2 className="text-xl font-semibold mb-2">Choose a page type to get started</h2>
         <p className="text-muted-foreground">
