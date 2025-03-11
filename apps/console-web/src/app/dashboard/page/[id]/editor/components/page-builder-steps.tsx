@@ -215,10 +215,7 @@ export function PageBuilderSteps() {
               {/* Right Panel - Preview */}
               {showPreview && (
                 <div className="w-1/2 flex flex-col">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-medium">Preview</h3>
-                  </div>
-                  <div className="h-full border rounded-lg overflow-hidden">
+                  <div className="h-full rounded-lg overflow-hidden">
                     <PagePreview pageType={pageData.pageType || null} pageData={pageData} />
                   </div>
                 </div>

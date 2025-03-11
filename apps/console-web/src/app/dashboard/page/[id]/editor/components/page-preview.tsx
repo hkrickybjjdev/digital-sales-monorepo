@@ -194,8 +194,7 @@ export function PagePreview({ pageType, pageData = {} }: PagePreviewProps) {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex justify-between items-center mb-4">
-        <h3 className="font-medium">Preview: {getPageTitle()}</h3>
+      <div className="flex justify-end items-center mb-4">
         <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as any)} className="h-9">
           <TabsList className="h-8">
             <TabsTrigger value="desktop" className="h-7 w-7 p-0">
