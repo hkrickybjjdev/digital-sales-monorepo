@@ -124,10 +124,9 @@ export function PageTypeSelection({ onNext }: PageTypeSelectionProps) {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-xl font-semibold mb-2">Step 1: Select Page Type</h2>
-        <p className="text-muted-foreground">
-          Choose the type of page you want to create based on your campaign goals.
+      <div className="text-center">
+        <h2 className="text-xl font-semibold mb-2">Choose a page type to get started</h2>
+        <p className="text-muted-foreground">          
         </p>
       </div>
       

@@ -8,13 +8,7 @@ export const metadata: Metadata = {
 
 export default function PageBuilderPage() {
   return (
-    <div className="flex flex-col gap-6 p-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Page Builder</h1>
-        <p className="text-sm text-muted-foreground">
-          Create custom pages for your website with our drag-and-drop page builder.
-        </p>
-      </div>
+    <div className="flex flex-col gap-6 p-6">      
       <PageBuilderSteps />
     </div>
   );
