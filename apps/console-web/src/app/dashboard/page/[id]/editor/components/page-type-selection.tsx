@@ -60,9 +60,9 @@ const pageTypes: PageType[] = [
         className="text-blue-500"
       >
         <rect width="18" height="18" x="3" y="4" rx="2" ry="2"></rect>
-        <line x1="16" x2="16" y1="2" y1="6"></line>
-        <line x1="8" x2="8" y1="2" y1="6"></line>
-        <line x1="3" x2="21" y1="10" y1="10"></line>
+        <line x1="16" x2="16" y1="2" y2="6"></line>
+        <line x1="8" x2="8" y1="2" y2="6"></line>
+        <line x1="3" x2="21" y1="10" y2="10"></line>
         <path d="m9 16 2 2 4-4"></path>
       </svg>
     ),
@@ -123,9 +123,6 @@ export function PageTypeSelection({ onNext }: PageTypeSelectionProps) {
     
     // Update context with selected page type
     updatePageData({ pageType: typeId });
-    
-    // Call onNext to update the parent component's state
-    onNext(typeId);
   };
 
   return (
@@ -178,10 +175,13 @@ export function PageTypeSelection({ onNext }: PageTypeSelectionProps) {
             <CardFooter className="px-4 pb-4">
               <Button 
                 variant={selectedType === pageType.id ? "default" : "outline"}
-                className="w-full min-h-[2.5rem]" // Ensure touch target size is adequate
+                className="w-full min-h-[2.5rem]"
                 onClick={(e) => {
                   e.stopPropagation();
                   handleTypeSelection(pageType.id);
+                  if (selectedType) {
+                    onNext(pageType.id);
+                  }
                 }}
               >
                 {selectedType === pageType.id ? "Selected" : "Select"}
@@ -189,17 +189,6 @@ export function PageTypeSelection({ onNext }: PageTypeSelectionProps) {
             </CardFooter>
           </Card>
         ))}
-      </div>
-      
-      <div className="pt-4 md:pt-6 sticky bottom-0 bg-background pb-4 z-10">
-        <Button 
-          size="lg"
-          disabled={!selectedType} 
-          className="w-full min-h-[2.75rem]" // Larger touch target
-          onClick={() => selectedType && onNext(selectedType)}
-        >
-          Continue to General Settings
-        </Button>
       </div>
     </div>
   );

@@ -16,7 +16,7 @@ import { format } from "date-fns";
 
 interface GeneralSettingsProps {
   pageType: string | null;
-  onNext: () => void;
+  onNext?: () => void;
   onDataChange?: (data: any) => void;
 }
 
@@ -103,9 +103,9 @@ export function GeneralSettings({ pageType, onNext, onDataChange }: GeneralSetti
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-semibold">Step 2: General Settings</h2>
+        <h2 className="text-xl font-semibold">{getPageTypeName()}</h2>
         <p className="text-sm text-muted-foreground">
-          Configure the basic settings for your {getPageTypeName().toLowerCase()}.
+          Configure the settings for your page.
         </p>
       </div>
 
@@ -120,7 +120,7 @@ export function GeneralSettings({ pageType, onNext, onDataChange }: GeneralSetti
         </Tabs>
       </div>
 
-      <div className="pb-24"> {/* Add padding for fixed bottom action buttons */}
+      <div className="pb-6"> {/* Reduced padding since we removed the fixed bottom buttons */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           {/* Basic Information Tab */}
           <TabsContent value="basic" className="space-y-6 mt-0">
@@ -409,23 +409,6 @@ export function GeneralSettings({ pageType, onNext, onDataChange }: GeneralSetti
             </div>
           </TabsContent>
         </Tabs>
-      </div>
-
-      {/* Fixed action buttons at the bottom */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-background border-t flex justify-between z-20">
-        <Button 
-          variant="outline"
-          onClick={() => setActiveTab("basic")} 
-          className="min-h-[2.75rem] md:min-h-[2.25rem]"
-        >
-          Back
-        </Button>
-        <Button 
-          onClick={onNext}
-          className="min-h-[2.75rem] md:min-h-[2.25rem]"
-        >
-          Continue to Content
-        </Button>
       </div>
     </div>
   );
