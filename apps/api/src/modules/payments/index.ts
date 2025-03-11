@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
-import { jwt } from 'hono/jwt';
 import { Env } from '../../types';
+import { validateJWT } from '../auth/middleware/authMiddleware';
 
 // Create the payments module router
 const paymentsModule = new Hono<{ Bindings: Env }>();
@@ -23,7 +23,7 @@ paymentsModule.post('/create-checkout', async (c) => {
 });
 
 // Protected routes for payment management
-paymentsModule.use('/*', jwt({ secret: (c) => c.env.JWT_SECRET }));
+paymentsModule.use('/*', validateJWT);
 
 // Orders/payments for the authenticated user
 paymentsModule.get('/orders', async (c) => {

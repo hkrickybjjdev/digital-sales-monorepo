@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
-import { jwt } from 'hono/jwt';
 import { Env } from '../../types';
+import { validateJWT } from '../auth/middleware/authMiddleware';
 
 // Create the storage module router
 const storageModule = new Hono<{ Bindings: Env }>();
@@ -14,7 +14,7 @@ storageModule.get('/download/:token', async (c) => {
 });
 
 // Protected routes for storage management
-storageModule.use('/*', jwt({ secret: (c) => c.env.JWT_SECRET }));
+storageModule.use('/*', validateJWT);
 
 // Generate signed upload URL for direct-to-R2 uploads
 storageModule.post('/get-upload-url', async (c) => {

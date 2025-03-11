@@ -1,12 +1,12 @@
 import { Hono } from 'hono';
-import { jwt } from 'hono/jwt';
 import { Env } from '../../types';
+import { validateJWT } from '../auth/middleware/authMiddleware';
 
 // Create the products module router
 const productsModule = new Hono<{ Bindings: Env }>();
 
 // All product routes are protected
-productsModule.use('/*', jwt({ secret: (c) => c.env.JWT_SECRET }));
+productsModule.use('/*', validateJWT);
 
 // Product CRUD operations
 productsModule.get('/', async (c) => {

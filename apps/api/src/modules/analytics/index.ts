@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
-import { jwt } from 'hono/jwt';
 import { Env } from '../../types';
+import { validateJWT } from '../auth/middleware/authMiddleware';
 
 // Create the analytics module router
 const analyticsModule = new Hono<{ Bindings: Env }>();
@@ -13,7 +13,7 @@ analyticsModule.post('/event', async (c) => {
 });
 
 // Protected routes for analytics data access
-analyticsModule.use('/*', jwt({ secret: (c) => c.env.JWT_SECRET }));
+analyticsModule.use('/*', validateJWT);
 
 // Dashboard analytics
 analyticsModule.get('/dashboard', async (c) => {

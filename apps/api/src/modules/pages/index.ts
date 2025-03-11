@@ -1,9 +1,9 @@
 import { Hono } from 'hono';
-import { jwt } from 'hono/jwt';
 import { Env } from '../../types';
 import { PageController } from './controllers/page-controller';
 import { ContentController } from './controllers/content-controller';
 import { RegistrationController } from './controllers/registration-controller';
+import { validateJWT } from '../auth/middleware/authMiddleware';
 
 // Create the pages module router
 const pagesModule = new Hono<{ Bindings: Env }>();
@@ -24,7 +24,7 @@ pagesModule.post('/s/:shortId/register', async (c) => {
 
 // PROTECTED ROUTES
 const protectedRoutes = new Hono<{ Bindings: Env }>();
-protectedRoutes.use('/*', jwt({ secret: (c) => c.env.JWT_SECRET }));
+protectedRoutes.use('/*', validateJWT);
 
 // Page CRUD operations
 protectedRoutes.get('/', async (c) => {
