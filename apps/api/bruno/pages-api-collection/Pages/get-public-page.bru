@@ -1,0 +1,32 @@
+meta {
+  name: Get Public Page
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/api/v1/pages/s/:shortId
+  body: none
+}
+
+vars {
+  shortId: example-short-id
+}
+
+headers {
+  Content-Type: application/json
+}
+
+tests {
+  test("Status code is 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("Response has page and content data", function() {
+    expect(res.body.page).to.be.an('object');
+    expect(res.body.contents).to.be.an('array');
+    expect(res.body.page.type).to.be.a('string');
+    expect(res.body.page.customization).to.be.an('object');
+    expect(res.body.page.settings).to.be.an('object');
+  });
+}

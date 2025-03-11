@@ -2,4 +2,4 @@
 DELETE FROM sessions;
 
 -- Clear all data from the users table
-DELETE FROM users; 
+DELETE FROM users;

@@ -11,7 +11,7 @@ export class UserRepository {
 
   async getUserByEmail(email: string): Promise<User | null> {
     const stmt = this.db.prepare(
-      'SELECT * FROM users WHERE email = ?'
+      'SELECT * FROM User WHERE email = ?'
     ).bind(email.toLowerCase());
 
     const result = await stmt.first();
@@ -20,28 +20,28 @@ export class UserRepository {
 
   async getUserById(id: string): Promise<User | null> {
     const stmt = this.db.prepare(
-      'SELECT * FROM users WHERE id = ?'
+      'SELECT * FROM User WHERE id = ?'
     ).bind(id);
 
     const result = await stmt.first();
     return result as User | null;
   }
 
-  async createUser(user: Omit<User, 'id' | 'created_at' | 'updated_at'>): Promise<User> {
+  async createUser(user: Omit<User, 'id' | 'createdAt' | 'updatedAt'>): Promise<User> {
     const now = Date.now();
     const id = nanoid();
 
     const stmt = this.db.prepare(`
-      INSERT INTO users (id, email, name, password_hash, created_at, updated_at, stripe_account) 
+      INSERT INTO User (id, email, name, passwordHash, createdAt, updatedAt, stripeAccount) 
       VALUES (?, ?, ?, ?, ?, ?, ?)
     `).bind(
       id,
       user.email.toLowerCase(),
       user.name,
-      user.password_hash,
+      user.passwordHash,
       now,
       now,
-      user.stripe_account || null
+      user.stripeAccount || null
     );
 
     await stmt.run();
@@ -50,10 +50,10 @@ export class UserRepository {
       id,
       email: user.email.toLowerCase(),
       name: user.name,
-      password_hash: user.password_hash,
-      created_at: now,
-      updated_at: now,
-      stripe_account: user.stripe_account || null
+      passwordHash: user.passwordHash,
+      createdAt: now,
+      updatedAt: now,
+      stripeAccount: user.stripeAccount || null
     };
   }
 
@@ -63,7 +63,7 @@ export class UserRepository {
     const expiresAt = now + (expiresInSeconds * 1000);
 
     const stmt = this.db.prepare(`
-      INSERT INTO sessions (id, user_id, expires_at, created_at)
+      INSERT INTO Session (id, userId, expiresAt, createdAt)
       VALUES (?, ?, ?, ?)
     `).bind(
       id,
@@ -76,15 +76,15 @@ export class UserRepository {
 
     return {
       id,
-      user_id: userId,
-      expires_at: expiresAt,
-      created_at: now
+      userId: userId,
+      expiresAt: expiresAt,
+      createdAt: now
     };
   }
 
   async getSessionById(id: string): Promise<Session | null> {
     const stmt = this.db.prepare(
-      'SELECT * FROM sessions WHERE id = ?'
+      'SELECT * FROM Session WHERE id = ?'
     ).bind(id);
 
     const result = await stmt.first();
@@ -93,7 +93,7 @@ export class UserRepository {
 
   async deleteSession(id: string): Promise<void> {
     const stmt = this.db.prepare(
-      'DELETE FROM sessions WHERE id = ?'
+      'DELETE FROM Session WHERE id = ?'
     ).bind(id);
 
     await stmt.run();
@@ -102,7 +102,7 @@ export class UserRepository {
   async deleteExpiredSessions(): Promise<void> {
     const now = Date.now();
     const stmt = this.db.prepare(
-      'DELETE FROM sessions WHERE expires_at < ?'
+      'DELETE FROM Session WHERE expiresAt < ?'
     ).bind(now);
 
     await stmt.run();

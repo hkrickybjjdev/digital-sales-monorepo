@@ -1,0 +1,55 @@
+meta {
+  name: Create Page
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/v1/pages
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer {{authToken}}
+}
+
+body:json {
+  {
+    "type": "countdown",
+    "expiresAt": "2024-12-31T23:59:59Z",
+    "launchAt": "2024-01-01T00:00:00Z",
+    "isActive": true,
+    "customization": {
+      "theme": "dark",
+      "colors": {
+        "primary": "#FF0000",
+        "secondary": "#00FF00",
+        "background": "#000000",
+        "text": "#FFFFFF"
+      },
+      "logo": "https://example.com/logo.png",
+      "fontFamily": "Arial"
+    },
+    "settings": {
+      "countdownTarget": "2024-12-31T23:59:59Z",
+      "postCountdownAction": "redirect",
+      "redirectUrl": "https://example.com"
+    }
+  }
+}
+
+tests {
+  test("Status code is 201", function() {
+    expect(res.status).to.equal(201);
+  });
+  
+  test("Response has page ID", function() {
+    expect(res.body.id).to.be.a('string');
+  });
+  
+  test("Response has shortId", function() {
+    expect(res.body.shortId).to.be.a('string');
+  });
+}

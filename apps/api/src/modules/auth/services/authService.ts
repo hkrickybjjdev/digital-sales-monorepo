@@ -30,7 +30,7 @@ export class AuthService {
     const user = await this.userRepository.createUser({
       email: data.email,
       name: data.name,
-      password_hash: passwordHash
+      passwordHash: passwordHash
     });
 
     // Create session and generate JWT
@@ -48,7 +48,7 @@ export class AuthService {
     }
 
     // Verify password
-    const isPasswordValid = await this.verifyPassword(data.password, user.password_hash);
+    const isPasswordValid = await this.verifyPassword(data.password, user.passwordHash);
     if (!isPasswordValid) {
       throw new Error('Invalid email or password');
     }
@@ -60,7 +60,7 @@ export class AuthService {
   /**
    * Get user by ID
    */
-  async getUserById(id: string): Promise<Omit<User, 'password_hash'> | null> {
+  async getUserById(id: string): Promise<Omit<User, 'passwordHash'> | null> {
     const user = await this.userRepository.getUserById(id);
     
     if (!user) {
@@ -68,7 +68,7 @@ export class AuthService {
     }
 
     // Don't return password hash
-    const { password_hash, ...userWithoutPassword } = user;
+    const { passwordHash, ...userWithoutPassword } = user;
     return userWithoutPassword;
   }
 
@@ -109,7 +109,7 @@ export class AuthService {
         name: user.name
       },
       token,
-      expires_at: session.expires_at
+      expiresAt: session.expiresAt
     };
   }
 

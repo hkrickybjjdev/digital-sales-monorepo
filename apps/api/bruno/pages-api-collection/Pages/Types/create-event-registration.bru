@@ -1,0 +1,48 @@
+meta {
+  name: Create Event Registration Page
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/v1/pages/event-registration
+  body: json
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer {{authToken}}
+}
+
+body:json {
+  {
+    "eventStartTime": "2024-03-15T10:00:00Z",
+    "eventEndTime": "2024-03-15T16:00:00Z",
+    "eventLocation": "virtual",
+    "virtualPlatform": "zoom",
+    "platformLink": "https://zoom.us/j/123456789",
+    "maxAttendees": 500,
+    "waitlistEnabled": true,
+    "customization": {
+      "theme": "corporate",
+      "colors": {
+        "primary": "#0066CC",
+        "secondary": "#333333"
+      }
+    },
+    "launchAt": "2024-01-15T00:00:00Z",
+    "expiresAt": "2024-03-15T16:00:00Z"
+  }
+}
+
+tests {
+  test("Status code is 201", function() {
+    expect(res.status).to.equal(201);
+  });
+
+  test("Response has event registration page data", function() {
+    expect(res.body.type).to.equal('event-registration');
+    expect(res.body.settings.eventStartTime).to.be.a('string');
+    expect(res.body.settings.maxAttendees).to.be.a('number');
+  });
+}

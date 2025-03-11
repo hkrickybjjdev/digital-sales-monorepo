@@ -1,0 +1,45 @@
+meta {
+  name: Create Countdown Page
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/v1/pages/countdown
+  body: json
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer {{authToken}}
+}
+
+body:json {
+  {
+    "countdownTarget": "2024-12-31T23:59:59Z",
+    "postCountdownAction": "redirect",
+    "redirectUrl": "https://example.com/launch",
+    "messageTitle": "Launch Complete!",
+    "messageContent": "Thanks for waiting",
+    "customization": {
+      "theme": "dark",
+      "colors": {
+        "primary": "#FF0000",
+        "secondary": "#00FF00"
+      }
+    },
+    "launchAt": "2024-01-01T00:00:00Z",
+    "expiresAt": "2024-12-31T23:59:59Z"
+  }
+}
+
+tests {
+  test("Status code is 201", function() {
+    expect(res.status).to.equal(201);
+  });
+
+  test("Response has countdown page data", function() {
+    expect(res.body.type).to.equal('countdown');
+    expect(res.body.settings.countdownTarget).to.be.a('string');
+  });
+}

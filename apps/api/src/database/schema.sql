@@ -1,8 +1,17 @@
+-- Session table for auth
+CREATE TABLE IF NOT EXISTS "Session" (
+  id TEXT PRIMARY KEY,
+  userId TEXT NOT NULL REFERENCES "User"(id),
+  expiresAt TEXT NOT NULL,
+  createdAt TEXT NOT NULL
+);
+
 -- User table
 CREATE TABLE IF NOT EXISTS "User" (
   id TEXT PRIMARY KEY,
   email TEXT UNIQUE NOT NULL,
   name TEXT NOT NULL,
+  passwordHash TEXT NOT NULL,
   createdAt TEXT NOT NULL,
   updatedAt TEXT NOT NULL,
   stripeAccount TEXT
@@ -87,14 +96,24 @@ CREATE TABLE IF NOT EXISTS "Registration" (
 );
 
 -- Create indexes for frequently accessed columns
+CREATE INDEX IF NOT EXISTS idx_users_email ON "User"(email);
+
+CREATE INDEX IF NOT EXISTS idx_session_userId ON "Session"(userId);
+CREATE INDEX IF NOT EXISTS idx_session_expiresAt ON "Session"(expiresAt);
+
 CREATE INDEX IF NOT EXISTS idx_page_userId ON "Page"(userId);
 CREATE INDEX IF NOT EXISTS idx_page_shortId ON "Page"(shortId);
 CREATE INDEX IF NOT EXISTS idx_page_expiresAt ON "Page"(expiresAt);
 
 CREATE INDEX IF NOT EXISTS idx_page_content_pageId ON "PageContent"(pageId);
+CREATE INDEX IF NOT EXISTS idx_page_content_productId ON "PageContent"(productId);
 
 CREATE INDEX IF NOT EXISTS idx_order_pageId ON "Order"(pageId);
 CREATE INDEX IF NOT EXISTS idx_order_customerId ON "Order"(customerId);
+CREATE INDEX IF NOT EXISTS idx_order_productId ON "Order"(productId);
 
 CREATE INDEX IF NOT EXISTS idx_registration_pageId ON "Registration"(pageId);
 CREATE INDEX IF NOT EXISTS idx_registration_email ON "Registration"(email);
+
+CREATE INDEX IF NOT EXISTS idx_product_userId ON "Product"(userId);
+CREATE INDEX IF NOT EXISTS idx_file_productId ON "File"(productId);

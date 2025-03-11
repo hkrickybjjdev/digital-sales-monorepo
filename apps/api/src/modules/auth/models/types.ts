@@ -5,10 +5,10 @@ export const userSchema = z.object({
   id: z.string(),
   email: z.string().email(),
   name: z.string(),
-  password_hash: z.string(),
-  created_at: z.number(),
-  updated_at: z.number(),
-  stripe_account: z.string().nullable().optional(),
+  passwordHash: z.string(),
+  createdAt: z.number(),
+  updatedAt: z.number(),
+  stripeAccount: z.string().nullable().optional(),
 });
 
 // Login request schema
@@ -32,7 +32,7 @@ export const authResponseSchema = z.object({
     name: z.string(),
   }),
   token: z.string(),
-  expires_at: z.number(),
+  expiresAt: z.number(),
 });
 
 // Types derived from schemas
@@ -44,7 +44,7 @@ export type AuthResponse = z.infer<typeof authResponseSchema>;
 // Session type
 export interface Session {
   id: string;
-  user_id: string;
-  expires_at: number;
-  created_at: number;
+  userId: string;
+  expiresAt: number;
+  createdAt: number;
 }

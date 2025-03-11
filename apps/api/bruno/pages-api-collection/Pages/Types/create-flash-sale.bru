@@ -1,0 +1,47 @@
+meta {
+  name: Create Flash Sale Page
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/v1/pages/flash-sale
+  body: json
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer {{authToken}}
+}
+
+body:json {
+  {
+    "saleEndTime": "2024-02-01T23:59:59Z",
+    "discountPercentage": 30,
+    "originalPriceDisplay": true,
+    "inventoryLimit": 100,
+    "soldOutAction": "redirect",
+    "postSaleRedirectUrl": "https://example.com/sold-out",
+    "customization": {
+      "theme": "light",
+      "colors": {
+        "primary": "#FF4444",
+        "secondary": "#222222"
+      }
+    },
+    "launchAt": "2024-01-01T00:00:00Z",
+    "expiresAt": "2024-02-01T23:59:59Z"
+  }
+}
+
+tests {
+  test("Status code is 201", function() {
+    expect(res.status).to.equal(201);
+  });
+
+  test("Response has flash sale page data", function() {
+    expect(res.body.type).to.equal('flash-sale');
+    expect(res.body.settings.saleEndTime).to.be.a('string');
+    expect(res.body.settings.discountPercentage).to.be.a('number');
+  });
+}

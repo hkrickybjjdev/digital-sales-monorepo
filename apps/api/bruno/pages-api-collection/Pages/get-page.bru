@@ -1,0 +1,31 @@
+meta {
+  name: Get Page
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/v1/pages/:id
+  body: none
+}
+
+vars {
+  id: example-page-id
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer {{authToken}}
+}
+
+tests {
+  test("Status code is 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("Response has page data", function() {
+    expect(res.body.page).to.be.an('object');
+    expect(res.body.contents).to.be.an('array');
+    expect(res.body.stats).to.be.an('object');
+  });
+}

@@ -1,0 +1,31 @@
+meta {
+  name: List Pages
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/v1/pages
+  body: none
+}
+
+query {
+  limit: 20
+  offset: 0
+  type: countdown
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer {{authToken}}
+}
+
+tests {
+  test("Status code is 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("Response has pages array", function() {
+    expect(res.body.pages).to.be.an('array');
+  });
+}
