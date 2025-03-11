@@ -14,19 +14,20 @@ interface PageEditorProps {
   };
 }
 
-export default function PageEditor({ params }: PageEditorProps) {
-  // Check if this is a new page (id is "new")
-  const isNewPage = params.id === "new";
+export default async function PageEditor({ params }: PageEditorProps) {
+  // In Next.js 15, params is a Promise that needs to be awaited
+  const { id } = await params;
+  const isNewPage = id === "new";
   
   // In a real implementation, you would fetch page data here
   // For now, we'll just check if id is valid
-  if (!isNewPage && !isValidPageId(params.id)) {
+  if (!isNewPage && !isValidPageId(id)) {
     return notFound();
   }
 
   return (
     <div className="flex flex-col gap-6 p-6">
-      <PageEditorProvider pageId={params.id} isNewPage={isNewPage}>
+      <PageEditorProvider pageId={id} isNewPage={isNewPage}>
         <PageBuilderSteps />
       </PageEditorProvider>
     </div>
