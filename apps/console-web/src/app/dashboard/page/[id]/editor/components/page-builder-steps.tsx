@@ -47,10 +47,10 @@ export function PageBuilderSteps() {
   // Render for mobile
   if (isMobile) {
     return (
-      <div className="flex flex-col w-full">
+      <div className="flex flex-col w-full h-full">
         {/* Mobile Header */}
         {!showPageTypeSelection && (
-          <div className="flex items-center justify-between mb-4 sticky top-0 z-10 bg-background p-2">
+          <div className="flex items-center justify-between mb-4 sticky top-0 z-10 bg-background p-2 border-b">
             <div className="flex items-center">
                 <Button 
                   variant="ghost" 
@@ -79,8 +79,8 @@ export function PageBuilderSteps() {
           </div>
         )}
 
-        {/* Content */}
-        <div className="flex-1 pb-6">
+        {/* Content - Main scrollable area */}
+        <div className="flex-1 overflow-y-auto pb-24">
           {isLoading ? (
             <div className="flex flex-col items-center justify-center p-12">
               <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
@@ -89,9 +89,11 @@ export function PageBuilderSteps() {
           ) : (
             <>
               {showPageTypeSelection ? (
-                <PageTypeSelection onNext={handlePageTypeSelection} />
+                <div className="px-4">
+                  <PageTypeSelection onNext={handlePageTypeSelection} />
+                </div>
               ) : (
-                <div className="p-4">
+                <div className="px-4">
                   <GeneralSettings 
                     pageType={pageData.pageType || null} 
                     onDataChange={handlePageDataChange}

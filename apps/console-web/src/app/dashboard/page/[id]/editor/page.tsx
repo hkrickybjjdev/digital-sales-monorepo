@@ -26,7 +26,7 @@ export default async function PageEditor({ params }: PageEditorProps) {
   }
 
   return (
-    <div className="flex flex-col gap-6 p-6">
+    <div className="flex flex-col h-[calc(100vh-4rem)] overflow-hidden">
       <PageEditorProvider pageId={id} isNewPage={isNewPage}>
         <PageBuilderSteps />
       </PageEditorProvider>
