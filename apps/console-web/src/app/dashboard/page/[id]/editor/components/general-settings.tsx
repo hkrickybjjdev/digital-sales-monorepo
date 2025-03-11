@@ -10,7 +10,8 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { CalendarIcon, Palette } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { CalendarIcon, Palette, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 
@@ -25,7 +26,9 @@ export function GeneralSettings({ pageType, onNext, onDataChange }: GeneralSetti
   const [pageTitle, setPageTitle] = useState("");
   const [pageSlug, setPageSlug] = useState("");
   const [launchDate, setLaunchDate] = useState<Date | undefined>(undefined);
+  const [launchTime, setLaunchTime] = useState<string | null>(null);
   const [expirationDate, setExpirationDate] = useState<Date | undefined>(undefined);
+  const [expirationTime, setExpirationTime] = useState<string | null>(null);
   const [hasExpiration, setHasExpiration] = useState(false);
   const [primaryColor, setPrimaryColor] = useState("#3B82F6");
   const [secondaryColor, setSecondaryColor] = useState("#F59E0B");
@@ -36,6 +39,16 @@ export function GeneralSettings({ pageType, onNext, onDataChange }: GeneralSetti
   
   // For tabs within the general settings
   const [activeTab, setActiveTab] = useState("basic");
+
+  // Time slots for selection
+  const timeSlots = [
+    "00:00", "00:30", "01:00", "01:30", "02:00", "02:30", "03:00", "03:30",
+    "04:00", "04:30", "05:00", "05:30", "06:00", "06:30", "07:00", "07:30",
+    "08:00", "08:30", "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
+    "12:00", "12:30", "13:00", "13:30", "14:00", "14:30", "15:00", "15:30",
+    "16:00", "16:30", "17:00", "17:30", "18:00", "18:30", "19:00", "19:30",
+    "20:00", "20:30", "21:00", "21:30", "22:00", "22:30", "23:00", "23:30",
+  ];
 
   // Function to handle URL slug generation from title
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -98,6 +111,12 @@ export function GeneralSettings({ pageType, onNext, onDataChange }: GeneralSetti
       default:
         return "Custom Page";
     }
+  };
+
+  // Format date and time for display
+  const formatDateTime = (date: Date | undefined, time: string | null) => {
+    if (!date) return "Not set";
+    return `${format(date, "MMM d, yyyy")}${time ? ` at ${time}` : ""}`;
   };
 
   return (
@@ -167,29 +186,50 @@ export function GeneralSettings({ pageType, onNext, onDataChange }: GeneralSetti
               <div className="grid gap-4">
                 <div className="grid gap-2">
                   <Label htmlFor="launch-date">Launch Date & Time</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        id="launch-date"
-                        variant="outline"
-                        className={cn(
-                          "w-full justify-start text-left font-normal min-h-[2.75rem] md:min-h-[2.25rem]",
-                          !launchDate && "text-muted-foreground"
-                        )}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {launchDate ? format(launchDate, "PPP") : "Select launch date"}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
+                  <div className="rounded-lg border border-border">
+                    <div className="flex max-sm:flex-col">
                       <Calendar
                         mode="single"
                         selected={launchDate}
-                        onSelect={setLaunchDate}
-                        initialFocus
+                        onSelect={(newDate) => {
+                          if (newDate) {
+                            setLaunchDate(newDate);
+                          }
+                        }}
+                        className="p-2 sm:pe-5 bg-background"
                       />
-                    </PopoverContent>
-                  </Popover>
+                      <div className="relative w-full max-sm:h-48 sm:w-40">
+                        <div className="absolute inset-0 border-border py-4 max-sm:border-t">
+                          <ScrollArea className="h-full border-border sm:border-s">
+                            <div className="space-y-3">
+                              <div className="flex h-5 shrink-0 items-center px-5">
+                                <p className="text-sm font-medium">
+                                  {launchDate ? format(launchDate, "EEEE, d") : "Select a date"}
+                                </p>
+                              </div>
+                              <div className="grid gap-1.5 px-5 max-sm:grid-cols-2">
+                                {timeSlots.map((timeSlot) => (
+                                  <Button
+                                    key={timeSlot}
+                                    variant={launchTime === timeSlot ? "default" : "outline"}
+                                    size="sm"
+                                    className="w-full"
+                                    onClick={() => setLaunchTime(timeSlot)}
+                                    disabled={!launchDate}
+                                  >
+                                    {timeSlot}
+                                  </Button>
+                                ))}
+                              </div>
+                            </div>
+                          </ScrollArea>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-sm text-muted-foreground mt-1">
+                    Selected: {formatDateTime(launchDate, launchTime)}
+                  </div>
                 </div>
 
                 <div className="flex items-center space-x-2 p-1">
@@ -207,33 +247,54 @@ export function GeneralSettings({ pageType, onNext, onDataChange }: GeneralSetti
                 {hasExpiration && (
                   <div className="grid gap-2">
                     <Label htmlFor="expiration-date">Expiration Date & Time</Label>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          id="expiration-date"
-                          variant="outline"
-                          className={cn(
-                            "w-full justify-start text-left font-normal min-h-[2.75rem] md:min-h-[2.25rem]",
-                            !expirationDate && "text-muted-foreground"
-                          )}
-                        >
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {expirationDate ? format(expirationDate, "PPP") : "Select expiration date"}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
+                    <div className="rounded-lg border border-border">
+                      <div className="flex max-sm:flex-col">
                         <Calendar
                           mode="single"
                           selected={expirationDate}
-                          onSelect={setExpirationDate}
-                          initialFocus
+                          onSelect={(newDate) => {
+                            if (newDate) {
+                              setExpirationDate(newDate);
+                            }
+                          }}
+                          className="p-2 sm:pe-5 bg-background"
                           disabled={(date) => {
                             // Disable dates before launch date
                             return launchDate ? date < launchDate : false;
                           }}
                         />
-                      </PopoverContent>
-                    </Popover>
+                        <div className="relative w-full max-sm:h-48 sm:w-40">
+                          <div className="absolute inset-0 border-border py-4 max-sm:border-t">
+                            <ScrollArea className="h-full border-border sm:border-s">
+                              <div className="space-y-3">
+                                <div className="flex h-5 shrink-0 items-center px-5">
+                                  <p className="text-sm font-medium">
+                                    {expirationDate ? format(expirationDate, "EEEE, d") : "Select a date"}
+                                  </p>
+                                </div>
+                                <div className="grid gap-1.5 px-5 max-sm:grid-cols-2">
+                                  {timeSlots.map((timeSlot) => (
+                                    <Button
+                                      key={timeSlot}
+                                      variant={expirationTime === timeSlot ? "default" : "outline"}
+                                      size="sm"
+                                      className="w-full"
+                                      onClick={() => setExpirationTime(timeSlot)}
+                                      disabled={!expirationDate}
+                                    >
+                                      {timeSlot}
+                                    </Button>
+                                  ))}
+                                </div>
+                              </div>
+                            </ScrollArea>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-sm text-muted-foreground mt-1">
+                      Selected: {formatDateTime(expirationDate, expirationTime)}
+                    </div>
                   </div>
                 )}
               </div>

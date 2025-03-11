@@ -153,7 +153,7 @@ importers:
         specifier: 19.0.0
         version: 19.0.0
       react-day-picker:
-        specifier: ^9.4.3
+        specifier: ^9.6.1
         version: 9.6.1(react@19.0.0)
       react-dom:
         specifier: 19.0.0
@@ -4622,7 +4622,7 @@ snapshots:
       eslint: 8.48.0
       eslint-import-resolver-node: 0.3.9
       eslint-import-resolver-typescript: 3.8.3(eslint-plugin-import@2.31.0(@typescript-eslint/parser@8.26.0(eslint@8.48.0)(typescript@5.7.2))(eslint@8.48.0))(eslint@8.48.0)
-      eslint-plugin-import: 2.31.0(@typescript-eslint/parser@8.26.0(eslint@8.48.0)(typescript@5.7.2))(eslint-import-resolver-typescript@3.8.3)(eslint@8.48.0)
+      eslint-plugin-import: 2.31.0(@typescript-eslint/parser@8.26.0(eslint@8.48.0)(typescript@5.7.2))(eslint-import-resolver-typescript@3.8.3(eslint-plugin-import@2.31.0(@typescript-eslint/parser@8.26.0(eslint@8.48.0)(typescript@5.7.2))(eslint@8.48.0))(eslint@8.48.0))(eslint@8.48.0)
       eslint-plugin-jsx-a11y: 6.10.2(eslint@8.48.0)
       eslint-plugin-react: 7.37.4(eslint@8.48.0)
       eslint-plugin-react-hooks: 5.2.0(eslint@8.48.0)
@@ -4652,7 +4652,7 @@ snapshots:
       stable-hash: 0.0.4
       tinyglobby: 0.2.12
     optionalDependencies:
-      eslint-plugin-import: 2.31.0(@typescript-eslint/parser@8.26.0(eslint@8.48.0)(typescript@5.7.2))(eslint-import-resolver-typescript@3.8.3)(eslint@8.48.0)
+      eslint-plugin-import: 2.31.0(@typescript-eslint/parser@8.26.0(eslint@8.48.0)(typescript@5.7.2))(eslint-import-resolver-typescript@3.8.3(eslint-plugin-import@2.31.0(@typescript-eslint/parser@8.26.0(eslint@8.48.0)(typescript@5.7.2))(eslint@8.48.0))(eslint@8.48.0))(eslint@8.48.0)
     transitivePeerDependencies:
       - supports-color
 
@@ -4667,7 +4667,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-plugin-import@2.31.0(@typescript-eslint/parser@8.26.0(eslint@8.48.0)(typescript@5.7.2))(eslint-import-resolver-typescript@3.8.3)(eslint@8.48.0):
+  eslint-plugin-import@2.31.0(@typescript-eslint/parser@8.26.0(eslint@8.48.0)(typescript@5.7.2))(eslint-import-resolver-typescript@3.8.3(eslint-plugin-import@2.31.0(@typescript-eslint/parser@8.26.0(eslint@8.48.0)(typescript@5.7.2))(eslint@8.48.0))(eslint@8.48.0))(eslint@8.48.0):
     dependencies:
       '@rtsao/scc': 1.1.0
       array-includes: 3.1.8
