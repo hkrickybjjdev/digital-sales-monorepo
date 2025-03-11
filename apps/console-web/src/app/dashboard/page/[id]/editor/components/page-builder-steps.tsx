@@ -15,7 +15,6 @@ export function PageBuilderSteps() {
   
   const [showPageTypeSelection, setShowPageTypeSelection] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
-  const [showPreview, setShowPreview] = useState(true);
 
   // Set initial view based on whether we have a page type for editing or are creating a new page
   useEffect(() => {
@@ -169,9 +168,9 @@ export function PageBuilderSteps() {
           ) : (
             <div className="flex gap-6 h-full">
               {/* Left Panel - Editor Content */}
-              <div className={`flex flex-col ${showPreview ? 'w-1/2' : 'w-full'}`}>
+              <div className="flex flex-col w-1/2">
                 <div className="flex justify-between items-center mb-4">
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center">
                     <Button 
                       variant="ghost" 
                       size="sm" 
@@ -183,14 +182,6 @@ export function PageBuilderSteps() {
                     </Button>                    
                   </div>
                   <div className="flex items-center space-x-2">
-                    <Button 
-                      variant="outline"
-                      size="sm"
-                      className="h-8"
-                      onClick={() => setShowPreview(!showPreview)}
-                    >
-                      {showPreview ? "Hide Preview" : "Show Preview"}
-                    </Button>
                     <Button 
                       variant="default"
                       size="sm"
@@ -213,13 +204,11 @@ export function PageBuilderSteps() {
               </div>
               
               {/* Right Panel - Preview */}
-              {showPreview && (
-                <div className="w-1/2 flex flex-col">
-                  <div className="h-full rounded-lg overflow-hidden">
-                    <PagePreview pageType={pageData.pageType || null} pageData={pageData} />
-                  </div>
+              <div className="w-1/2 flex flex-col">
+                <div className="h-full rounded-lg overflow-hidden">
+                  <PagePreview pageType={pageData.pageType || null} pageData={pageData} />
                 </div>
-              )}
+              </div>
             </div>
           )}
         </>
