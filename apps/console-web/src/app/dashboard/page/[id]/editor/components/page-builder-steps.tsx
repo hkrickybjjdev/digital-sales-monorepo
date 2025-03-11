@@ -50,26 +50,23 @@ export function PageBuilderSteps() {
     return (
       <div className="flex flex-col w-full">
         {/* Mobile Header */}
-        <div className="flex items-center justify-between mb-4 sticky top-0 z-10 bg-background p-2 border-b">
-          <div className="flex items-center">
-            {!showPageTypeSelection && (
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="mr-2"
-                onClick={() => setShowPageTypeSelection(true)}
-              >
-                <ArrowLeft className="h-4 w-4" />
-                <span className="sr-only">Back to page type</span>
-              </Button>
-            )}
-            <div className="flex flex-col">
-              <h3 className="font-medium">
-                {showPageTypeSelection ? "Select Page Type" : "Page Editor"}
-              </h3>
+        {!showPageTypeSelection && (
+          <div className="flex items-center justify-between mb-4 sticky top-0 z-10 bg-background p-2">
+            <div className="flex items-center">
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="mr-2"
+                  onClick={() => setShowPageTypeSelection(true)}
+                >
+                  <ArrowLeft className="h-4 w-4" />                
+                </Button>
+              <div className="flex flex-col">
+                <h3 className="font-medium">
+                  Back to page type
+                </h3>
+              </div>
             </div>
-          </div>
-          {!showPageTypeSelection && (
             <Button 
               variant="default"
               size="sm"
@@ -80,8 +77,8 @@ export function PageBuilderSteps() {
               <Save className="h-4 w-4 mr-1" />
               Save
             </Button>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Content */}
         <div className="flex-1 pb-6">
@@ -183,9 +180,7 @@ export function PageBuilderSteps() {
                     >
                       <ChevronDown className="h-4 w-4 rotate-90 mr-1" />
                       Back to Page Type
-                    </Button>
-                    <Separator orientation="vertical" className="h-6" />
-                    <h3 className="font-medium">Page Editor</h3>
+                    </Button>                    
                   </div>
                   <div className="flex items-center space-x-2">
                     <Button 
