@@ -1,68 +1,116 @@
 import { Hono } from 'hono';
 import { jwt } from 'hono/jwt';
 import { Env } from '../../types';
+import { PageController } from './controllers/page-controller';
+import { ContentController } from './controllers/content-controller';
+import { RegistrationController } from './controllers/registration-controller';
 
 // Create the pages module router
 const pagesModule = new Hono<{ Bindings: Env }>();
 
-// Public routes for accessing pages by shortId
+// PUBLIC ROUTES
+
+// Access page by shortId
 pagesModule.get('/s/:shortId', async (c) => {
-  const shortId = c.req.param('shortId');
-  // Implementation will fetch page data from database and validate expiration
-  return c.json({ message: `Page ${shortId} details would be returned here` });
+  const pageController = new PageController(c.env);
+  return await pageController.getPublicPage(c);
 });
 
-// Protected routes for page management
-pagesModule.use('/*', jwt({ secret: (c) => c.env.JWT_SECRET }));
+// Submit registration
+pagesModule.post('/s/:shortId/register', async (c) => {
+  const registrationController = new RegistrationController(c.env);
+  return await registrationController.createRegistration(c);
+});
+
+// PROTECTED ROUTES
+const protectedRoutes = new Hono<{ Bindings: Env }>();
+protectedRoutes.use('/*', jwt({ secret: (c) => c.env.JWT_SECRET }));
 
 // Page CRUD operations
-pagesModule.get('/', async (c) => {
-  // List pages for the authenticated user
-  return c.json({ message: 'List of pages would be returned here' });
+protectedRoutes.get('/', async (c) => {
+  const pageController = new PageController(c.env);
+  return await pageController.listPages(c);
 });
 
-pagesModule.post('/', async (c) => {
-  // Create a new page
-  return c.json({ message: 'Page created' }, 201);
+protectedRoutes.post('/', async (c) => {
+  const pageController = new PageController(c.env);
+  return await pageController.createPage(c);
 });
 
-pagesModule.get('/:id', async (c) => {
-  const id = c.req.param('id');
-  // Get page details
-  return c.json({ message: `Page ${id} details would be returned here` });
+protectedRoutes.get('/:id', async (c) => {
+  const pageController = new PageController(c.env);
+  return await pageController.getPage(c);
 });
 
-pagesModule.put('/:id', async (c) => {
-  const id = c.req.param('id');
-  // Update page details
-  return c.json({ message: `Page ${id} updated successfully` });
+protectedRoutes.put('/:id', async (c) => {
+  const pageController = new PageController(c.env);
+  return await pageController.updatePage(c);
 });
 
-pagesModule.delete('/:id', async (c) => {
-  const id = c.req.param('id');
-  // Delete page
-  return c.json({ message: `Page ${id} deleted successfully` });
+protectedRoutes.delete('/:id', async (c) => {
+  const pageController = new PageController(c.env);
+  return await pageController.deletePage(c);
 });
 
-// Different page type endpoints
-pagesModule.post('/countdown', async (c) => {
-  // Create countdown landing page
-  return c.json({ message: 'Countdown page created' }, 201);
+// Page Content operations
+protectedRoutes.post('/:pageId/contents', async (c) => {
+  const contentController = new ContentController(c.env);
+  return await contentController.createPageContent(c);
 });
 
-pagesModule.post('/flash-sale', async (c) => {
-  // Create flash sale page
-  return c.json({ message: 'Flash sale page created' }, 201);
+protectedRoutes.get('/:pageId/contents', async (c) => {
+  const contentController = new ContentController(c.env);
+  return await contentController.listPageContents(c);
 });
 
-pagesModule.post('/event-registration', async (c) => {
-  // Create event registration page
-  return c.json({ message: 'Event registration page created' }, 201);
+protectedRoutes.get('/:pageId/contents/:contentId', async (c) => {
+  const contentController = new ContentController(c.env);
+  return await contentController.getPageContent(c);
 });
 
-pagesModule.post('/limited-offer', async (c) => {
-  // Create limited offer page
-  return c.json({ message: 'Limited offer page created' }, 201);
+protectedRoutes.put('/:pageId/contents/:contentId', async (c) => {
+  const contentController = new ContentController(c.env);
+  return await contentController.updatePageContent(c);
 });
+
+protectedRoutes.delete('/:pageId/contents/:contentId', async (c) => {
+  const contentController = new ContentController(c.env);
+  return await contentController.deletePageContent(c);
+});
+
+// Registration management 
+protectedRoutes.get('/:pageId/registrations', async (c) => {
+  const registrationController = new RegistrationController(c.env);
+  return await registrationController.listRegistrations(c);
+});
+
+protectedRoutes.get('/:pageId/registrations/export', async (c) => {
+  const registrationController = new RegistrationController(c.env);
+  return await registrationController.exportRegistrations(c);
+});
+
+// Page type-specific creation endpoints
+protectedRoutes.post('/countdown', async (c) => {
+  const pageController = new PageController(c.env);
+  return await pageController.createCountdownPage(c);
+});
+
+protectedRoutes.post('/flash-sale', async (c) => {
+  const pageController = new PageController(c.env);
+  return await pageController.createFlashSalePage(c);
+});
+
+protectedRoutes.post('/event-registration', async (c) => {
+  const pageController = new PageController(c.env);
+  return await pageController.createEventRegistrationPage(c);
+});
+
+protectedRoutes.post('/limited-offer', async (c) => {
+  const pageController = new PageController(c.env);
+  return await pageController.createLimitedOfferPage(c);
+});
+
+// Mount protected routes
+pagesModule.route('/', protectedRoutes);
 
 export { pagesModule };
