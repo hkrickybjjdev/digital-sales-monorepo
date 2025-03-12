@@ -1,10 +1,9 @@
 import { Context } from 'hono';
-import { corsHeaders } from '../middleware/index';
 import { JSONValue } from 'hono/utils/types';
 
 // Helper function to format responses according to Azure API conventions
 export function formatResponse<T extends JSONValue>(c: Context, data: T, status: number = 200): Response {
-  return c.json(data, { status, headers: corsHeaders });
+  return c.json(data, { status });
 }
 
 // Helper function to format paginated responses according to Azure API conventions
@@ -47,7 +46,7 @@ export function formatPaginatedResponse<T extends JSONValue>(
     nextLink
   };
   
-  return c.json(response, { status, headers: corsHeaders });
+  return c.json(response, { status });
 }
 
 // Helper function to format error responses according to Azure API conventions
@@ -59,6 +58,6 @@ export function formatError(c: Context, message: string, code: string, status: n
         message: message
       }
     },
-    { status, headers: corsHeaders }
+    { status }
   );
 }

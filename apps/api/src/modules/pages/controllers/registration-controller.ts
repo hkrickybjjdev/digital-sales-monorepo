@@ -5,7 +5,6 @@ import { PageCacheService } from '../services/cache';
 import { ValidationService } from '../services/validation';
 import { CreateRegistrationRequest, Registration } from '../types';
 import { formatResponse, formatPaginatedResponse, formatError } from '../../../utils/api-response';
-import { corsHeaders } from '../../../middleware';
 
 export class RegistrationController {
   private dbService: PageDatabaseService;
@@ -152,8 +151,7 @@ export class RegistrationController {
       return new Response(csv, {
         headers: {
           'Content-Type': 'text/csv',
-          'Content-Disposition': `attachment; filename="registrations-${pageId}.csv"`,
-          ...corsHeaders
+          'Content-Disposition': `attachment; filename="registrations-${pageId}.csv"`          
         }
       });
     } catch (error) {

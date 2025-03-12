@@ -27,6 +27,8 @@ app.use('*', secureHeaders());
 app.use('*', prettyJSON());
 app.use('*', cors({
   origin: ['https://tempopages.com', 'https://console.tempopages.com', /\.tempopages\.com$/] as string[],
+  allowMethods: ['POST', 'GET', 'PUT', 'DELETE', 'OPTIONS'],
+  maxAge: 86400,
   credentials: true,
 }));
 

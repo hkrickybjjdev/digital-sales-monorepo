@@ -1,10 +1,3 @@
-export const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-  'Access-Control-Max-Age': '86400',
-};
-
 // Check if we're in a production environment
 // In Cloudflare Workers, environment variables are accessed from env parameter
 // Defaulting to development mode if we can't determine the environment
@@ -33,23 +26,7 @@ export const errorHandler = (error: Error): Response => {
       }
     }, 
     { 
-      status: 500,
-      headers: corsHeaders 
+      status: 500
     }
   );
-};
-
-export const withCors = (handler: Function) => async (request: Request, ...args: any[]) => {
-  if (request.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
-  }
-  
-  const response = await handler(request, ...args);
-  
-  // Add CORS headers to the response
-  Object.entries(corsHeaders).forEach(([key, value]) => {
-    response.headers.set(key, value);
-  });
-  
-  return response;
 };
