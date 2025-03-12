@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { Env } from '../../types';
 import { validateJWT } from '../auth/middleware/authMiddleware';
-import { formatResponse, formatError } from '../../utils/api-response';
+import { formatResponse, formatError, format500Error } from '../../utils/api-response';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -27,7 +27,7 @@ storageModule.get('/download/:token', async (c) => {
     });
   } catch (error) {
     console.error('Error downloading file:', error);
-    return formatError(c, 'Error downloading file', 'InternalServerError', 500);
+    return format500Error(error as Error);
   }
 });
 
@@ -44,7 +44,7 @@ storageModule.post('/get-upload-url', async (c) => {
     });
   } catch (error) {
     console.error('Error generating upload URL:', error);
-    return formatError(c, 'Error generating upload URL', 'InternalServerError', 500);
+    return format500Error(error as Error);
   }
 });
 
@@ -59,7 +59,7 @@ storageModule.post('/get-download-url', async (c) => {
     });
   } catch (error) {
     console.error('Error generating download URL:', error);
-    return formatError(c, 'Error generating download URL', 'InternalServerError', 500);
+    return format500Error(error as Error);
   }
 });
 
@@ -74,7 +74,7 @@ storageModule.delete('/:key', async (c) => {
     });
   } catch (error) {
     console.error('Error deleting file:', error);
-    return formatError(c, 'Error deleting file', 'InternalServerError', 500);
+    return format500Error(error as Error);
   }
 });
 
@@ -88,7 +88,7 @@ storageModule.get('/', async (c) => {
     });
   } catch (error) {
     console.error('Error listing files:', error);
-    return formatError(c, 'Error listing files', 'InternalServerError', 500);
+    return format500Error(error as Error);
   }
 });
 

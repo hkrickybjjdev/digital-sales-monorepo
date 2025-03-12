@@ -3,7 +3,7 @@ import { Env } from '../../../types';
 import { PageDatabaseService } from '../services/db';
 import { ValidationService } from '../services/validation';
 import { CreatePageContentRequest, PageContent } from '../types';
-import { formatResponse, formatError } from '../../../utils/api-response';
+import { formatResponse, formatError, format500Error } from '../../../utils/api-response';
 
 export class ContentController {
   private dbService: PageDatabaseService;
@@ -45,7 +45,7 @@ export class ContentController {
       return formatResponse(c, this.serializeContent(content), 201);
     } catch (error) {
       console.error('Error creating page content:', error);
-      return formatError(c, 'Error creating page content', 'InternalServerError', 500);
+      return format500Error(error as Error);
     }
   }
 
@@ -70,7 +70,7 @@ export class ContentController {
       return formatResponse(c, this.serializeContent(content), 200);
     } catch (error) {
       console.error('Error fetching page content:', error);
-      return formatError(c, 'Error fetching page content', 'InternalServerError', 500);
+      return format500Error(error as Error);
     }
   }
 
@@ -92,7 +92,7 @@ export class ContentController {
       }, 200);
     } catch (error) {
       console.error('Error listing page contents:', error);
-      return formatError(c, 'Error listing page contents', 'InternalServerError', 500);
+      return format500Error(error as Error);
     }
   }
 
@@ -113,7 +113,7 @@ export class ContentController {
       return formatResponse(c, this.serializeContent(updatedContent), 200);
     } catch (error) {
       console.error('Error updating page content:', error);
-      return formatError(c, 'Error updating page content', 'InternalServerError', 500);
+      return format500Error(error as Error);
     }
   }
 
@@ -133,7 +133,7 @@ export class ContentController {
       return formatResponse(c, { success: true }, 200);
     } catch (error) {
       console.error('Error deleting page content:', error);
-      return formatError(c, 'Error deleting page content', 'InternalServerError', 500);
+      return format500Error(error as Error);
     }
   }
 }

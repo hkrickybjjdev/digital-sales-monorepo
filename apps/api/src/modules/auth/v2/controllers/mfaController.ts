@@ -1,5 +1,6 @@
 import { Context } from 'hono';
 import { Env } from '../../../../types';
+import { formatResponse, formatError, format500Error } from '../../../../utils/api-response';
 
 /**
  * MFA verification handler for v2 API
@@ -11,35 +12,31 @@ export async function mfaVerifyHandler(c: Context<{ Bindings: Env }>) {
     
     // Validate input
     if (!tempToken || !code) {
-      return c.json({ error: 'Temporary token and verification code are required' }, 400);
+      return formatError(c, 'Temporary token and verification code are required', 'ValidationError', 400);
     }
-    
+
     // This is just a sample - in a real implementation, you would:
     // 1. Verify the temporary token is valid and not expired
     // 2. Verify the MFA code is correct for the given user
     // 3. Generate a JWT token if verification is successful
     
     // Sample implementation for demonstration purposes
-    
-    // Simulate verification (in a real app, you'd verify against a stored secret)
     const isCodeValid = code === '123456' || code.length === 6;
     
     if (!isCodeValid) {
-      return c.json({ 
-        error: 'Invalid verification code',
-        remainingAttempts: 2
-      }, 400);
+      return formatError(c, 'Invalid verification code', 'InvalidCode', 400);
     }
     
     // If verification is successful, generate a JWT token
     // In a real implementation, you would sign a proper JWT
+   
     const token = 'jwt_' + Math.random().toString(36).substring(2, 15);
     
     // Record the successful verification
     // Update the device information if provided
     
     // Return the authentication token
-    return c.json({
+    return formatResponse(c, {
       status: 'success',
       message: 'MFA verification successful',
       token: token,
@@ -61,6 +58,6 @@ export async function mfaVerifyHandler(c: Context<{ Bindings: Env }>) {
     
   } catch (error) {
     console.error('MFA verification error:', error);
-    return c.json({ error: 'MFA verification failed' }, 401);
+    return format500Error(error as Error);
   }
-} 
+}

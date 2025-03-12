@@ -3,7 +3,7 @@ import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
 import { secureHeaders } from 'hono/secure-headers';
 import { prettyJSON } from 'hono/pretty-json';
-import { formatResponse, formatError } from './utils/api-response';
+import { formatResponse, formatError, format500Error } from './utils/api-response';
 
 import { authModule } from './modules/auth';
 import { pagesModule } from './modules/pages';
@@ -104,8 +104,8 @@ app.onError((err, c) => {
     return formatError(c, 'Resource not found', 'NotFound', 404);
   }
   
-  // Default error response
-  return formatError(c, 'Internal server error', 'InternalServerError', 500);
+  // Default error response using format500Error
+  return format500Error(err);
 });
 
 // Not found handler

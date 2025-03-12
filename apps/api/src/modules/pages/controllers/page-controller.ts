@@ -3,7 +3,7 @@ import { Env } from '../../../types';
 import { PageDatabaseService } from '../services/db';
 import { PageCacheService } from '../services/cache';
 import { ValidationService } from '../services/validation';
-import { formatResponse, formatError, formatPaginatedResponse } from '../../../utils/api-response';
+import { formatResponse, formatError, formatPaginatedResponse, format500Error } from '../../../utils/api-response';
 import { 
   CreatePageRequest,
   UpdatePageRequest,
@@ -86,7 +86,7 @@ export class PageController {
       }, 200);
     } catch (error) {
       console.error('Error fetching page:', error);
-      return formatError(c, 'Error fetching page', 'InternalServerError', 500);
+      return format500Error(error as Error);
     }
   }
 
@@ -112,7 +112,7 @@ export class PageController {
       return formatResponse(c, this.serializePage(page), 201);
     } catch (error) {
       console.error('Error creating page:', error);
-      return formatError(c, 'Error creating page', 'InternalServerError', 500);
+      return format500Error(error as Error);
     }
   }
 
@@ -145,7 +145,7 @@ export class PageController {
       return formatResponse(c, this.serializePage(page), 200);
     } catch (error) {
       console.error('Error updating page:', error);
-      return formatError(c, 'Error updating page', 'InternalServerError', 500);
+      return format500Error(error as Error);
     }
   }
 
@@ -180,7 +180,7 @@ export class PageController {
       }, 200);
     } catch (error) {
       console.error('Error fetching page:', error);
-      return formatError(c, 'Error fetching page', 'InternalServerError', 500);
+      return format500Error(error as Error);
     }
   }
 
@@ -207,7 +207,7 @@ export class PageController {
       );
     } catch (error) {
       console.error('Error listing pages:', error);
-      return formatError(c, 'Error listing pages', 'InternalServerError', 500);
+      return format500Error(error as Error);
     }
   }
 
@@ -245,7 +245,7 @@ export class PageController {
       return formatResponse(c, this.serializePage(page), 201);
     } catch (error) {
       console.error('Error creating countdown page:', error);
-      return formatError(c, 'Error creating countdown page', 'InternalServerError', 500);
+      return format500Error(error as Error);
     }
   }
 
@@ -284,7 +284,7 @@ export class PageController {
       return formatResponse(c, this.serializePage(page), 201);
     } catch (error) {
       console.error('Error creating flash sale page:', error);
-      return formatError(c, 'Error creating flash sale page', 'InternalServerError', 500);
+      return format500Error(error as Error);
     }
   }
 
@@ -325,7 +325,7 @@ export class PageController {
       return formatResponse(c, this.serializePage(page), 201);
     } catch (error) {
       console.error('Error creating event registration page:', error);
-      return formatError(c, 'Error creating event registration page', 'InternalServerError', 500);
+      return format500Error(error as Error);
     }
   }
 
@@ -363,7 +363,7 @@ export class PageController {
       return formatResponse(c, this.serializePage(page), 201);
     } catch (error) {
       console.error('Error creating limited offer page:', error);
-      return formatError(c, 'Error creating limited offer page', 'InternalServerError', 500);
+      return format500Error(error as Error);
     }
   }
 
@@ -397,7 +397,7 @@ export class PageController {
       return formatResponse(c, { success: true }, 200);
     } catch (error) {
       console.error('Error deleting page:', error);
-      return formatError(c, 'Error deleting page', 'InternalServerError', 500);
+      return format500Error(error as Error);
     }
   }
 }

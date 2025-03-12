@@ -1,5 +1,6 @@
 import { Context } from 'hono';
 import { Env } from '../../../../types';
+import { formatResponse, formatError, format500Error } from '../../../../utils/api-response';
 
 /**
  * V2 Login handler with enhanced features:
@@ -14,7 +15,7 @@ export async function loginHandler(c: Context<{ Bindings: Env }>) {
     
     // Validate input
     if (!email || !password) {
-      return c.json({ error: 'Email and password are required' }, 400);
+      return formatError(c, 'Email and password are required', 'ValidationError', 400);
     }
     
     // This is just a sample - in a real implementation, you would:
@@ -36,13 +37,12 @@ export async function loginHandler(c: Context<{ Bindings: Env }>) {
     if (userRecord.mfaEnabled) {
       // Generate a temporary token for MFA verification
       const tempToken = 'temp_' + Math.random().toString(36).substring(2, 15);
-      
       // In a real implementation, you would:
       // 1. Store this temporary token in a database with an expiration
       // 2. Send an MFA code to the user via SMS, email, or generate a TOTP code
-      
+
       // Return a response indicating MFA is required
-      return c.json({
+      return formatResponse(c, {
         status: 'mfa_required',
         message: 'Multi-factor authentication is required',
         tempToken: tempToken,
@@ -54,12 +54,11 @@ export async function loginHandler(c: Context<{ Bindings: Env }>) {
     // If MFA is not enabled, generate a JWT token
     // In a real implementation, you would sign a proper JWT
     const token = 'jwt_' + Math.random().toString(36).substring(2, 15);
-    
     // Record the login in the database
     // Track the device information for security
     
     // Return the authentication token
-    return c.json({
+    return formatResponse(c, {
       status: 'success',
       message: 'Login successful',
       token: token,
@@ -72,6 +71,6 @@ export async function loginHandler(c: Context<{ Bindings: Env }>) {
     
   } catch (error) {
     console.error('Login error:', error);
-    return c.json({ error: 'Authentication failed' }, 401);
+    return format500Error(error as Error);
   }
-} 
+}

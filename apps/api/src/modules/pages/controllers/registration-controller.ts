@@ -4,7 +4,7 @@ import { PageDatabaseService } from '../services/db';
 import { PageCacheService } from '../services/cache';
 import { ValidationService } from '../services/validation';
 import { CreateRegistrationRequest, Registration } from '../types';
-import { formatResponse, formatPaginatedResponse, formatError } from '../../../utils/api-response';
+import { formatResponse, formatPaginatedResponse, formatError, format500Error } from '../../../utils/api-response';
 
 export class RegistrationController {
   private dbService: PageDatabaseService;
@@ -91,7 +91,7 @@ export class RegistrationController {
       );
     } catch (error) {
       console.error('Error creating registration:', error);
-      return formatError(c, 'Error creating registration', 'InternalServerError', 500);
+      return format500Error(error as Error);
     }
   }
 
@@ -121,7 +121,7 @@ export class RegistrationController {
       );
     } catch (error) {
       console.error('Error listing registrations:', error);
-      return formatError(c, 'Error listing registrations', 'InternalServerError', 500);
+      return format500Error(error as Error);
     }
   }
 
@@ -156,7 +156,7 @@ export class RegistrationController {
       });
     } catch (error) {
       console.error('Error exporting registrations:', error);
-      return formatError(c, 'Error exporting registrations', 'InternalServerError', 500);
+      return format500Error(error as Error);
     }
   }
 }

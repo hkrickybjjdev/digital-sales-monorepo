@@ -1,5 +1,6 @@
 import { Context } from 'hono';
 import { Env } from '../../../../types';
+import { formatResponse, formatError, format500Error } from '../../../../utils/api-response';
 
 /**
  * V2 Get current user handler with enhanced features:
@@ -10,14 +11,12 @@ import { Env } from '../../../../types';
  */
 export async function getCurrentUserHandler(c: Context<{ Bindings: Env }>) {
   try {
-    // In a real implementation, the user would be set by the auth middleware
-    // For this sample, we'll simulate a user
     const user = c.get('user');
     
     if (!user) {
-      return c.json({ error: 'User not found' }, 404);
+      return formatError(c, 'User not found', 'ResourceNotFound', 404);
     }
-    
+
     // This is just a sample - in a real implementation, you would:
     // 1. Fetch the user's complete profile from the database
     // 2. Fetch the user's MFA settings
@@ -25,7 +24,7 @@ export async function getCurrentUserHandler(c: Context<{ Bindings: Env }>) {
     // 4. Fetch the user's security settings
     
     // Sample implementation for demonstration purposes
-    
+
     // Get device information if available
     const deviceId = c.req.header('X-Device-ID');
     
@@ -48,7 +47,7 @@ export async function getCurrentUserHandler(c: Context<{ Bindings: Env }>) {
     ];
     
     // Return enhanced user profile
-    return c.json({
+    return formatResponse(c, {
       id: user.id,
       email: user.email,
       name: user.name,
@@ -78,6 +77,6 @@ export async function getCurrentUserHandler(c: Context<{ Bindings: Env }>) {
     
   } catch (error) {
     console.error('Get user error:', error);
-    return c.json({ error: 'Failed to retrieve user information' }, 500);
+    return format500Error(error as Error);
   }
-} 
+}

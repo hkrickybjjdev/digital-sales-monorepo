@@ -1,5 +1,6 @@
 import { Context } from 'hono';
 import { Env } from '../../../../types';
+import { formatResponse, formatError, format500Error } from '../../../../utils/api-response';
 
 /**
  * V2 Register handler with enhanced features:
@@ -14,32 +15,27 @@ export async function registerHandler(c: Context<{ Bindings: Env }>) {
     
     // Validate input
     if (!email || !password || !name) {
-      return c.json({ error: 'Email, password, and name are required' }, 400);
+      return formatError(c, 'Email, password, and name are required', 'ValidationError', 400);
     }
-    
     // This is just a sample - in a real implementation, you would:
     // 1. Validate email format
     // 2. Check password strength
     // 3. Check if user already exists
     // 4. Hash the password
     // 5. Create the user in the database
-    // 6. Send verification email
-    
+    // 6. Send verification email    
     // Sample implementation for demonstration purposes
-    
     // Simulate user creation
     const userId = 'user_' + Math.random().toString(36).substring(2, 10);
     
     // Generate verification token
     const verificationToken = 'verify_' + Math.random().toString(36).substring(2, 15);
-    
     // In a real implementation, you would:
     // 1. Store the user in the database
     // 2. Store the verification token
     // 3. Send a verification email
     
-    // Return success response
-    return c.json({
+    return formatResponse(c, {
       status: 'success',
       message: 'Registration successful. Please verify your email.',
       userId: userId,
@@ -55,6 +51,6 @@ export async function registerHandler(c: Context<{ Bindings: Env }>) {
     
   } catch (error) {
     console.error('Registration error:', error);
-    return c.json({ error: 'Registration failed' }, 400);
+    return format500Error(error as Error);
   }
-} 
+}

@@ -2,6 +2,7 @@ import { Context } from 'hono';
 import { AuthService } from '../services/authService';
 import { loginSchema } from '../models/types';
 import { Env } from '../../../types';
+import { formatResponse, formatError, format500Error } from '../../../utils/api-response';
 
 // Export a single handler function
 export const loginHandler = async (c: Context<{ Bindings: Env }>) => {
@@ -12,20 +13,20 @@ export const loginHandler = async (c: Context<{ Bindings: Env }>) => {
     // Validate the input manually
     const parseResult = loginSchema.safeParse(body);
     if (!parseResult.success) {
-      return c.json({ error: 'Invalid input', details: parseResult.error.format() }, 400);
+      return formatError(c, 'Invalid input', 'ValidationError', 400);
     }
     
     const data = parseResult.data;
     const authService = new AuthService(c.env);
     
     const result = await authService.login(data);
-    return c.json(result);
+    return formatResponse(c, result);
   } catch (error) {
     if (error instanceof Error && error.message === 'Invalid email or password') {
-      return c.json({ error: error.message }, 401);
+      return formatError(c, error.message, 'Unauthorized', 401);
     }
     
     console.error('Login error:', error);
-    return c.json({ error: 'Authentication failed' }, 500);
+    return format500Error(error as Error);
   }
-}
+};

@@ -2,7 +2,7 @@ import { Context } from 'hono';
 import { AuthService } from '../services/authService';
 import { registerSchema } from '../models/types';
 import { Env } from '../../../types';
-import { formatResponse, formatError } from '../../../utils/api-response';
+import { formatResponse, formatError, format500Error } from '../../../utils/api-response';
 
 // Export a single handler function
 export const registerHandler = async (c: Context<{ Bindings: Env }>) => {
@@ -27,6 +27,6 @@ export const registerHandler = async (c: Context<{ Bindings: Env }>) => {
     }
     
     console.error('Registration error:', error);
-    return formatError(c, 'Registration failed', 'InternalServerError', 500);
+    return format500Error(error as Error);
   }
-}
+};
