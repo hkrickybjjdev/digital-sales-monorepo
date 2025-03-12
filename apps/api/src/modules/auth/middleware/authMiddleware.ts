@@ -3,6 +3,16 @@ import { verify } from 'hono/jwt';
 import { Env } from '../../../types';
 import { UserRepository } from '../models/userRepository';
 
+
+/*
+TODO:
+currently other modules directly depend on the auth module's validateJWT middleware, which would make it difficult to extract modules into separate workers later. Let's fix this by:
+
+Creating a JWT validation service that can be accessed via API endpoints
+Modifying the auth middleware to use HTTP calls instead of direct module dependencies
+Setting up proper interfaces for authentication that can work across workers
+*/
+
 export async function validateJWT(c: Context<{ Bindings: Env }>, next: Next) {
   try {
     // Extract JWT from Authorization header
