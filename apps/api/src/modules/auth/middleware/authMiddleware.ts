@@ -1,6 +1,7 @@
 import { Context, Next } from 'hono';
 import { verify } from 'hono/jwt';
 import { Env } from '../../../types';
+import { UserRepository } from '../models/userRepository';
 
 export async function validateJWT(c: Context<{ Bindings: Env }>, next: Next) {
   try {
@@ -15,6 +16,20 @@ export async function validateJWT(c: Context<{ Bindings: Env }>, next: Next) {
     
     // Verify JWT
     const payload = await verify(token, c.env.JWT_SECRET);
+    
+    // Check if session exists and is valid
+    const userRepository = new UserRepository(c.env);
+    const session = await userRepository.getSessionById(payload.sid);
+    
+    if (!session) {
+      return c.json({ error: 'Unauthorized: Session not found' }, 401);
+    }
+
+    // Check if session has expired
+    if (Date.now() > session.expiresAt) {
+      await userRepository.deleteSession(session.id);
+      return c.json({ error: 'Unauthorized: Session expired' }, 401);
+    }
     
     // Add payload to context for use in subsequent handlers
     c.set('jwtPayload', payload);

@@ -12,7 +12,7 @@
     "test:watch": "vitest",
     "db:init": "npx wrangler d1 execute DB --local --file=./src/database/schema.sql",
     "db:clear": "npx wrangler d1 execute DB --local --file=./src/database/clear_tables.sql",
-    "db:drop": "npx wrangler d1 execute DB --local --file=./src/database/drop_tables.sql"    
+    "db:drop": "npx wrangler d1 execute DB --local --file=./src/database/drop_tables.sql"
   },
   "dependencies": {
     "@hono/zod-validator": "^0.1.11",
@@ -31,7 +31,7 @@
     "tsup": "^7.2.0",
     "typescript": "^5.2.2",
     "vitest": "^0.34.6",
-    "wrangler": "^3.15.0"
+    "wrangler": "^3.114.1"
   },
   "engines": {
     "node": ">=18"
