@@ -1,6 +1,7 @@
 import { nanoid } from 'nanoid';
 import { User, Session } from './types';
 import { Env } from '../../../types';
+import { v7 as uuidv7 } from 'uuid';
 
 export class UserRepository {
   private db: D1Database;
@@ -29,7 +30,7 @@ export class UserRepository {
 
   async createUser(user: Omit<User, 'id' | 'createdAt' | 'updatedAt'>): Promise<User> {
     const now = Date.now();
-    const id = nanoid();
+    const id = uuidv7();
 
     const stmt = this.db.prepare(`
       INSERT INTO User (id, email, name, passwordHash, createdAt, updatedAt, stripeAccount) 
@@ -58,7 +59,7 @@ export class UserRepository {
   }
 
   async createSession(userId: string, expiresInSeconds: number = 60 * 60 * 24 * 7): Promise<Session> {
-    const id = nanoid();
+    const id = uuidv7();
     const now = Date.now();
     const expiresAt = now + (expiresInSeconds * 1000);
 

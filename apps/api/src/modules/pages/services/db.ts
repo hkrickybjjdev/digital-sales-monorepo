@@ -1,5 +1,6 @@
 import { D1Database } from '@cloudflare/workers-types';
 import { nanoid } from 'nanoid';
+import { v7 as uuidv7 } from 'uuid';
 import { 
   Page, 
   PageContent, 
@@ -11,7 +12,6 @@ import {
   PageType
 } from '../types';
 
-const PAGE_ID_LENGTH = 20;
 const SHORT_ID_LENGTH = 8;
 
 export class PageDatabaseService {
@@ -19,7 +19,7 @@ export class PageDatabaseService {
 
   // Page CRUD operations
   async createPage(userId: string, request: CreatePageRequest): Promise<Page> {
-    const id = nanoid(PAGE_ID_LENGTH);
+    const id = uuidv7();
     const shortId = nanoid(SHORT_ID_LENGTH);
     const now = new Date().toISOString();
     
@@ -167,7 +167,7 @@ export class PageDatabaseService {
     const page = await this.getPageById(pageId);
     if (!page || page.userId !== userId) return null;
     
-    const id = nanoid(PAGE_ID_LENGTH);
+    const id = uuidv7();
     
     const content: PageContent = {
       id,
@@ -291,7 +291,7 @@ export class PageDatabaseService {
 
   // Registration operations
   async createRegistration(pageId: string, request: CreateRegistrationRequest): Promise<Registration> {
-    const id = nanoid(PAGE_ID_LENGTH);
+    const id = uuidv7();
     const now = new Date().toISOString();
     
     const registration: Registration = {
