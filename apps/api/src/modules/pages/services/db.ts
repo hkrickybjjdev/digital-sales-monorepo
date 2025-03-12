@@ -141,7 +141,7 @@ export class PageDatabaseService {
       WHERE userId = ?
     `;
     
-    const params = [userId];
+    const params: Array<string | number> = [userId];
     
     if (type) {
       query += ' AND type = ?';
@@ -149,7 +149,7 @@ export class PageDatabaseService {
     }
     
     query += ' ORDER BY createdAt DESC LIMIT ? OFFSET ?';
-    params.push(limit, offset);
+    params.push(limit.toString(), offset.toString());
     
     const result = await this.db.prepare(query).bind(...params).all();
     
@@ -299,7 +299,7 @@ export class PageDatabaseService {
       pageId,
       email: request.email,
       name: request.name,
-      phone: request.phone || null,
+      phone: request.phone,  // Phone is already optional in the type
       registeredAt: now,
       customFields: request.customFields || {}
     };
@@ -348,6 +348,24 @@ export class PageDatabaseService {
       WHERE pageId = ?
     `).bind(pageId).first();
 
-    return result?.count || 0;
+    return (result?.count as number) || 0;
+  }
+
+  async getUserPagesCount(userId: string, type?: PageType): Promise<number> {
+    let query = `
+      SELECT COUNT(*) as count
+      FROM Page 
+      WHERE userId = ?
+    `;
+    
+    const params: Array<string> = [userId];
+    
+    if (type) {
+      query += ' AND type = ?';
+      params.push(type);
+    }
+
+    const result = await this.db.prepare(query).bind(...params).first();
+    return (result?.count as number) || 0;
   }
 }

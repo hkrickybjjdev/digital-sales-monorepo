@@ -2,7 +2,8 @@ import { Context } from 'hono';
 import { Env } from '../../../types';
 import { PageDatabaseService } from '../services/db';
 import { ValidationService } from '../services/validation';
-import { CreatePageContentRequest } from '../types';
+import { CreatePageContentRequest, PageContent } from '../types';
+import { formatResponse, formatError } from '../../../utils/api-response';
 
 export class ContentController {
   private dbService: PageDatabaseService;
@@ -11,6 +12,15 @@ export class ContentController {
   constructor(env: Env) {
     this.dbService = new PageDatabaseService(env.DB);
     this.validationService = new ValidationService();
+  }
+
+  // Helper method to serialize PageContent to JSON-safe object
+  private serializeContent(content: PageContent) {
+    return {
+      ...content,
+      priceInCents: Number(content.priceInCents),
+      metadata: content.metadata || {}
+    };
   }
 
   async createPageContent(c: Context<{ Bindings: Env }>) {
@@ -22,20 +32,20 @@ export class ContentController {
       // Validate request
       const validationErrors = this.validationService.validatePageContentRequest(body);
       if (validationErrors.length > 0) {
-        return c.json({ errors: validationErrors }, 400);
+        return formatError(c, 'Invalid page content data', 'ValidationError', 400);
       }
 
       // Create page content
       const content = await this.dbService.createPageContent(pageId, userId, body);
 
       if (!content) {
-        return c.json({ error: 'Page not found or you do not have permission to update it' }, 404);
+        return formatError(c, 'Page not found or you do not have permission to update it', 'ResourceNotFound', 404);
       }
 
-      return c.json(content, 201);
+      return formatResponse(c, this.serializeContent(content), 201);
     } catch (error) {
       console.error('Error creating page content:', error);
-      return c.json({ error: 'Error creating page content' }, 500);
+      return formatError(c, 'Error creating page content', 'InternalServerError', 500);
     }
   }
 
@@ -48,19 +58,19 @@ export class ContentController {
       // Verify page belongs to user
       const page = await this.dbService.getPageById(pageId);
       if (!page || page.userId !== userId) {
-        return c.json({ error: 'Page not found or you do not have permission to access it' }, 404);
+        return formatError(c, 'Page not found or you do not have permission to access it', 'ResourceNotFound', 404);
       }
 
       const content = await this.dbService.getPageContentById(contentId);
 
       if (!content || content.pageId !== pageId) {
-        return c.json({ error: 'Content not found' }, 404);
+        return formatError(c, 'Content not found', 'ResourceNotFound', 404);
       }
 
-      return c.json(content);
+      return formatResponse(c, this.serializeContent(content), 200);
     } catch (error) {
       console.error('Error fetching page content:', error);
-      return c.json({ error: 'Error fetching page content' }, 500);
+      return formatError(c, 'Error fetching page content', 'InternalServerError', 500);
     }
   }
 
@@ -72,15 +82,17 @@ export class ContentController {
       // Verify page belongs to user
       const page = await this.dbService.getPageById(pageId);
       if (!page || page.userId !== userId) {
-        return c.json({ error: 'Page not found or you do not have permission to access it' }, 404);
+        return formatError(c, 'Page not found or you do not have permission to access it', 'ResourceNotFound', 404);
       }
 
       const contents = await this.dbService.getPageContents(pageId);
-
-      return c.json({ contents });
+      
+      return formatResponse(c, { 
+        contents: contents.map(content => this.serializeContent(content)) 
+      }, 200);
     } catch (error) {
       console.error('Error listing page contents:', error);
-      return c.json({ error: 'Error listing page contents' }, 500);
+      return formatError(c, 'Error listing page contents', 'InternalServerError', 500);
     }
   }
 
@@ -95,13 +107,13 @@ export class ContentController {
       const updatedContent = await this.dbService.updatePageContent(contentId, pageId, userId, body);
 
       if (!updatedContent) {
-        return c.json({ error: 'Content not found or you do not have permission to update it' }, 404);
+        return formatError(c, 'Content not found or you do not have permission to update it', 'ResourceNotFound', 404);
       }
 
-      return c.json(updatedContent);
+      return formatResponse(c, this.serializeContent(updatedContent), 200);
     } catch (error) {
       console.error('Error updating page content:', error);
-      return c.json({ error: 'Error updating page content' }, 500);
+      return formatError(c, 'Error updating page content', 'InternalServerError', 500);
     }
   }
 
@@ -115,13 +127,13 @@ export class ContentController {
       const success = await this.dbService.deletePageContent(contentId, pageId, userId);
 
       if (!success) {
-        return c.json({ error: 'Content not found or you do not have permission to delete it' }, 404);
+        return formatError(c, 'Content not found or you do not have permission to delete it', 'ResourceNotFound', 404);
       }
 
-      return c.json({ success: true });
+      return formatResponse(c, { success: true }, 200);
     } catch (error) {
       console.error('Error deleting page content:', error);
-      return c.json({ error: 'Error deleting page content' }, 500);
+      return formatError(c, 'Error deleting page content', 'InternalServerError', 500);
     }
   }
 }

@@ -3,6 +3,7 @@ import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
 import { secureHeaders } from 'hono/secure-headers';
 import { prettyJSON } from 'hono/pretty-json';
+import { formatResponse, formatError } from './utils/api-response';
 
 import { authModule } from './modules/auth';
 import { pagesModule } from './modules/pages';
@@ -31,7 +32,7 @@ app.use('*', cors({
 
 // Health check endpoint
 app.get('/', (c) => {
-  return c.json({ 
+  return formatResponse(c, { 
     status: 'ok',
     version: '0.1.0',
     api_versions: getAllVersions(),
@@ -42,7 +43,7 @@ app.get('/', (c) => {
 
 // API versioning documentation
 app.get('/api', (c) => {
-  return c.json({
+  return formatResponse(c, {
     message: 'TempPages API',
     versions: getAllVersions(),
     latest_version: getLatestVersion(),
@@ -94,20 +95,20 @@ app.onError((err, c) => {
   
   // Handle known errors
   if (err.message.includes('Unauthorized')) {
-    return c.json({ error: 'Unauthorized access' }, 401);
+    return formatError(c, 'Unauthorized access', 'Unauthorized', 401);
   }
   
   if (err.message.includes('Not found')) {
-    return c.json({ error: 'Resource not found' }, 404);
+    return formatError(c, 'Resource not found', 'NotFound', 404);
   }
   
   // Default error response
-  return c.json({ error: 'Internal server error' }, 500);
+  return formatError(c, 'Internal server error', 'InternalServerError', 500);
 });
 
 // Not found handler
 app.notFound((c) => {
-  return c.json({ error: 'Not found' }, 404);
+  return formatError(c, 'Not found', 'NotFound', 404);
 });
 
 export default app;

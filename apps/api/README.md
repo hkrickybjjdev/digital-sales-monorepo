@@ -60,6 +60,70 @@ When an API version is deprecated, responses will include a `Warning` header wit
 
 For full API documentation, visit [https://docs.tempopages.com/api](https://docs.tempopages.com/api)
 
+## Response Format
+
+All API responses follow Azure REST API conventions for consistency and standards compliance:
+
+### Success Responses
+
+Standard response format:
+```json
+{
+  "property1": "value1",
+  "property2": "value2"
+}
+```
+
+### Paginated Responses
+
+Paginated responses follow Azure's format with value array and nextLink:
+```json
+{
+  "value": [
+    { "id": "1", "name": "Item 1" },
+    { "id": "2", "name": "Item 2" }
+  ],
+  "count": 2,
+  "nextLink": "https://api.tempopages.com/resources?page=2&pageSize=2"
+}
+```
+
+### Error Responses
+
+All error responses follow a consistent format:
+```json
+{
+  "error": {
+    "code": "ErrorCode",
+    "message": "A human-readable error message"
+  }
+}
+```
+
+Common error codes:
+- `ValidationError` - Invalid input data
+- `ResourceNotFound` - Requested resource doesn't exist
+- `Unauthorized` - Authentication required or failed
+- `Forbidden` - Insufficient permissions
+- `InternalServerError` - Server-side error
+- `PageExpired` - Requested page has expired
+- `PageNotLaunched` - Page is not yet available
+- `PageInactive` - Page is no longer active
+- `RegistrationLimitReached` - Event registration limit reached
+
+### Headers
+
+All responses include CORS and API version headers:
+```
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS
+Access-Control-Allow-Headers: Content-Type, Authorization
+Access-Control-Max-Age: 86400
+api-supported-versions: 1.0.0, 2.0.0
+api-version: 1.0.0
+api-deprecated-versions: (if any versions are deprecated)
+```
+
 ## Development
 
 ### Environment Variables

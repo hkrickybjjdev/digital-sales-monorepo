@@ -3,10 +3,12 @@ import { Env } from '../../../types';
 import { PageDatabaseService } from '../services/db';
 import { PageCacheService } from '../services/cache';
 import { ValidationService } from '../services/validation';
+import { formatResponse, formatError, formatPaginatedResponse } from '../../../utils/api-response';
 import { 
   CreatePageRequest,
   UpdatePageRequest,
-  PageType
+  PageType,
+  Page
 } from '../types';
 
 export class PageController {
@@ -18,6 +20,18 @@ export class PageController {
     this.dbService = new PageDatabaseService(env.DB);
     this.cacheService = new PageCacheService(env.PAGES_METADATA);
     this.validationService = new ValidationService();
+  }
+
+  // Helper method to serialize Page to JSON-safe object
+  private serializePage(page: Page) {
+    return {
+      ...page,
+      settings: page.settings || {},
+      customization: page.customization || {},
+      createdAt: page.createdAt.toString(),
+      expiresAt: page.expiresAt?.toString() || null,
+      launchAt: page.launchAt?.toString() || null
+    };
   }
 
   async getPublicPage(c: Context<{ Bindings: Env }>) {
@@ -32,7 +46,7 @@ export class PageController {
         page = await this.dbService.getPageByShortId(shortId);
         
         if (!page) {
-          return c.json({ error: 'Page not found' }, 404);
+          return formatError(c, 'Page not found', 'ResourceNotFound', 404);
         }
         
         // Cache page if active
@@ -43,12 +57,12 @@ export class PageController {
       
       // Check if page is expired
       if (page.expiresAt && new Date(page.expiresAt) < new Date()) {
-        return c.json({ error: 'This page has expired', pageId: page.id }, 404);
+        return formatError(c, 'This page has expired', 'PageExpired', 404);
       }
       
       // Check if page is not yet launched
       if (page.launchAt && new Date(page.launchAt) > new Date()) {
-        return c.json({ error: 'This page is not yet available', pageId: page.id }, 404);
+        return formatError(c, 'This page is not yet available', 'PageNotLaunched', 404);
       }
       
       // Increment page view stats
@@ -57,19 +71,22 @@ export class PageController {
       // Get page content
       const pageContents = await this.dbService.getPageContents(page.id);
       
-      return c.json({ 
-        page: {
+      return formatResponse(c,{ 
+        page: this.serializePage({
           id: page.id,
           shortId: page.shortId,
           type: page.type,
           customization: page.customization,
           settings: page.settings,
-        },
-        contents: pageContents
-      });
+        } as Page),
+        contents: pageContents.map(content => ({
+          ...content,
+          metadata: content.metadata || {}
+        }))
+      }, 200);
     } catch (error) {
       console.error('Error fetching page:', error);
-      return c.json({ error: 'Error fetching page' }, 500);
+      return formatError(c, 'Error fetching page', 'InternalServerError', 500);
     }
   }
 
@@ -81,7 +98,7 @@ export class PageController {
       // Validate request
       const validationErrors = this.validationService.validatePageRequest(body);
       if (validationErrors.length > 0) {
-        return c.json({ errors: validationErrors }, 400);
+        return formatError(c, 'Invalid page data', 'ValidationError', 400);
       }
       
       // Create page
@@ -92,10 +109,10 @@ export class PageController {
         await this.cacheService.cachePage(page);
       }
       
-      return c.json(page, 201);
+      return formatResponse(c, this.serializePage(page), 201);
     } catch (error) {
       console.error('Error creating page:', error);
-      return c.json({ error: 'Error creating page' }, 500);
+      return formatError(c, 'Error creating page', 'InternalServerError', 500);
     }
   }
 
@@ -108,14 +125,14 @@ export class PageController {
       // Validate request
       const validationErrors = this.validationService.validatePageUpdateRequest(body);
       if (validationErrors.length > 0) {
-        return c.json({ errors: validationErrors }, 400);
+        return formatError(c, 'Invalid update data', 'ValidationError', 400);
       }
       
       // Update page
       const page = await this.dbService.updatePage(id, userId, body);
       
       if (!page) {
-        return c.json({ error: 'Page not found or you do not have permission to update it' }, 404);
+        return formatError(c, 'Page not found or you do not have permission to update it', 'ResourceNotFound', 404);
       }
       
       // Update cache or invalidate based on active status
@@ -125,44 +142,10 @@ export class PageController {
         await this.cacheService.invalidatePageCache(page.shortId);
       }
       
-      return c.json(page);
+      return formatResponse(c, this.serializePage(page), 200);
     } catch (error) {
       console.error('Error updating page:', error);
-      return c.json({ error: 'Error updating page' }, 500);
-    }
-  }
-
-  async deletePage(c: Context<{ Bindings: Env }>) {
-    try {
-      const userId = c.get('jwtPayload').sub;
-      const id = c.req.param('id');
-      
-      // Get page short ID before deletion
-      const page = await this.dbService.getPageById(id);
-      if (!page) {
-        return c.json({ error: 'Page not found' }, 404);
-      }
-      
-      if (page.userId !== userId) {
-        return c.json({ error: 'You do not have permission to delete this page' }, 403);
-      }
-      
-      const shortId = page.shortId;
-      
-      // Delete page
-      const success = await this.dbService.deletePage(id, userId);
-      
-      if (!success) {
-        return c.json({ error: 'Failed to delete page' }, 500);
-      }
-      
-      // Invalidate cache
-      await this.cacheService.invalidatePageCache(shortId);
-      
-      return c.json({ success: true });
-    } catch (error) {
-      console.error('Error deleting page:', error);
-      return c.json({ error: 'Error deleting page' }, 500);
+      return formatError(c, 'Error updating page', 'InternalServerError', 500);
     }
   }
 
@@ -174,11 +157,11 @@ export class PageController {
       const page = await this.dbService.getPageById(id);
       
       if (!page) {
-        return c.json({ error: 'Page not found' }, 404);
+        return formatError(c, 'Page not found', 'ResourceNotFound', 404);
       }
       
       if (page.userId !== userId) {
-        return c.json({ error: 'You do not have permission to access this page' }, 403);
+        return formatError(c, 'You do not have permission to access this page', 'Forbidden', 403);
       }
       
       // Get page content
@@ -187,14 +170,17 @@ export class PageController {
       // Get page stats
       const stats = await this.cacheService.getPageStats(page.id);
       
-      return c.json({ 
-        page,
-        contents: pageContents,
-        stats
-      });
+      return formatResponse(c, { 
+        page: this.serializePage(page),
+        contents: pageContents.map(content => ({
+          ...content,
+          metadata: content.metadata || {}
+        })),
+        stats: stats || { views: 0, conversions: 0, conversionRate: 0 }
+      }, 200);
     } catch (error) {
       console.error('Error fetching page:', error);
-      return c.json({ error: 'Error fetching page' }, 500);
+      return formatError(c, 'Error fetching page', 'InternalServerError', 500);
     }
   }
 
@@ -208,11 +194,20 @@ export class PageController {
       const type = queryParams.type as PageType || undefined;
       
       const pages = await this.dbService.listUserPages(userId, limit, offset, type);
+      const totalCount = await this.dbService.getUserPagesCount(userId, type);
       
-      return c.json({ pages });
+      return formatPaginatedResponse(
+        c,
+        pages.map(page => this.serializePage(page)),
+        totalCount,
+        Math.floor(offset / limit) + 1,
+        limit,
+        new URL(c.req.url),
+        200        
+      );
     } catch (error) {
       console.error('Error listing pages:', error);
-      return c.json({ error: 'Error listing pages' }, 500);
+      return formatError(c, 'Error listing pages', 'InternalServerError', 500);
     }
   }
 
@@ -236,7 +231,7 @@ export class PageController {
       // Validate request
       const validationErrors = this.validationService.validatePageRequest(pageRequest);
       if (validationErrors.length > 0) {
-        return c.json({ errors: validationErrors }, 400);
+        return formatError(c, 'Invalid page data', 'ValidationError', 400);
       }
       
       // Create page
@@ -247,10 +242,10 @@ export class PageController {
         await this.cacheService.cachePage(page);
       }
       
-      return c.json(page, 201);
+      return formatResponse(c, this.serializePage(page), 201);
     } catch (error) {
       console.error('Error creating countdown page:', error);
-      return c.json({ error: 'Error creating countdown page' }, 500);
+      return formatError(c, 'Error creating countdown page', 'InternalServerError', 500);
     }
   }
 
@@ -275,7 +270,7 @@ export class PageController {
       // Validate request
       const validationErrors = this.validationService.validatePageRequest(pageRequest);
       if (validationErrors.length > 0) {
-        return c.json({ errors: validationErrors }, 400);
+        return formatError(c, 'Invalid page data', 'ValidationError', 400);
       }
       
       // Create page
@@ -286,10 +281,10 @@ export class PageController {
         await this.cacheService.cachePage(page);
       }
       
-      return c.json(page, 201);
+      return formatResponse(c, this.serializePage(page), 201);
     } catch (error) {
       console.error('Error creating flash sale page:', error);
-      return c.json({ error: 'Error creating flash sale page' }, 500);
+      return formatError(c, 'Error creating flash sale page', 'InternalServerError', 500);
     }
   }
 
@@ -316,7 +311,7 @@ export class PageController {
       // Validate request
       const validationErrors = this.validationService.validatePageRequest(pageRequest);
       if (validationErrors.length > 0) {
-        return c.json({ errors: validationErrors }, 400);
+        return formatError(c, 'Invalid page data', 'ValidationError', 400);
       }
       
       // Create page
@@ -327,10 +322,10 @@ export class PageController {
         await this.cacheService.cachePage(page);
       }
       
-      return c.json(page, 201);
+      return formatResponse(c, this.serializePage(page), 201);
     } catch (error) {
       console.error('Error creating event registration page:', error);
-      return c.json({ error: 'Error creating event registration page' }, 500);
+      return formatError(c, 'Error creating event registration page', 'InternalServerError', 500);
     }
   }
 
@@ -354,7 +349,7 @@ export class PageController {
       // Validate request
       const validationErrors = this.validationService.validatePageRequest(pageRequest);
       if (validationErrors.length > 0) {
-        return c.json({ errors: validationErrors }, 400);
+        return formatError(c, 'Invalid page data', 'ValidationError', 400);
       }
       
       // Create page
@@ -365,10 +360,44 @@ export class PageController {
         await this.cacheService.cachePage(page);
       }
       
-      return c.json(page, 201);
+      return formatResponse(c, this.serializePage(page), 201);
     } catch (error) {
       console.error('Error creating limited offer page:', error);
-      return c.json({ error: 'Error creating limited offer page' }, 500);
+      return formatError(c, 'Error creating limited offer page', 'InternalServerError', 500);
+    }
+  }
+
+  async deletePage(c: Context<{ Bindings: Env }>) {
+    try {
+      const userId = c.get('jwtPayload').sub;
+      const id = c.req.param('id');
+      
+      // Get page short ID before deletion
+      const page = await this.dbService.getPageById(id);
+      if (!page) {
+        return formatError(c, 'Page not found', 'ResourceNotFound', 404);
+      }
+      
+      if (page.userId !== userId) {
+        return formatError(c, 'You do not have permission to delete this page', 'Forbidden', 403);
+      }
+      
+      const shortId = page.shortId;
+      
+      // Delete page
+      const success = await this.dbService.deletePage(id, userId);
+      
+      if (!success) {
+        return formatError(c, 'Failed to delete page', 'InternalServerError', 500);
+      }
+      
+      // Invalidate cache
+      await this.cacheService.invalidatePageCache(shortId);
+      
+      return formatResponse(c, { success: true }, 200);
+    } catch (error) {
+      console.error('Error deleting page:', error);
+      return formatError(c, 'Error deleting page', 'InternalServerError', 500);
     }
   }
 }

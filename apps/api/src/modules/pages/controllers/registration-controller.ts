@@ -3,17 +3,28 @@ import { Env } from '../../../types';
 import { PageDatabaseService } from '../services/db';
 import { PageCacheService } from '../services/cache';
 import { ValidationService } from '../services/validation';
-import { CreateRegistrationRequest } from '../types';
+import { CreateRegistrationRequest, Registration } from '../types';
+import { formatResponse, formatPaginatedResponse, formatError } from '../../../utils/api-response';
+import { corsHeaders } from '../../../middleware';
 
 export class RegistrationController {
   private dbService: PageDatabaseService;
   private cacheService: PageCacheService;
   private validationService: ValidationService;
-  
+
   constructor(env: Env) {
     this.dbService = new PageDatabaseService(env.DB);
     this.cacheService = new PageCacheService(env.PAGES_METADATA);
     this.validationService = new ValidationService();
+  }
+
+  // Helper method to serialize Registration to JSON-safe object
+  private serializeRegistration(registration: Registration) {
+    return {
+      ...registration,
+      registeredAt: registration.registeredAt.toString(),
+      customFields: registration.customFields || {}
+    };
   }
 
   async createRegistration(c: Context<{ Bindings: Env }>) {
@@ -24,29 +35,29 @@ export class RegistrationController {
       // Validate request
       const validationErrors = this.validationService.validateRegistrationRequest(body);
       if (validationErrors.length > 0) {
-        return c.json({ errors: validationErrors }, 400);
+        return formatError(c, 'Invalid registration data', 'ValidationError', 400);
       }
 
       // Get page
       const page = await this.dbService.getPageByShortId(shortId);
       
       if (!page) {
-        return c.json({ error: 'Page not found' }, 404);
+        return formatError(c, 'Page not found', 'ResourceNotFound', 404);
       }
       
       // Check if page is active
       if (!page.isActive) {
-        return c.json({ error: 'This page is no longer active' }, 400);
+        return formatError(c, 'This page is no longer active', 'PageInactive', 400);
       }
       
       // Check if page is expired
       if (page.expiresAt && new Date(page.expiresAt) < new Date()) {
-        return c.json({ error: 'This page has expired' }, 400);
+        return formatError(c, 'This page has expired', 'PageExpired', 400);
       }
       
       // Check if page is not yet launched
       if (page.launchAt && new Date(page.launchAt) > new Date()) {
-        return c.json({ error: 'This page is not yet available' }, 400);
+        return formatError(c, 'This page is not yet available', 'PageNotLaunched', 400);
       }
       
       // For event registration pages, check if registration limit is reached
@@ -57,7 +68,7 @@ export class RegistrationController {
           const registrationCount = await this.dbService.getRegistrationCount(page.id);
           
           if (registrationCount >= settings.maxAttendees && !settings.waitlistEnabled) {
-            return c.json({ error: 'Registration limit has been reached' }, 400);
+            return formatError(c, 'Registration limit has been reached', 'RegistrationLimitReached', 400);
           }
         }
       }
@@ -68,16 +79,20 @@ export class RegistrationController {
       // Update conversion stats
       await this.cacheService.incrementConversions(page.id, page.shortId);
       
-      return c.json({
-        success: true,
-        registration: {
-          id: registration.id,
-          registeredAt: registration.registeredAt
-        }
-      }, 201);
+      return formatResponse(
+        c,
+        {
+          success: true,
+          registration: this.serializeRegistration({
+            id: registration.id,
+            registeredAt: registration.registeredAt
+          } as Registration)
+        }, 
+        201
+      );
     } catch (error) {
       console.error('Error creating registration:', error);
-      return c.json({ error: 'Error creating registration' }, 500);
+      return formatError(c, 'Error creating registration', 'InternalServerError', 500);
     }
   }
 
@@ -96,15 +111,18 @@ export class RegistrationController {
       // Get registration count
       const count = await this.dbService.getRegistrationCount(pageId);
       
-      return c.json({
-        registrations,
+      return formatPaginatedResponse(
+        c,
+        registrations.map(reg => this.serializeRegistration(reg)),
         count,
+        Math.floor(offset / limit) + 1,
         limit,
-        offset
-      });
+        new URL(c.req.url),
+        200        
+      );
     } catch (error) {
       console.error('Error listing registrations:', error);
-      return c.json({ error: 'Error listing registrations' }, 500);
+      return formatError(c, 'Error listing registrations', 'InternalServerError', 500);
     }
   }
 
@@ -116,7 +134,7 @@ export class RegistrationController {
       // Verify page belongs to user
       const page = await this.dbService.getPageById(pageId);
       if (!page || page.userId !== userId) {
-        return c.json({ error: 'Page not found or you do not have permission to access it' }, 404);
+        return formatError(c, 'Page not found or you do not have permission to access it', 'ResourceNotFound', 404);
       }
       
       // Get all registrations for the page
@@ -134,12 +152,13 @@ export class RegistrationController {
       return new Response(csv, {
         headers: {
           'Content-Type': 'text/csv',
-          'Content-Disposition': `attachment; filename="registrations-${pageId}.csv"`
+          'Content-Disposition': `attachment; filename="registrations-${pageId}.csv"`,
+          ...corsHeaders
         }
       });
     } catch (error) {
       console.error('Error exporting registrations:', error);
-      return c.json({ error: 'Error exporting registrations' }, 500);
+      return formatError(c, 'Error exporting registrations', 'InternalServerError', 500);
     }
   }
 }
