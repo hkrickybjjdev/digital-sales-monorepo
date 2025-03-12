@@ -1,5 +1,5 @@
 import { nanoid } from 'nanoid';
-import { User, Session } from './types';
+import { User, Session } from './schemas';
 import { Env } from '../../../types';
 import { v7 as uuidv7 } from 'uuid';
 

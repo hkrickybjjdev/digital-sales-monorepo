@@ -48,13 +48,18 @@ You can also use the `/api/latest` endpoint to always access the most recent sta
 
 ### Version Headers
 
-All API responses include the following headers:
-- `X-API-Version`: The version of the API that processed the request
-- `X-API-Latest-Version`: The latest available API version
+All API responses include the following headers that follow Azure REST API conventions:
+- `api-supported-versions`: List of all supported API versions (e.g., "1.0.0, 2.0.0")
+- `api-version`: The version of the API that processed the request (e.g., "1.0.0")
+- `api-deprecated-versions`: List of deprecated API versions, if any
 
 ### Deprecation Notices
 
-When an API version is deprecated, responses will include a `Warning` header with information about when the version will be removed and which version to migrate to.
+When an API version is deprecated, responses will include a `Warning` header with information about when the version will be removed and which version to migrate to:
+
+```
+Warning: 299 - "This API version is deprecated and will be removed on {sunset-date}. Please migrate to v{latest-version}."
+```
 
 ## Documentation
 
@@ -90,12 +95,26 @@ Paginated responses follow Azure's format with value array and nextLink:
 
 ### Error Responses
 
-All error responses follow a consistent format:
+All error responses follow Azure REST API conventions with a consistent format:
 ```json
 {
   "error": {
     "code": "ErrorCode",
     "message": "A human-readable error message"
+  }
+}
+```
+
+For 500 Internal Server errors, additional debugging information is included in non-production environments:
+```json
+{
+  "error": {
+    "code": "InternalServerError",
+    "message": "An error occurred processing your request",
+    "innererror": {
+      "code": "ErrorName",
+      "stackTrace": "Detailed stack trace (only in non-production)"
+    }
   }
 }
 ```
@@ -106,6 +125,7 @@ Common error codes:
 - `Unauthorized` - Authentication required or failed
 - `Forbidden` - Insufficient permissions
 - `InternalServerError` - Server-side error
+- `UnsupportedApiVersion` - Requested API version is not supported
 - `PageExpired` - Requested page has expired
 - `PageNotLaunched` - Page is not yet available
 - `PageInactive` - Page is no longer active
@@ -226,7 +246,7 @@ The pages module follows a clean architecture pattern:
    - Validates input using Zod schemas
    - Calls appropriate service methods
    - Formats responses according to API standards
-   - Example: `page-handlers.ts`, `content-handlers.ts`, `registration-handlers.ts`
+   - Example: `pageHandlers.ts`, `contentHandlers.ts`, `registrationHandlers.ts`
 
 5. **Module Entry Point** (`index.ts`)
    - Defines routes and connects them to handler functions
@@ -257,7 +277,7 @@ npx wrangler d1 execute DB --file=./src/database/schema.sql
 
 #### Clearing Tables
 
-To clear all data from the users and sessions tables (useful for testing):
+To clear all data from the tables (useful for testing):
 
 ```bash
 # Clear tables in the local development database
@@ -267,6 +287,20 @@ npm run db:clear
 
 # Clear tables in the production database
 npx wrangler d1 execute DB --file=./src/database/clear_tables.sql
+```
+
+#### Dropping Tables
+
+To completely remove all tables from the database:
+
+```bash
+# Drop all tables in the local development database
+npx wrangler d1 execute DB --local --file=./src/database/drop_tables.sql
+# or
+npm run db:drop
+
+# Drop all tables in the production database
+npx wrangler d1 execute DB --file=./src/database/drop_tables.sql
 ```
 
 ## Environment Variables

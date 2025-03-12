@@ -1,7 +1,7 @@
 import { Context, Next } from 'hono';
 import { verify } from 'hono/jwt';
 import { Env } from '../../../types';
-import { UserRepository } from '../models/userRepository';
+import { UserRepository } from '../repositories/userRepository';
 import { formatError } from '../../../utils/api-response';
 
 

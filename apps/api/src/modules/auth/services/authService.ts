@@ -1,7 +1,7 @@
 import * as bcrypt from 'bcryptjs';
 import * as jose from 'jose';
-import { UserRepository } from '../models/userRepository';
-import { User, AuthResponse, LoginRequest, RegisterRequest } from '../models/types';
+import { UserRepository } from '../repositories/userRepository';
+import { User, AuthResponse, LoginRequest, RegisterRequest } from '../models/schemas';
 import { Env } from '../../../types';
 
 export class AuthService {

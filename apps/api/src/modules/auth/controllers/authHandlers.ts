@@ -1,10 +1,10 @@
 import { Context } from 'hono';
 import { AuthService } from '../services/authService';
-import { loginSchema } from '../models/types';
+import { loginSchema } from '../models/schemas';
 import { Env } from '../../../types';
 import { formatResponse, formatError, format500Error } from '../../../utils/api-response';
-import { UserRepository } from '../models/userRepository';
-import { registerSchema } from '../models/types';
+import { UserRepository } from '../repositories/userRepository';
+import { registerSchema } from '../models/schemas';
 
 // Export a single handler function
 export const login = async (c: Context<{ Bindings: Env }>) => {
