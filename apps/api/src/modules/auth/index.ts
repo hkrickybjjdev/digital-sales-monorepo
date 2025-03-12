@@ -1,9 +1,6 @@
 import { Hono } from 'hono';
 import { Env } from '../../types';
-import { loginHandler } from './controllers/loginController';
-import { registerHandler } from './controllers/registerController';
-import { getCurrentUserHandler } from './controllers/userController';
-import { logoutHandler } from './controllers/logoutController';
+import * as authHandlers from './controllers/authHandlers';
 import { validateJWT } from './middleware/authMiddleware';
 
 // Create the auth module router
@@ -23,14 +20,14 @@ authModule.get('/', (c) => {
 });
 
 // Public routes
-authModule.post('/register', registerHandler);
-authModule.post('/login', loginHandler);
+authModule.post('/register', authHandlers.register);
+authModule.post('/login', authHandlers.login);
 
 // Protected routes that require JWT authentication
 authModule.use('/me', validateJWT);
-authModule.get('/me', getCurrentUserHandler);
+authModule.get('/me', authHandlers.getCurrentUser);
 
 authModule.use('/logout', validateJWT);
-authModule.post('/logout', logoutHandler);
+authModule.post('/logout', authHandlers.logout);
 
 export { authModule };

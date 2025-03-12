@@ -187,18 +187,53 @@ Each domain module is organized in a consistent structure:
 ```
 modules/
   ├── auth/            # Authentication and authorization
-  │   ├── controllers/ # Request handlers
-  │   ├── services/    # Business logic
-  │   ├── models/      # Data models
+  │   ├── controllers/ # RHandler functions for HTTP requests
+  │   ├── services/    # Business logic layer
+  │   ├── models/      # Zod schemas and type definitions
   │   ├── utils/       # Module-specific utilities
   │   ├── v2/          # v2 API implementation
-  │   └── index.ts     # Public API of the module
+  │   └── index.ts     # Route definitions and module exports
   ├── pages/           # Page management
   ├── products/        # Digital product handling
   ├── payments/        # Stripe integration
   ├── storage/         # File upload and delivery
   └── analytics/       # Usage tracking and reporting
 ```
+
+### Pages Module Architecture
+
+The pages module follows a clean architecture pattern:
+
+1. **Models Layer** (`models/schemas.ts`)
+   - Defines data structures using Zod schemas
+   - Provides type definitions derived from schemas
+   - Handles validation rules for all data entities
+
+2. **Repository Layer** (`repositories/`)
+   - Handles database operations
+   - Provides data access abstraction
+   - Implements CRUD operations for each entity
+   - Example: `pageRepository.ts`, `contentRepository.ts`, `registrationRepository.ts`
+
+3. **Service Layer** (`services/`)
+   - Implements business logic
+   - Orchestrates operations across repositories
+   - Handles caching and complex operations
+   - Example: `PageService.ts`, `ContentService.ts`, `RegistrationService.ts`
+
+4. **Controller Layer** (`controllers/`)
+   - Contains handler functions for HTTP requests
+   - Validates input using Zod schemas
+   - Calls appropriate service methods
+   - Formats responses according to API standards
+   - Example: `page-handlers.ts`, `content-handlers.ts`, `registration-handlers.ts`
+
+5. **Module Entry Point** (`index.ts`)
+   - Defines routes and connects them to handler functions
+   - Applies middleware like authentication
+   - Exports the module router
+
+This architecture provides clear separation of concerns, making the code more maintainable, testable, and scalable.
 
 ## Database
 
