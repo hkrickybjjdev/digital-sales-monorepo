@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import { Env } from '../../types';
+import { validateJWT } from '../auth/middleware/authMiddleware';
 import * as organizationHandlers from './controllers/organizationHandlers';
 import * as groupHandlers from './controllers/groupHandlers';
 import * as roleHandlers from './controllers/roleHandlers';
@@ -14,6 +15,7 @@ import {
 
 // Create a Hono app for the accounts module
 const accountsModule = new Hono<{ Bindings: Env }>();
+accountsModule.use('/*', validateJWT);
 
 // Integration endpoints for auth and other modules
 accountsModule.post('/integrations/user-registration', integrationHandlers.handleUserRegistration);
