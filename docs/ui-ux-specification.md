@@ -170,17 +170,21 @@ The platform uses Shadcn UI as its component library foundation with the followi
 #### 1. Dashboard Overview
 
 **Key Elements**:
-- Summary metrics by page type (active pages, conversion rates, etc.)
-- Quick action buttons for creating new pages
-- Recent activity feed (new registrations, sales, etc.)
-- Performance overview charts
-- Upcoming expirations and launches
+
+*   Summary metrics by page type (active pages, conversion rates, etc.)
+*   Quick action buttons for creating new pages
+*   Recent activity feed (new registrations, sales, etc.)
+*   Performance overview charts
+*   Upcoming expirations and launches
+*   **Organization and Subscription Status**
 
 **Organization**:
-- Tab/filter system to view metrics by page type
-- Date range selector for historical data
-- Saved views for frequently accessed metrics
-- Export functionality for reports
+
+*   Tab/filter system to view metrics by page type
+*   Date range selector for historical data
+*   Saved views for frequently accessed metrics
+*   Export functionality for reports
+*   **Organization and User Management Section**
 
 #### 2. Page Type Selector
 
@@ -200,12 +204,14 @@ The platform uses Shadcn UI as its component library foundation with the followi
 #### 3. Page Builder Interface
 
 **Common Elements Across Page Types**:
-- Page title and URL configuration
-- Launch and expiration settings
-- Design customization (colors, fonts, images)
-- SEO metadata configuration
-- Tracking and analytics integration
-- Product selection and association (for product-based pages)
+
+*   Page title and URL configuration
+*   Launch and expiration settings
+*   Design customization (colors, fonts, images)
+*   SEO metadata configuration
+*   Tracking and analytics integration
+*   Product selection and association (for product-based pages)
+*   **Organization and Group Assignment**
 
 **Type-Specific Builders**:
 
@@ -353,6 +359,46 @@ graph TD
     K --> L[Monitor Performance]
 ```
 
+#### Organization Management Flow
+
+```mermaid
+graph TD
+    A[Access Console] --> B[Select "Organization Settings"]
+    B --> C[View Organization Details]
+    C --> D{Edit Organization?}
+    D -- Yes --> E[Modify Organization Details]
+    E --> F[Save Changes]
+    D -- No --> G[Return to Dashboard]
+```
+
+#### User and Role Management Flow
+
+```mermaid
+graph TD
+    A[Access Console] --> B[Select "User Management"]
+    B --> C[View User List]
+    C --> D{Add New User?}
+    D -- Yes --> E[Enter User Details]
+    E --> F[Assign Role]
+    F --> G[Save User]
+    D -- No --> H{Edit User?}
+    H -- Yes --> I[Modify User Details]
+    I --> J[Save Changes]
+    H -- No --> K[Return to User List]
+```
+
+#### Subscription Management Flow
+
+```mermaid
+graph TD
+    A[Access Console] --> B[Select "Subscription"]
+    B --> C[View Current Plan]
+    C --> D{Change Plan?}
+    D -- Yes --> E[Select New Plan]
+    E --> F[Confirm Subscription Change]
+    D -- No --> G[Return to Dashboard]
+```
+
 ## Accessibility Standards
 
 ### WCAG 2.1 AA Compliance
@@ -465,3 +511,12 @@ graph TD
 - Regular audits for accessibility and performance
 - Version control for design assets in Figma
 - Changelog for significant UI/UX updates
+
+## Role-Based Access Control (RBAC) in UI
+
+The UI reflects RBAC by:
+
+*   **Hiding or disabling features based on the user's role.**
+*   **Displaying different levels of access to data based on the user's role.**
+*   **Providing specific dashboards and reports tailored to each role.**
+*   **Restricting access to organization and user management functions based on role.**

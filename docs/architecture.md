@@ -23,6 +23,7 @@ The Temporary Pages Platform is designed as a modern, serverless architecture le
   - `payments`: Stripe integration and transaction processing
   - `storage`: File upload and secure delivery
   - `analytics`: Usage and performance tracking
+  - `accounts`: Organization, Group, Role, User Role, Plan, and Subscription management
 - **Shared Core Services**: Common utilities and middleware used across modules:
   - Security (HMAC, rate limiting)
   - Logging and monitoring
@@ -44,13 +45,16 @@ The platform employs a modular monolith approach for the following reasons:
 ### Data Storage
 
 - **Cloudflare R2**: Object storage for digital products (PDFs, images, etc.)
-- **Cloudflare D1**: For structured data storage (user accounts, page configurations, etc.)
+- **Cloudflare D1**: For structured data storage:
+  - User accounts, page configurations, products, files, orders, registrations
+  - Organizations, Groups, Roles, User Roles, Plans, Subscriptions
   - Separation of read and write models for scalability
 
 ### Authentication & Security
 
 - **Auth Layer**: JWT-based authentication with configurable session expiration
 - **HMAC Signing**: For tamper-proof URLs and parameters
+- **Role-Based Access Control**: Implemented using the `ROLE` and `USER_ROLE` entities to manage user permissions.
 - **Rate Limiting**: Implemented at the edge level with Cloudflare Workers
 - **IP Validation**: Using CF-Connecting-IP headers for access control
 
@@ -77,21 +81,25 @@ graph TD
     B --> J
     B --> K
     B --> L
+
+    C -- Account Management --> M[Accounts Module]
+    M -- Data Operations --> E
 ```
 
 ## Request Flow
 
 ### Page Creation
 
-1. User creates a temporary page through the console frontend
-2. Selects page type (countdown, flash sale, event registration, limited-time offer)
-3. Configures page-specific settings and customizations
-4. For product-based pages, associates products or uploads new products
-5. Next.js API routes process configuration and generate a unique shortened UUID
-6. Any files are uploaded directly to R2 with presigned URL
-7. Page metadata stored in database with expiration parameters
-8. For product-based pages, PAGE_CONTENT records are created with references to the associated products
-9. Unique page URL generated and returned to user
+1.  User creates a temporary page through the console frontend
+2.  Selects page type (countdown, flash sale, event registration, limited-time offer)
+3.  **System verifies user's organization, group, plan, and role.**
+4.  Configures page-specific settings and customizations
+5.  For product-based pages, associates products or uploads new products
+6.  Next.js API routes process configuration and generate a unique shortened UUID
+7.  Any files are uploaded directly to R2 with presigned URL
+8.  Page metadata stored in database with expiration parameters
+9.  For product-based pages, PAGE_CONTENT records are created with references to the associated products
+10. Unique page URL generated and returned to user
 
 ### Page Visitor Flow
 
@@ -191,7 +199,9 @@ stateDiagram-v2
 - Separation of read and write paths
 - Asynchronous processing for non-critical operations
 - Optimized database access patterns for high-traffic periods
-- **Selective Extraction Strategy**: Design modules to be extractable into separate workers if specific components need independent scaling
+- **Scalability of the `accounts` module, especially during user creation and subscription management, should be considered.**
+- **Caching of organization, group, and role data to reduce database load.**
+- Selective Extraction Strategy: Design modules to be extractable into separate workers if specific components need independent scaling
 
 ## Monitoring and Observability
 

@@ -27,6 +27,7 @@ This document outlines the phased development approach for building the Temporar
 - [ ] Create secure URL generation service with HMAC signing
 - [ ] Develop basic page management APIs
 - [ ] Define relationships between products and page content
+- [ ] **Set up database tables for Organizations, Groups, Roles, User Roles, Plans, and Subscriptions**
 
 #### Week 3: Countdown Page Development
 - [ ] Build user dashboard layout
@@ -118,6 +119,7 @@ This document outlines the phased development approach for building the Temporar
 - [ ] Create template system for quick page creation
 - [ ] Add rate limiting for all API endpoints
 - [ ] Enhance access control for downloads and registrations
+- [ ] **Implement Role-Based Access Control (RBAC) system**
 - [ ] Conduct final security and performance review
 
 ## Phase 4: Platform Expansion (Future Roadmap)
