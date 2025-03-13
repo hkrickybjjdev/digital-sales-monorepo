@@ -15,6 +15,7 @@ The Temporary Pages Platform is designed as a modern, serverless architecture le
 
 ### Backend Architecture (Cloudflare Workers)
 
+- **Web Framework**: Hono is used as the web framework for handling routing and middleware.
 - **Modular Monolith Approach**: A single worker with modular internal organization rather than separate microservices
 - **Domain-Driven Modules**: Organized into distinct functional modules:
   - `auth`: User authentication and authorization
