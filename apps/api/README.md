@@ -233,11 +233,14 @@ The pages module follows a clean architecture pattern:
    - Handles database operations
    - Provides data access abstraction
    - Implements CRUD operations for each entity
+   - Uses `D1Database`, passed in the constructor
    - Example: `pageRepository.ts`, `contentRepository.ts`, `registrationRepository.ts`
 
 3. **Service Layer** (`services/`)
    - Implements business logic
    - Orchestrates operations across repositories
+   - Uses repositories, passed in the constructor
+   - Should not call any db function directly, but instead use the repository
    - Handles caching and complex operations
    - Example: `PageService.ts`, `ContentService.ts`, `RegistrationService.ts`
 
