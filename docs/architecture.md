@@ -66,7 +66,7 @@ graph TD
     A[Visitor Browser] --> B[Next.js Frontend]
     B -- API Calls --> C[Cloudflare Workers]
     C -- Object Storage --> D[Cloudflare R2]
-    C -- Data Operations --> E[Database]
+    C -- Data Operations --> E[Cloudflare D1]
     C -- Payment Processing --> F[Stripe API]
     B -- Static Assets --> G[Vercel Edge Network]
     C -- Email/SMS Notifications --> H[Communication Service]
