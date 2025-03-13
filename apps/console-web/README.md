@@ -99,6 +99,7 @@ git clone https://github.com/Kiranism/next-shadcn-dashboard-starter.git
 - Create a `.env.local` file by copying the example environment file:
   `cp env.example.txt .env.local`
 - Add the required environment variables to the `.env.local` file.
+- run `node -e "console.log(require('crypto').randomBytes(32).toString('base64'));"` to generate AUTH_SECRET
 - `pnpm run dev`
 
 You should now be able to access the application at http://localhost:3000.
