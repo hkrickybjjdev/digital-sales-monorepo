@@ -45,6 +45,27 @@ erDiagram
         string roleId FK
         PRIMARY KEY (userId, roleId)
     }
+
+    PLAN {
+        string id PK
+        string name
+        string description
+        int priceInCents
+        string currency
+        string interval
+        boolean isVisible
+        JSON features
+    }
+
+    SUBSCRIPTION {
+        string id PK
+        string userId FK
+        string planId FK
+        timestamp startDate
+        timestamp endDate
+        string status
+        string stripeSubscriptionId
+    }
     
     PRODUCT {
         string id PK
@@ -129,6 +150,8 @@ erDiagram
     ORGANIZATION ||--o{ GROUP : has
     USER ||--o{ USER_ROLE : has
     ROLE ||--o{ USER_ROLE : assigned to
+    USER ||--o{ SUBSCRIPTION : subscribes to
+    PLAN ||--o{ SUBSCRIPTION : provides
 ```
 
 ## Core Entities
@@ -189,6 +212,35 @@ Represents the assignment of a role to a user.
 |-------|------|-------------|
 | userId | UUID (FK) | Reference to user |
 | roleId | UUID (FK) | Reference to role |
+
+### Plan
+
+Represents a pricing plan.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| id | UUID | Primary identifier |
+| name | String | Plan name (e.g., Free, Basic, Premium) |
+| description | String | Plan details |
+| priceInCents | Integer | Price in smallest currency unit |
+| currency | String | ISO currency code (e.g., USD) |
+| interval | String | Billing interval (e.g., month, year) |
+| isVisible | Boolean | Whether the plan is visible to users |
+| features | JSON | Plan-specific features and limits |
+
+### Subscription
+
+Represents a user's subscription to a plan, including free plans.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| id | UUID | Primary identifier |
+| userId | UUID (FK) | Reference to user |
+| planId | UUID (FK) | Reference to plan |
+| startDate | Timestamp | Subscription start date |
+| endDate | Timestamp | Subscription end date |
+| status | String | Subscription status (e.g., active, canceled, past_due, free) |
+| stripeSubscriptionId | String | Stripe subscription ID (if applicable, NULL for free plans) |
 
 ### Product
 
