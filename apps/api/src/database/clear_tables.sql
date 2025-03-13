@@ -8,6 +8,12 @@ DELETE FROM "PageContent";
 DELETE FROM "Session";
 
 -- Then clear the primary tables
+DELETE FROM "Subscription";
+DELETE FROM "UserRole";
+DELETE FROM "Group";
+DELETE FROM "Organization";
 DELETE FROM "Page";
 DELETE FROM "Product";
 DELETE FROM "User";
+DELETE FROM "Role";
+DELETE FROM "Plan";
