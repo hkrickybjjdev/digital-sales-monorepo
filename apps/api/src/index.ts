@@ -11,6 +11,7 @@ import { productsModule } from './modules/products';
 import { paymentsModule } from './modules/payments';
 import { storageModule } from './modules/storage';
 import { analyticsModule } from './modules/analytics';
+import { accountsModule } from './modules/accounts';
 import { Env } from './types';
 import { getAllVersions, getLatestVersion, LATEST_VERSION } from './utils/versioning';
 import { versionMiddleware } from './middleware/versionMiddleware';
@@ -61,35 +62,37 @@ app.use('/api/*', versionMiddleware);
 const v1 = new Hono<{ Bindings: Env }>();
 
 // Mount the modules to v1
-v1.route('/auth', authModule as any);
-v1.route('/pages', pagesModule as any);
-v1.route('/products', productsModule as any);
-v1.route('/payments', paymentsModule as any);
-v1.route('/storage', storageModule as any);
-v1.route('/analytics', analyticsModule as any);
+v1.route('/auth', authModule);
+v1.route('/pages', pagesModule);
+v1.route('/products', productsModule);
+v1.route('/payments', paymentsModule);
+v1.route('/storage', storageModule);
+v1.route('/analytics', analyticsModule);
+v1.route('/accounts', accountsModule);
 
 // v2 API routes
 const v2 = new Hono<{ Bindings: Env }>();
 
 // Mount the v2 modules
 // Only mount the auth module for v2 as a sample
-v2.route('/auth', authModuleV2 as any);
+v2.route('/auth', authModuleV2);
 
 // For other modules, use v1 implementations until v2 versions are ready
-v2.route('/pages', pagesModule as any);
-v2.route('/products', productsModule as any);
-v2.route('/payments', paymentsModule as any);
-v2.route('/storage', storageModule as any);
-v2.route('/analytics', analyticsModule as any);
+v2.route('/pages', pagesModule);
+v2.route('/products', productsModule);
+v2.route('/payments', paymentsModule);
+v2.route('/storage', storageModule);
+v2.route('/analytics', analyticsModule);
+v2.route('/accounts', accountsModule);
 
 // Mount v1 API to /api/v1
-app.route('/api/v1', v1 as any);
+app.route('/api/v1', v1);
 
 // Mount v2 API to /api/v2
-app.route('/api/v2', v2 as any);
+app.route('/api/v2', v2);
 
 // Also mount the latest version to /api/latest for convenience
-app.route(`/api/latest`, v1 as any);
+app.route(`/api/latest`, v1);
 
 // Error handling
 app.onError((err, c) => {
