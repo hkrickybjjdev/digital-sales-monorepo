@@ -34,14 +34,14 @@ export class SubscriptionService {
     const plan = await this.planRepository.getPlanById(data.planId);
     if (!plan) return null;
     
-    const now = new Date().toISOString();
-    let endDate: string | null = null;
+    const now = Date.now();
+    let endDate: number | null = null;
     
     // For free plans or trials, set an end date 30 days in the future
     if (plan.priceInCents === 0 || !data.paymentMethodId) {
       const endDateObj = new Date();
       endDateObj.setDate(endDateObj.getDate() + 30);
-      endDate = endDateObj.toISOString();
+      endDate = endDateObj.getTime();
     }
     
     // If it's a free plan, mark as 'free', otherwise as 'active'
@@ -75,7 +75,7 @@ export class SubscriptionService {
     if (!subscription) return null;
     
     // Set end date to now
-    const now = new Date().toISOString();
+    const now = Date.now();
     
     // If there's an active Stripe subscription, cancel it
     if (subscription.stripeSubscriptionId) {
@@ -110,7 +110,7 @@ export class SubscriptionService {
   }
   
   async processExpiredSubscriptions(): Promise<number> {
-    const now = new Date().toISOString();
+    const now = Date.now();
     const expiredSubscriptions = await this.subscriptionRepository.getExpiredSubscriptions(now);
     
     let processedCount = 0;

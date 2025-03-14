@@ -8,7 +8,7 @@ export class OrganizationRepository {
   
   async createOrganization(name: string, ownerId:string, isEnterprise = false): Promise<Organization> {
     const id = generateUUID();
-    const now = new Date().toISOString();
+    const now = Date.now();
     
     await this.db.prepare(
       `INSERT INTO "Organization" (id, ownerId, name, isEnterprise, createdAt, updatedAt)
@@ -67,7 +67,7 @@ export class OrganizationRepository {
     const org = await this.getOrganizationById(id);
     if (!org) return null;
     
-    const now = new Date().toISOString();
+    const now = Date.now();
     const updates = [];
     const params = [];
     

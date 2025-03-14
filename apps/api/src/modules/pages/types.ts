@@ -5,9 +5,9 @@ export interface Page {
   shortId: string;
   userId: string;
   type: PageType;
-  createdAt: string;
-  expiresAt: string | null;
-  launchAt: string | null;
+  createdAt: number;
+  expiresAt: number | null;
+  launchAt: number | null;
   isActive: boolean;
   customization: PageCustomization;
   settings: CountdownSettings | FlashSaleSettings | EventRegistrationSettings | LimitedOfferSettings;
@@ -27,7 +27,7 @@ export interface PageCustomization {
 }
 
 export interface CountdownSettings {
-  countdownTarget: string; // ISO timestamp
+  countdownTarget: number; // Unix timestamp
   postCountdownAction: 'redirect' | 'show-message' | 'show-form';
   redirectUrl?: string;
   messageTitle?: string;
@@ -35,7 +35,7 @@ export interface CountdownSettings {
 }
 
 export interface FlashSaleSettings {
-  saleEndTime: string; // ISO timestamp
+  saleEndTime: number; // Unix timestamp
   discountPercentage?: number;
   originalPriceDisplay?: boolean;
   inventoryLimit?: number;
@@ -44,8 +44,8 @@ export interface FlashSaleSettings {
 }
 
 export interface EventRegistrationSettings {
-  eventStartTime: string; // ISO timestamp
-  eventEndTime: string; // ISO timestamp
+  eventStartTime: number; // Unix timestamp
+  eventEndTime: number; // Unix timestamp
   eventLocation: 'virtual' | 'physical';
   physicalAddress?: string;
   virtualPlatform?: 'zoom' | 'meet' | 'teams' | 'custom';
@@ -55,7 +55,7 @@ export interface EventRegistrationSettings {
 }
 
 export interface LimitedOfferSettings {
-  offerEndTime: string; // ISO timestamp
+  offerEndTime: number; // Unix timestamp
   discountCode?: string;
   bonusDescription?: string;
   limitedQuantity?: number;
@@ -80,22 +80,22 @@ export interface Registration {
   email: string;
   name: string;
   phone?: string;
-  registeredAt: string;
+  registeredAt: number;
   customFields?: Record<string, any>;
 }
 
 export interface CreatePageRequest {
   type: PageType;
-  expiresAt?: string;
-  launchAt?: string;
+  expiresAt?: number;
+  launchAt?: number;
   isActive?: boolean;
   customization?: PageCustomization;
   settings: CountdownSettings | FlashSaleSettings | EventRegistrationSettings | LimitedOfferSettings;
 }
 
 export interface UpdatePageRequest {
-  expiresAt?: string;
-  launchAt?: string;
+  expiresAt?: number;
+  launchAt?: number;
   isActive?: boolean;
   customization?: PageCustomization;
   settings?: CountdownSettings | FlashSaleSettings | EventRegistrationSettings | LimitedOfferSettings;

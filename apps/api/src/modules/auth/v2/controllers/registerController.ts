@@ -44,7 +44,7 @@ export async function registerHandler(c: Context<{ Bindings: Env }>) {
       deviceInfo: deviceId ? {
         id: deviceId,
         name: 'New Device',
-        registered: new Date().toISOString(),
+        registered: Date.now(),
         trusted: true
       } : null
     }, 201);

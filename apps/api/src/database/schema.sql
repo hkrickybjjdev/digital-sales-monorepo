@@ -2,8 +2,8 @@
 CREATE TABLE IF NOT EXISTS "Session" (
   id TEXT PRIMARY KEY,
   userId TEXT NOT NULL REFERENCES "User"(id),
-  expiresAt TEXT NOT NULL,
-  createdAt TEXT NOT NULL
+  expiresAt INTEGER NOT NULL,
+  createdAt INTEGER NOT NULL
 );
 
 -- User table
@@ -14,8 +14,8 @@ CREATE TABLE IF NOT EXISTS "User" (
   email TEXT UNIQUE NOT NULL,
   name TEXT NOT NULL,
   passwordHash TEXT NOT NULL,
-  createdAt TEXT NOT NULL,
-  updatedAt TEXT NOT NULL,
+  createdAt INTEGER NOT NULL,
+  updatedAt INTEGER NOT NULL,
   stripeAccount TEXT
 );
 
@@ -27,9 +27,9 @@ CREATE TABLE IF NOT EXISTS "Product" (
   description TEXT,
   priceInCents INTEGER NOT NULL,
   currency TEXT NOT NULL,
-  createdAt TEXT NOT NULL,
-  updatedAt TEXT NOT NULL,
-  expiresAt TEXT,
+  createdAt INTEGER NOT NULL,
+  updatedAt INTEGER NOT NULL,
+  expiresAt INTEGER,
   isActive INTEGER NOT NULL DEFAULT 1
 );
 
@@ -41,7 +41,7 @@ CREATE TABLE IF NOT EXISTS "File" (
   fileType TEXT NOT NULL,
   storageKey TEXT NOT NULL,
   fileSizeBytes INTEGER NOT NULL,
-  uploadedAt TEXT NOT NULL
+  uploadedAt INTEGER NOT NULL
 );
 
 -- Page table
@@ -50,9 +50,9 @@ CREATE TABLE IF NOT EXISTS "Page" (
   shortId TEXT UNIQUE NOT NULL,
   userId TEXT NOT NULL REFERENCES "User"(id),
   type TEXT NOT NULL,
-  createdAt TEXT NOT NULL,
-  expiresAt TEXT,
-  launchAt TEXT,
+  createdAt INTEGER NOT NULL,
+  expiresAt INTEGER,
+  launchAt INTEGER,
   isActive INTEGER NOT NULL DEFAULT 1,
   customization TEXT NOT NULL DEFAULT '{}',
   settings TEXT NOT NULL
@@ -80,10 +80,10 @@ CREATE TABLE IF NOT EXISTS "Order" (
   paymentId TEXT NOT NULL,
   amountPaid INTEGER NOT NULL,
   currency TEXT NOT NULL,
-  createdAt TEXT NOT NULL,
+  createdAt INTEGER NOT NULL,
   status TEXT NOT NULL,
   downloadAttempts INTEGER NOT NULL DEFAULT 0,
-  lastDownloadAt TEXT
+  lastDownloadAt INTEGER
 );
 
 -- Registration table
@@ -93,7 +93,7 @@ CREATE TABLE IF NOT EXISTS "Registration" (
   email TEXT NOT NULL,
   name TEXT NOT NULL,
   phone TEXT,
-  registeredAt TEXT NOT NULL,
+  registeredAt INTEGER NOT NULL,
   customFields TEXT NOT NULL DEFAULT '{}'
 );
 
@@ -103,8 +103,8 @@ CREATE TABLE IF NOT EXISTS "Organization" (
   ownerId TEXT REFERENCES "User"(id),
   name TEXT NOT NULL,
   isEnterprise INTEGER NOT NULL DEFAULT 0,
-  createdAt TEXT NOT NULL,
-  updatedAt TEXT NOT NULL
+  createdAt INTEGER NOT NULL,
+  updatedAt INTEGER NOT NULL
 );
 
 -- Group table
@@ -112,8 +112,8 @@ CREATE TABLE IF NOT EXISTS "Group" (
   id TEXT PRIMARY KEY,
   organizationId TEXT NOT NULL REFERENCES "Organization"(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
-  createdAt TEXT NOT NULL,
-  updatedAt TEXT NOT NULL
+  createdAt INTEGER NOT NULL,
+  updatedAt INTEGER NOT NULL
 );
 
 -- Role table
@@ -146,12 +146,12 @@ CREATE TABLE IF NOT EXISTS "Subscription" (
   id TEXT PRIMARY KEY,
   userId TEXT NOT NULL REFERENCES "User"(id) ON DELETE CASCADE,
   planId TEXT NOT NULL REFERENCES "Plan"(id),
-  startDate TEXT NOT NULL,
-  endDate TEXT,
+  startDate INTEGER NOT NULL,
+  endDate INTEGER,
   status TEXT NOT NULL,
   stripeSubscriptionId TEXT,
-  createdAt TEXT NOT NULL,
-  updatedAt TEXT NOT NULL
+  createdAt INTEGER NOT NULL,
+  updatedAt INTEGER NOT NULL
 );
 
 -- Create indexes for frequently accessed columns

@@ -26,35 +26,35 @@ export const PageCustomizationSchema = z.object({
 
 // Settings Schemas
 export const CountdownSettingsSchema = z.object({
-  countdownTarget: z.string(), // ISO timestamp
+  countdownTarget: z.number(), // Unix timestamp
   postCountdownAction: z.enum(['redirect', 'show-message', 'show-form']),
-  redirectUrl: z.string().optional(),
+  redirectUrl: z.string().url().optional(),
   messageTitle: z.string().optional(),
   messageContent: z.string().optional(),
 });
 
 export const FlashSaleSettingsSchema = z.object({
-  saleEndTime: z.string(), // ISO timestamp
+  saleEndTime: z.number(), // Unix timestamp
   discountPercentage: z.number().optional(),
   originalPriceDisplay: z.boolean().optional(),
   inventoryLimit: z.number().optional(),
   soldOutAction: z.enum(['redirect', 'show-message']).optional(),
-  postSaleRedirectUrl: z.string().optional(),
+  postSaleRedirectUrl: z.string().url().optional(),
 });
 
 export const EventRegistrationSettingsSchema = z.object({
-  eventStartTime: z.string(), // ISO timestamp
-  eventEndTime: z.string(), // ISO timestamp
+  eventStartTime: z.number(), // Unix timestamp
+  eventEndTime: z.number(), // Unix timestamp
   eventLocation: z.enum(['virtual', 'physical']),
   physicalAddress: z.string().optional(),
   virtualPlatform: z.enum(['zoom', 'meet', 'teams', 'custom']).optional(),
-  platformLink: z.string().optional(),
+  platformLink: z.string().url().optional(),
   maxAttendees: z.number().optional(),
   waitlistEnabled: z.boolean().optional(),
 });
 
 export const LimitedOfferSettingsSchema = z.object({
-  offerEndTime: z.string(), // ISO timestamp
+  offerEndTime: z.number(), // Unix timestamp
   discountCode: z.string().optional(),
   bonusDescription: z.string().optional(),
   limitedQuantity: z.number().optional(),
@@ -75,9 +75,9 @@ export const PageSchema = z.object({
   shortId: z.string(),
   userId: z.string(),
   type: PageTypeSchema,
-  createdAt: z.string(),
-  expiresAt: z.string().nullable(),
-  launchAt: z.string().nullable(),
+  createdAt: z.number(),
+  expiresAt: z.number().nullable(),
+  launchAt: z.number().nullable(),
   isActive: z.boolean(),
   customization: PageCustomizationSchema,
   settings: z.union([
@@ -112,7 +112,7 @@ export const RegistrationSchema = z.object({
   email: z.string().email(),
   name: z.string(),
   phone: z.string().optional(),
-  registeredAt: z.string(),
+  registeredAt: z.number(),
   customFields: z.record(z.any()).optional(),
 });
 
@@ -121,8 +121,8 @@ export type Registration = z.infer<typeof RegistrationSchema>;
 // Request Schemas
 export const CreatePageRequestSchema = z.object({
   type: PageTypeSchema,
-  expiresAt: z.string().optional(),
-  launchAt: z.string().optional(),
+  expiresAt: z.number().optional(),
+  launchAt: z.number().optional(),
   isActive: z.boolean().optional(),
   customization: PageCustomizationSchema,
   settings: z.union([
@@ -136,8 +136,8 @@ export const CreatePageRequestSchema = z.object({
 export type CreatePageRequest = z.infer<typeof CreatePageRequestSchema>;
 
 export const UpdatePageRequestSchema = z.object({
-  expiresAt: z.string().optional(),
-  launchAt: z.string().optional(),
+  expiresAt: z.number().optional(),
+  launchAt: z.number().optional(),
   isActive: z.boolean().optional(),
   customization: PageCustomizationSchema,
   settings: z.union([
@@ -177,4 +177,4 @@ export const PageStatsSchema = z.object({
   conversionRate: z.number(),
 });
 
-export type PageStats = z.infer<typeof PageStatsSchema>; 
+export type PageStats = z.infer<typeof PageStatsSchema>;

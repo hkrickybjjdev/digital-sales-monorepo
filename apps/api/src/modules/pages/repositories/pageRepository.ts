@@ -16,7 +16,7 @@ export class PageRepository implements IPageRepository {
   async createPage(userId: string, request: CreatePageRequest): Promise<Page> {
     const id = generateUUID();
     const shortId = generateShortID(SHORT_ID_LENGTH);
-    const now = new Date().toISOString();
+    const now = Date.now();
     
     const page: Page = {
       id,

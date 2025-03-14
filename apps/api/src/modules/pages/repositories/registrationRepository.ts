@@ -11,7 +11,7 @@ export class RegistrationRepository implements IRegistrationRepository {
 
   async createRegistration(pageId: string, request: CreateRegistrationRequest): Promise<Registration> {
     const id = generateUUID();
-    const now = new Date().toISOString();
+    const now = Date.now();
     
     const registration: Registration = {
       id,

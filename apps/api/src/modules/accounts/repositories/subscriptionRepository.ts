@@ -105,7 +105,7 @@ export class SubscriptionRepository {
     return this.getSubscriptionById(id);
   }
   
-  async cancelSubscription(id: string, endDate: string): Promise<Subscription | null> {
+  async cancelSubscription(id: string, endDate: number): Promise<Subscription | null> {
     const subscription = await this.getSubscriptionById(id);
     if (!subscription) return null;
     
@@ -158,7 +158,7 @@ export class SubscriptionRepository {
     return result.results;
   }
   
-  async getExpiredSubscriptions(currentDate: string): Promise<Subscription[]> {
+  async getExpiredSubscriptions(currentDate: number): Promise<Subscription[]> {
     const result = await this.db.prepare(
       `SELECT id, userId, planId, startDate, endDate, status, stripeSubscriptionId
        FROM "Subscription"

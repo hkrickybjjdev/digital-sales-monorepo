@@ -12,14 +12,14 @@ post {
 
 headers {
   Content-Type: application/json
-  Authorization: Bearer {{authToken}}
+  Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIwMTk1OTQ2MS01OGRhLTcwOTEtOTkyOC05NjkzOTQ1YWIwYWIiLCJzaWQiOiIwMTk1OTQ2MS01OTIxLTczNGMtOGY5Yi00YzI0MzRmOTMzOGQiLCJpYXQiOjE3NDE5NTExNjIsImV4cCI6MTc0MjU1NTk2Mn0.f5ZlMOsxudusEbMouMAI9Hl6SmNNU0Ao883e8UvRpOk
 }
 
 body:json {
   {
     "type": "countdown",
-    "expiresAt": "2024-12-31T23:59:59Z",
-    "launchAt": "2024-01-01T00:00:00Z",
+    "expiresAt": 1742555962657,
+    "launchAt": 1742555962657,
     "isActive": true,
     "customization": {
       "theme": "dark",
@@ -33,7 +33,7 @@ body:json {
       "fontFamily": "Arial"
     },
     "settings": {
-      "countdownTarget": "2024-12-31T23:59:59Z",
+      "countdownTarget": 1742555962657,
       "postCountdownAction": "redirect",
       "redirectUrl": "https://example.com"
     }

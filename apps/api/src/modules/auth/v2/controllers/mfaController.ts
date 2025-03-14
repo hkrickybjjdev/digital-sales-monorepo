@@ -51,7 +51,7 @@ export async function mfaVerifyHandler(c: Context<{ Bindings: Env }>) {
       deviceInfo: deviceId ? {
         id: deviceId,
         name: 'Unknown Device',
-        lastLogin: new Date().toISOString(),
+        lastLogin: Date.now(),
         trusted: false
       } : null
     }, 200);

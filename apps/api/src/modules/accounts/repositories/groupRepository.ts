@@ -7,7 +7,7 @@ export class GroupRepository {
   
   async createGroup(name: string, organizationId: string): Promise<Group> {
     const id = generateUUID();
-    const now = new Date().toISOString();
+    const now = Date.now();
     
     await this.db.prepare(
       `INSERT INTO "Group" (id, organizationId, name, createdAt, updatedAt)
@@ -41,7 +41,7 @@ export class GroupRepository {
     const group = await this.getGroupById(id);
     if (!group) return null;
     
-    const now = new Date().toISOString();
+    const now = Date.now();
     const updates = [];
     const params = [];
     

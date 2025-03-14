@@ -6,8 +6,8 @@ export const organizationSchema = z.object({
   ownerId: z.string().uuid(),
   name: z.string().min(2).max(100),
   isEnterprise: z.boolean().default(false),
-  createdAt: z.string().datetime(),
-  updatedAt: z.string().datetime(),
+  createdAt: z.number(),
+  updatedAt: z.number(),
 });
 
 // Create organization request schema
@@ -28,8 +28,8 @@ export const groupSchema = z.object({
   id: z.string().uuid(),
   organizationId: z.string().uuid(),
   name: z.string().min(2).max(100),
-  createdAt: z.string().datetime(),
-  updatedAt: z.string().datetime(),
+  createdAt: z.number(),
+  updatedAt: z.number(),
 });
 
 // Create group request schema
@@ -102,12 +102,12 @@ export const subscriptionSchema = z.object({
   id: z.string().uuid(),
   userId: z.string().uuid(),
   planId: z.string().uuid(),
-  startDate: z.string().datetime(),
-  endDate: z.string().datetime().nullable(),
+  startDate: z.number(),
+  endDate: z.number().nullable(),
   status: subscriptionStatusSchema,
   stripeSubscriptionId: z.string().nullable(),
-  createdAt: z.string().datetime(),
-  updatedAt: z.string().datetime()
+  createdAt: z.number(),
+  updatedAt: z.number()
 });
 
 // Create subscription request schema
@@ -121,7 +121,7 @@ export const createSubscriptionSchema = z.object({
 export const updateSubscriptionSchema = z.object({
   planId: z.string().uuid().optional(),
   status: subscriptionStatusSchema.optional(),
-  endDate: z.string().datetime().optional(),
+  endDate: z.number().optional()
 });
 
 // User with roles schema
@@ -139,8 +139,8 @@ export const organizationWithGroupsSchema = z.object({
   id: z.string().uuid(),
   name: z.string().min(2).max(100),
   isEnterprise: z.boolean(),
-  createdAt: z.string().datetime(),
-  updatedAt: z.string().datetime(),
+  createdAt: z.number(),
+  updatedAt: z.number(),
   groups: z.array(groupSchema),
 });
 
@@ -179,4 +179,4 @@ export type UpdateSubscriptionRequest = z.infer<typeof updateSubscriptionSchema>
 
 export type UserWithRoles = z.infer<typeof userWithRolesSchema>;
 export type OrganizationWithGroups = z.infer<typeof organizationWithGroupsSchema>;
-export type UserPermissions = z.infer<typeof userPermissionsSchema>; 
+export type UserPermissions = z.infer<typeof userPermissionsSchema>;
