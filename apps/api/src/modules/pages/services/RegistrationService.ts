@@ -6,10 +6,11 @@ import {
 } from '../models/schemas';
 import { RegistrationRepository } from '../repositories/registrationRepository';
 import { PageRepository } from '../repositories/pageRepository';
+import { IRegistrationService, IRegistrationRepository, IPageRepository } from '../services/interfaces';
 
-export class RegistrationService {
-  private registrationRepository: RegistrationRepository;
-  private pageRepository: PageRepository;
+export class RegistrationService implements IRegistrationService {
+  private registrationRepository: IRegistrationRepository;
+  private pageRepository: IPageRepository;
   
   constructor(db: D1Database) {
     this.registrationRepository = new RegistrationRepository(db);
@@ -124,4 +125,4 @@ export class RegistrationService {
     
     return csvContent;
   }
-} 
+}

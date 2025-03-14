@@ -1,12 +1,12 @@
 import { Context } from 'hono';
 import { Env } from '../../../types';
-import { PageService } from '../services/PageService';
 import { 
   CreatePageRequestSchema,
   UpdatePageRequestSchema,
   Page
 } from '../models/schemas';
 import { formatResponse, formatError, formatPaginatedResponse, format500Error } from '../../../utils/api-response';
+import { getPagesContainer } from '../di/container';
 
 // Helper function to serialize Page to JSON-safe object
 function serializePage(page: Page) {
@@ -23,9 +23,9 @@ function serializePage(page: Page) {
 export const getPublicPage = async (c: Context<{ Bindings: Env }>) => {
   try {
     const shortId = c.req.param('shortId');
-    const pageService = new PageService(c.env.DB, c.env.PAGES_METADATA);
+    const container = getPagesContainer(c.env);
     
-    const page = await pageService.getPageByShortId(shortId);
+    const page = await container.pageService.getPageByShortId(shortId);
     
     if (!page) {
       return formatError(c, 'Page not found', 'ResourceNotFound', 404);
@@ -33,25 +33,25 @@ export const getPublicPage = async (c: Context<{ Bindings: Env }>) => {
     
     // For public pages, only return if active
     if (!page.isActive) {
-      return formatError(c, 'This page is not active', 'PageInactive', 404);
+      return formatError(c, 'Page is not active', 'PageInactive', 404);
     }
     
     // Check if page has expired
     if (page.expiresAt && new Date(page.expiresAt) < new Date()) {
-      return formatError(c, 'This page has expired', 'PageExpired', 404);
+      return formatError(c, 'Page has expired', 'PageExpired', 404);
     }
     
-    // Check if page has launched
+    // Check if page is launched yet
     if (page.launchAt && new Date(page.launchAt) > new Date()) {
-      return formatError(c, 'This page has not launched yet', 'PageNotLaunched', 404);
+      return formatError(c, 'Page is not yet available', 'PageNotLaunched', 404);
     }
     
     return formatResponse(c, serializePage(page));
   } catch (error) {
-    console.error('Error getting public page:', error);
+    console.error('Page retrieval error:', error);
     return format500Error(error as Error);
   }
-}
+};
 
 export const createPage = async (c: Context<{ Bindings: Env }>) => {
   try {
@@ -64,15 +64,39 @@ export const createPage = async (c: Context<{ Bindings: Env }>) => {
       return formatError(c, 'Invalid page data', 'ValidationError', 400);
     }
     
-    const pageService = new PageService(c.env.DB, c.env.PAGES_METADATA);
-    const page = await pageService.createPage(userId, result.data);
+    const container = getPagesContainer(c.env);
+    const page = await container.pageService.createPage(userId, result.data);
     
     return formatResponse(c, serializePage(page), 201);
   } catch (error) {
-    console.error('Error creating page:', error);
+    console.error('Page creation error:', error);
     return format500Error(error as Error);
   }
-}
+};
+
+export const getPage = async (c: Context<{ Bindings: Env }>) => {
+  try {
+    const userId = c.get('jwtPayload').sub;
+    const id = c.req.param('id');
+    
+    const container = getPagesContainer(c.env);
+    const page = await container.pageService.getPageById(id);
+    
+    if (!page) {
+      return formatError(c, 'Page not found', 'ResourceNotFound', 404);
+    }
+    
+    // Check ownership
+    if (page.userId !== userId) {
+      return formatError(c, 'Access denied', 'Forbidden', 403);
+    }
+    
+    return formatResponse(c, serializePage(page));
+  } catch (error) {
+    console.error('Page retrieval error:', error);
+    return format500Error(error as Error);
+  }
+};
 
 export const updatePage = async (c: Context<{ Bindings: Env }>) => {
   try {
@@ -86,82 +110,30 @@ export const updatePage = async (c: Context<{ Bindings: Env }>) => {
       return formatError(c, 'Invalid page data', 'ValidationError', 400);
     }
     
-    const pageService = new PageService(c.env.DB, c.env.PAGES_METADATA);
-    const page = await pageService.updatePage(id, userId, result.data);
+    const container = getPagesContainer(c.env);
+    const updatedPage = await container.pageService.updatePage(id, userId, result.data);
     
-    if (!page) {
-      return formatError(c, 'Page not found or you do not have permission to update it', 'ResourceNotFound', 404);
-    }
-    
-    return formatResponse(c, serializePage(page));
-  } catch (error) {
-    console.error('Error updating page:', error);
-    return format500Error(error as Error);
-  }
-}
-
-export const getPage = async (c: Context<{ Bindings: Env }>) => {
-  try {
-    const userId = c.get('jwtPayload').sub;
-    const id = c.req.param('id');
-    
-    const pageService = new PageService(c.env.DB, c.env.PAGES_METADATA);
-    const page = await pageService.getPageById(id);
-    
-    if (!page) {
+    if (!updatedPage) {
       return formatError(c, 'Page not found', 'ResourceNotFound', 404);
     }
     
-    // Check if user owns the page
-    if (page.userId !== userId) {
-      return formatError(c, 'You do not have permission to access this page', 'Unauthorized', 403);
-    }
-    
-    return formatResponse(c, serializePage(page));
+    return formatResponse(c, serializePage(updatedPage));
   } catch (error) {
-    console.error('Error getting page:', error);
+    console.error('Page update error:', error);
     return format500Error(error as Error);
   }
-}
-
-export const listPages = async (c: Context<{ Bindings: Env }>) => {
-  try {
-    const userId = c.get('jwtPayload').sub;
-    const limit = Number(c.req.query('limit') || '20');
-    const offset = Number(c.req.query('offset') || '0');
-    const type = c.req.query('type') as any;
-    
-    const pageService = new PageService(c.env.DB, c.env.PAGES_METADATA);
-    const { pages, total, hasMore } = await pageService.listUserPages(userId, limit, offset, type);
-    
-    // Create a URL object for pagination
-    const url = new URL(c.req.url);
-    const page = Math.floor(offset / limit) + 1;
-    
-    return formatPaginatedResponse(
-      c,
-      pages.map(page => serializePage(page)),
-      total,
-      page,
-      limit,
-      url
-    );
-  } catch (error) {
-    console.error('Error listing pages:', error);
-    return format500Error(error as Error);
-  }
-}
+};
 
 export const deletePage = async (c: Context<{ Bindings: Env }>) => {
   try {
     const userId = c.get('jwtPayload').sub;
     const id = c.req.param('id');
     
-    const pageService = new PageService(c.env.DB, c.env.PAGES_METADATA);
-    const deleted = await pageService.deletePage(id, userId);
+    const container = getPagesContainer(c.env);
+    const deleted = await container.pageService.deletePage(id, userId);
     
     if (!deleted) {
-      return formatError(c, 'Page not found or you do not have permission to delete it', 'ResourceNotFound', 404);
+      return formatError(c, 'Page not found', 'ResourceNotFound', 404);
     }
     
     return formatResponse(c, { success: true });
@@ -169,4 +141,39 @@ export const deletePage = async (c: Context<{ Bindings: Env }>) => {
     console.error('Error deleting page:', error);
     return format500Error(error as Error);
   }
-} 
+};
+
+export const listPages = async (c: Context<{ Bindings: Env }>) => {
+  try {
+    const userId = c.get('jwtPayload').sub;
+    
+    // Get pagination params from query
+    const limit = Number(c.req.query('limit') || 20);
+    const page = Number(c.req.query('page') || 1);
+    const type = c.req.query('type');
+    const offset = (page - 1) * limit;
+    
+    const container = getPagesContainer(c.env);
+    const result = await container.pageService.listUserPages(
+      userId,
+      limit,
+      offset,
+      type as any // Cast to PageType
+    );
+    
+    // Generate pagination URL
+    const url = new URL(c.req.url);
+    
+    return formatPaginatedResponse(
+      c,
+      result.pages.map(page => serializePage(page)),
+      result.total,
+      page,
+      limit,
+      url
+    );
+  } catch (error) {
+    console.error('Page listing error:', error);
+    return format500Error(error as Error);
+  }
+};

@@ -1,17 +1,16 @@
 import { Context } from 'hono';
 import { Env } from '../../../types';
-import { RegistrationService } from '../services/RegistrationService';
 import { 
   CreateRegistrationRequestSchema,
   Registration
 } from '../models/schemas';
 import { formatResponse, formatError, formatPaginatedResponse, format500Error } from '../../../utils/api-response';
+import { getPagesContainer } from '../di/container';
 
 // Helper function to serialize Registration to JSON-safe object
 function serializeRegistration(registration: Registration) {
   return {
     ...registration,
-    registeredAt: registration.registeredAt.toString(),
     customFields: registration.customFields || {}
   };
 }
@@ -27,37 +26,64 @@ export const createRegistration = async (c: Context<{ Bindings: Env }>) => {
       return formatError(c, 'Invalid registration data', 'ValidationError', 400);
     }
 
-    const registrationService = new RegistrationService(c.env.DB);
-    const { registration, error } = await registrationService.createRegistration(shortId, result.data);
-    
-    if (error) {
-      return formatError(c, error, 'RegistrationError', 400);
-    }
+    const container = getPagesContainer(c.env);
+    const { registration, error } = await container.registrationService.createRegistration(shortId, result.data);
     
     if (!registration) {
-      return formatError(c, 'Failed to create registration', 'InternalServerError', 500);
+      // Handle specific error cases
+      if (error === 'Page not found') {
+        return formatError(c, 'Page not found', 'ResourceNotFound', 404);
+      } else if (error === 'Page is not active') {
+        return formatError(c, 'Page is not active', 'PageInactive', 400);
+      } else if (error === 'Page has expired') {
+        return formatError(c, 'Page has expired', 'PageExpired', 400);
+      } else if (error === 'Page is not yet launched') {
+        return formatError(c, 'Page is not yet available', 'PageNotLaunched', 400);
+      } else if (error?.includes('maximum capacity')) {
+        return formatError(c, 'Registration limit reached', 'RegistrationLimitReached', 400);
+      } else {
+        return formatError(c, error || 'Failed to create registration', 'InternalServerError', 500);
+      }
     }
+
+    // Track conversion without waiting for the result
+    container.pageCacheService.incrementConversions(registration.pageId, shortId)
+      .catch(error => console.error('Error tracking conversion:', error));
 
     return formatResponse(c, serializeRegistration(registration), 201);
   } catch (error) {
-    console.error('Error creating registration:', error);
+    console.error('Registration creation error:', error);
     return format500Error(error as Error);
   }
-}
+};
 
 export const listRegistrations = async (c: Context<{ Bindings: Env }>) => {
   try {
     const userId = c.get('jwtPayload').sub;
     const pageId = c.req.param('pageId');
-    const limit = Number(c.req.query('limit') || '100');
-    const offset = Number(c.req.query('offset') || '0');
     
-    const registrationService = new RegistrationService(c.env.DB);
-    const { registrations, total, hasMore } = await registrationService.getRegistrations(pageId, userId, limit, offset);
+    // Get pagination params from query
+    const limit = Number(c.req.query('limit') || 100);
+    const page = Number(c.req.query('page') || 1);
+    const offset = (page - 1) * limit;
     
-    // Create a URL object for pagination
+    const container = getPagesContainer(c.env);
+    
+    // First verify page ownership
+    const pageExists = await container.pageService.getPageById(pageId);
+    if (!pageExists || pageExists.userId !== userId) {
+      return formatError(c, 'Page not found or access denied', 'ResourceNotFound', 404);
+    }
+    
+    const { registrations, total } = await container.registrationService.getRegistrations(
+      pageId, 
+      userId,
+      limit,
+      offset
+    );
+    
+    // Generate pagination URL
     const url = new URL(c.req.url);
-    const page = Math.floor(offset / limit) + 1;
     
     return formatPaginatedResponse(
       c,
@@ -71,15 +97,22 @@ export const listRegistrations = async (c: Context<{ Bindings: Env }>) => {
     console.error('Error listing registrations:', error);
     return format500Error(error as Error);
   }
-}
+};
 
 export const exportRegistrations = async (c: Context<{ Bindings: Env }>) => {
   try {
     const userId = c.get('jwtPayload').sub;
     const pageId = c.req.param('pageId');
     
-    const registrationService = new RegistrationService(c.env.DB);
-    const csvContent = await registrationService.exportRegistrationsAsCsv(pageId, userId);
+    const container = getPagesContainer(c.env);
+    
+    // First verify page ownership
+    const pageExists = await container.pageService.getPageById(pageId);
+    if (!pageExists || pageExists.userId !== userId) {
+      return formatError(c, 'Page not found or access denied', 'ResourceNotFound', 404);
+    }
+    
+    const csvContent = await container.registrationService.exportRegistrationsAsCsv(pageId, userId);
     
     // Set headers for CSV download
     c.header('Content-Type', 'text/csv');
@@ -90,4 +123,4 @@ export const exportRegistrations = async (c: Context<{ Bindings: Env }>) => {
     console.error('Error exporting registrations:', error);
     return format500Error(error as Error);
   }
-} 
+};

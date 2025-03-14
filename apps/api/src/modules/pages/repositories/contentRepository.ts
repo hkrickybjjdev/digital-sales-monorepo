@@ -4,8 +4,9 @@ import {
   PageContent, 
   CreatePageContentRequest
 } from '../models/schemas';
+import { IContentRepository } from '../services/interfaces';
 
-export class ContentRepository {
+export class ContentRepository implements IContentRepository {
   constructor(private readonly db: D1Database) {}
 
   async createPageContent(pageId: string, userId: string, request: CreatePageContentRequest): Promise<PageContent | null> {
@@ -173,4 +174,4 @@ export class ContentRepository {
       metadata: JSON.parse(result.metadata || '{}')
     };
   }
-} 
+}

@@ -4,9 +4,10 @@ import {
   CreatePageContentRequest
 } from '../models/schemas';
 import { ContentRepository } from '../repositories/contentRepository';
+import { IContentService, IContentRepository } from '../services/interfaces';
 
-export class ContentService {
-  private contentRepository: ContentRepository;
+export class ContentService implements IContentService {
+  private contentRepository: IContentRepository;
   
   constructor(db: D1Database) {
     this.contentRepository = new ContentRepository(db);
@@ -31,4 +32,4 @@ export class ContentService {
   async deletePageContent(id: string, pageId: string, userId: string): Promise<boolean> {
     return await this.contentRepository.deletePageContent(id, pageId, userId);
   }
-} 
+}

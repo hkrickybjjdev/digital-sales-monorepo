@@ -7,10 +7,11 @@ import {
   UpdatePageRequest,
   PageType
 } from '../models/schemas';
+import { IPageRepository } from '../services/interfaces';
 
 const SHORT_ID_LENGTH = 8;
 
-export class PageRepository {
+export class PageRepository implements IPageRepository {
   constructor(private readonly db: D1Database) {}
 
   async createPage(userId: string, request: CreatePageRequest): Promise<Page> {
@@ -179,4 +180,4 @@ export class PageRepository {
       settings: JSON.parse(result.settings || '{}')
     };
   }
-} 
+}

@@ -1,6 +1,7 @@
 import { Page, PageStats } from '../types';
+import { IPageCacheService } from './interfaces';
 
-export class PageCacheService {
+export class PageCacheService implements IPageCacheService {
   constructor(private readonly kv: KVNamespace) {}
 
   // Key formats

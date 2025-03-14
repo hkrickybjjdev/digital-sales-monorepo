@@ -4,8 +4,9 @@ import {
   Registration, 
   CreateRegistrationRequest
 } from '../models/schemas';
+import { IRegistrationRepository } from '../services/interfaces';
 
-export class RegistrationRepository {
+export class RegistrationRepository implements IRegistrationRepository {
   constructor(private readonly db: D1Database) {}
 
   async createRegistration(pageId: string, request: CreateRegistrationRequest): Promise<Registration> {
@@ -85,4 +86,4 @@ export class RegistrationRepository {
       customFields: JSON.parse(result.customFields || '{}')
     };
   }
-} 
+}
