@@ -1,10 +1,8 @@
 import { Context } from 'hono';
-import { AuthService } from '../services/authService';
-import { loginSchema } from '../models/schemas';
+import { loginSchema, registerSchema } from '../models/schemas';
 import { Env } from '../../../types';
 import { formatResponse, formatError, format500Error } from '../../../utils/api-response';
-import { UserRepository } from '../repositories/userRepository';
-import { registerSchema } from '../models/schemas';
+import { getAuthContainer } from '../di/container';
 
 // Export a single handler function
 export const login = async (c: Context<{ Bindings: Env }>) => {
@@ -19,9 +17,11 @@ export const login = async (c: Context<{ Bindings: Env }>) => {
     }
     
     const data = parseResult.data;
-    const authService = new AuthService(c.env);
     
-    const result = await authService.login(data);
+    // Use the DI container
+    const container = getAuthContainer(c.env);
+    const result = await container.authService.login(data);
+    
     return formatResponse(c, result);
   } catch (error) {
     if (error instanceof Error && error.message === 'Invalid email or password') {
@@ -41,9 +41,9 @@ export const logout = async (c: Context<{ Bindings: Env }>) => {
       return c.json({ error: 'Invalid session' }, 400);
     }
     
-    // Delete the session from database
-    const userRepository = new UserRepository(c.env);
-    await userRepository.deleteSession(sessionId);
+    // Use the DI container
+    const container = getAuthContainer(c.env);
+    await container.userRepository.deleteSession(sessionId);
     
     return c.json({ success: true, message: 'Logged out successfully' });
   } catch (error) {
@@ -64,9 +64,11 @@ export const register = async (c: Context<{ Bindings: Env }>) => {
     }
     
     const data = parseResult.data;
-    const authService = new AuthService(c.env);
     
-    const result = await authService.register(data);
+    // Use the DI container
+    const container = getAuthContainer(c.env);
+    const result = await container.authService.register(data);
+    
     return formatResponse(c, result, 201);
   } catch (error) {
     if (error instanceof Error && error.message === 'User with this email already exists') {
@@ -86,8 +88,9 @@ export const getCurrentUser = async (c: Context<{ Bindings: Env }>) => {
       return c.json({ error: 'User not found' }, 404);
     }
     
-    const authService = new AuthService(c.env);
-    const user = await authService.getUserById(userId);
+    // Use the DI container
+    const container = getAuthContainer(c.env);
+    const user = await container.authService.getUserById(userId);
     
     if (!user) {
       return c.json({ error: 'User not found' }, 404);

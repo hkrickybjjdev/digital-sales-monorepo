@@ -1,8 +1,9 @@
 import { User, Session } from '../models/schemas';
 import { Env } from '../../../types';
 import { v7 as uuidv7 } from 'uuid';
+import { IUserRepository } from '../services/interfaces';
 
-export class UserRepository {
+export class UserRepository implements IUserRepository {
   private db: D1Database;
 
   constructor(env: Env) {
@@ -104,7 +105,7 @@ export class UserRepository {
     const stmt = this.db.prepare(
       'DELETE FROM Session WHERE expiresAt < ?'
     ).bind(now);
-
+    
     await stmt.run();
   }
 }

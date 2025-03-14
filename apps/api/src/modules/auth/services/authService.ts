@@ -3,13 +3,15 @@ import * as jose from 'jose';
 import { UserRepository } from '../repositories/userRepository';
 import { User, AuthResponse, LoginRequest, RegisterRequest } from '../models/schemas';
 import { Env } from '../../../types';
+import { IAuthService } from './interfaces';
 
-export class AuthService {
-  private userRepository: UserRepository;
+export class AuthService implements IAuthService {
   private jwtSecret: string;
 
-  constructor(env: Env) {
-    this.userRepository = new UserRepository(env);
+  constructor(
+    private readonly env: Env, 
+    private readonly userRepository: UserRepository
+  ) {
     this.jwtSecret = env.JWT_SECRET;
   }
 

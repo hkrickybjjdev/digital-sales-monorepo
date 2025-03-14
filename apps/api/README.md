@@ -170,6 +170,45 @@ npm run build
 
 The backend follows a modular monolith architecture pattern, organizing functionality into domain-driven modules while maintaining a single deployment unit for simplicity and performance.
 
+### Dependency Injection
+
+The API uses a simple dependency injection pattern to improve testability, maintainability, and decoupling of components. Currently implemented in the Auth module, this pattern:
+
+1. **Defines Interfaces**: Service and repository contracts are defined in interface files
+2. **Creates Singletons**: Stateless services are implemented as singletons to improve performance
+3. **Uses Containers**: Module-specific DI containers manage instance creation and dependencies
+4. **Environment Aware**: Handles environment changes in serverless contexts
+
+#### DI Container Structure
+
+```typescript
+// Module-specific container interface
+interface AuthContainer {
+  userRepository: IUserRepository;
+  authService: IAuthService;
+}
+
+// Factory function to get container
+function getAuthContainer(env: Env): AuthContainer {
+  // Create or retrieve singleton instances
+  // Return container with all dependencies
+}
+```
+
+#### Usage Example
+
+```typescript
+// In a handler function
+const container = getAuthContainer(c.env);
+const result = await container.authService.login(data);
+```
+
+#### Benefits
+- **Testability**: Easy to mock dependencies for unit testing
+- **Maintainability**: Clear dependency graph and separation of concerns
+- **Flexibility**: Simple to swap implementations that follow the same interface
+- **Performance**: Singleton pattern for stateless services reduces instantiation overhead
+
 ## Getting Started
 
 ### Prerequisites
@@ -206,18 +245,21 @@ Each domain module is organized in a consistent structure:
 
 ```
 modules/
-  ├── auth/            # Authentication and authorization
-  │   ├── controllers/ # RHandler functions for HTTP requests
-  │   ├── services/    # Business logic layer
-  │   ├── models/      # Zod schemas and type definitions
-  │   ├── utils/       # Module-specific utilities
-  │   ├── v2/          # v2 API implementation
-  │   └── index.ts     # Route definitions and module exports
-  ├── pages/           # Page management
-  ├── products/        # Digital product handling
-  ├── payments/        # Stripe integration
-  ├── storage/         # File upload and delivery
-  └── analytics/       # Usage tracking and reporting
+  ├── auth/                 # Authentication and authorization
+  │   ├── controllers/      # Handler functions for HTTP requests
+  │   ├── services/         # Business logic layer
+  │   │   └── interfaces.ts # Service and repository interfaces
+  │   ├── models/           # Zod schemas and type definitions
+  │   ├── utils/            # Module-specific utilities
+  │   ├── di/               # Dependency injection containers
+  │   │   └── container.ts  # DI container implementation
+  │   ├── v2/               # v2 API implementation
+  │   └── index.ts          # Route definitions and module exports
+  ├── pages/                # Page management
+  ├── products/             # Digital product handling
+  ├── payments/             # Stripe integration
+  ├── storage/              # File upload and delivery
+  └── analytics/            # Usage tracking and reporting
 ```
 
 ### Pages Module Architecture
