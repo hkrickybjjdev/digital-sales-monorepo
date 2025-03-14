@@ -100,6 +100,7 @@ CREATE TABLE IF NOT EXISTS "Registration" (
 -- Organization table
 CREATE TABLE IF NOT EXISTS "Organization" (
   id TEXT PRIMARY KEY,
+  ownerId TEXT REFERENCES "User"(id),
   name TEXT NOT NULL,
   isEnterprise INTEGER NOT NULL DEFAULT 0,
   createdAt TEXT NOT NULL,
@@ -148,7 +149,9 @@ CREATE TABLE IF NOT EXISTS "Subscription" (
   startDate TEXT NOT NULL,
   endDate TEXT,
   status TEXT NOT NULL,
-  stripeSubscriptionId TEXT
+  stripeSubscriptionId TEXT,
+  createdAt TEXT NOT NULL,
+  updatedAt TEXT NOT NULL
 );
 
 -- Create indexes for frequently accessed columns

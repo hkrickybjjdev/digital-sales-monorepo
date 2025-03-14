@@ -21,6 +21,7 @@ erDiagram
 
     ORGANIZATION {
         string id PK
+        string ownerId FK
         string name
         boolean isEnterprise
         timestamp createdAt
@@ -65,6 +66,8 @@ erDiagram
         timestamp endDate
         string status
         string stripeSubscriptionId
+        timestamp createdAt
+        timestamp updatedAt
     }
     
     PRODUCT {
@@ -163,6 +166,7 @@ Represents a customer organization.
 | Field | Type | Description |
 |-------|------|-------------|
 | id | UUID | Primary identifier |
+| ownerId | UUID (FK) | Reference to user who owns the organization |
 | name | String | Organization name |
 | isEnterprise | Boolean | Indicates if the organization is an enterprise customer |
 | createdAt | Timestamp | Creation date |
@@ -241,6 +245,8 @@ Represents a user's subscription to a plan, including free plans.
 | endDate | Timestamp | Subscription end date |
 | status | String | Subscription status (e.g., active, canceled, past_due, free) |
 | stripeSubscriptionId | String | Stripe subscription ID (if applicable, NULL for free plans) |
+| createdAt | Timestamp | Subscription creation date |
+| updatedAt | Timestamp | Last Subscription update |
 
 ### Product
 

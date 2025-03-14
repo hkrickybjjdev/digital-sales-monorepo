@@ -45,6 +45,7 @@ export class UserSetupService {
       
       const organization = await this.organizationService.createOrganization({
         name: orgName,
+        ownerId: userId,
         isEnterprise: isEnterprise
       });
       

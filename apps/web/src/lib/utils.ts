@@ -1,6 +1,6 @@
 import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
-import { v4 as uuidv4 } from 'uuid'
+import { v7 as uuidv7 } from 'uuid'
 import * as crypto from 'crypto'
 
 export function cn(...inputs: ClassValue[]) {
@@ -9,7 +9,7 @@ export function cn(...inputs: ClassValue[]) {
 
 // Generate a unique UUID
 export function generateUUID(): string {
-  return uuidv4()
+  return uuidv7()
 }
 
 // Calculate when a product will expire (24 hours from now or creation)
