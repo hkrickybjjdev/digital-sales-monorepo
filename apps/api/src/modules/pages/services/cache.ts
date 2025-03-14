@@ -39,7 +39,9 @@ export class PageCacheService implements IPageCacheService {
     if (!cached) return null;
     
     try {
-      return JSON.parse(cached) as Page;
+      const page = JSON.parse(cached) as Page;
+      console.log(`Page ${shortId} retrieved from cache`);
+      return page;
     } catch (error) {
       console.error('Error parsing cached page:', error);
       return null;
