@@ -70,6 +70,13 @@ erDiagram
         timestamp updatedAt
     }
     
+    SESSION {
+        string id PK
+        string userId FK
+        timestamp expiresAt
+        timestamp createdAt
+    }
+    
     PRODUCT {
         string id PK
         string userId FK
@@ -155,6 +162,7 @@ erDiagram
     ROLE ||--o{ USER_ROLE : assigned to
     USER ||--o{ SUBSCRIPTION : subscribes to
     PLAN ||--o{ SUBSCRIPTION : provides
+    USER ||--o{ SESSION : has
 ```
 
 ## Core Entities
@@ -247,6 +255,17 @@ Represents a user's subscription to a plan, including free plans.
 | stripeSubscriptionId | String | Stripe subscription ID (if applicable, NULL for free plans) |
 | createdAt | Timestamp | Subscription creation date |
 | updatedAt | Timestamp | Last Subscription update |
+
+### Session
+
+Represents a user session for authentication.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| id | TEXT | Primary identifier |
+| userId | TEXT (FK) | Reference to user |
+| expiresAt | INTEGER | Session expiration timestamp |
+| createdAt | INTEGER | Session creation timestamp |
 
 ### Product
 

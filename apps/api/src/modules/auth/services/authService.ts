@@ -81,9 +81,6 @@ export class AuthService implements IAuthService {
     const secret = new TextEncoder().encode(this.jwtSecret);
     const alg = 'HS256';
 
-    // Create session
-    const session = await this.userRepository.createSession(userId);
-
     return new jose.SignJWT({ 
       sub: userId,
       sid: sessionId 
