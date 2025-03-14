@@ -35,8 +35,8 @@ export class SubscriptionRepository {
     const id = `sub_${uuidv4()}`;
     
     await this.db.prepare(
-      `INSERT INTO "Subscription" (id, userId, planId, startDate, endDate, status, stripeSubscriptionId)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`
+      `INSERT INTO "Subscription" (id, userId, planId, startDate, endDate, status, stripeSubscriptionId, createdAt, updatedAt)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
     )
     .bind(
       id,
@@ -45,7 +45,9 @@ export class SubscriptionRepository {
       subscription.startDate,
       subscription.endDate,
       subscription.status,
-      subscription.stripeSubscriptionId
+      subscription.stripeSubscriptionId,
+      subscription.createdAt,
+      subscription.updatedAt
     )
     .run();
     

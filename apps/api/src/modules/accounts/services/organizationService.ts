@@ -25,7 +25,7 @@ export class OrganizationService {
   }
   
   async createOrganization(data: CreateOrganizationRequest): Promise<Organization> {
-    return this.organizationRepository.createOrganization(data.name, data.isEnterprise);
+    return this.organizationRepository.createOrganization(data.name, data.ownerId, data.isEnterprise);
   }
   
   async getOrganizationById(id: string): Promise<Organization | null> {
@@ -50,11 +50,11 @@ export class OrganizationService {
     return this.organizationRepository.listOrganizations(limit, offset);
   }
   
-  async createDefaultOrganization(isEnterprise: boolean = false): Promise<{ organization: Organization; group: any }> {
+  async createDefaultOrganization(ownerId:string, isEnterprise: boolean = false): Promise<{ organization: Organization; group: any }> {
     // Create a new organization with a random name for non-enterprise users
     // For enterprise users, a proper name should be provided later
     const orgName = isEnterprise ? 'Enterprise Organization' : `Organization-${uuidv4().substring(0, 8)}`;
-    const organization = await this.organizationRepository.createOrganization(orgName, isEnterprise);
+    const organization = await this.organizationRepository.createOrganization(orgName, ownerId, isEnterprise);
     
     // Create a default group within the organization
     const groupName = isEnterprise ? 'Default Group' : `Group-${uuidv4().substring(0, 8)}`;

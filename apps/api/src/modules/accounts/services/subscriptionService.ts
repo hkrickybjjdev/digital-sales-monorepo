@@ -60,7 +60,9 @@ export class SubscriptionService {
       startDate: now,
       endDate,
       status,
-      stripeSubscriptionId
+      stripeSubscriptionId,
+      createdAt: now,
+      updatedAt: now,
     });
   }
   
