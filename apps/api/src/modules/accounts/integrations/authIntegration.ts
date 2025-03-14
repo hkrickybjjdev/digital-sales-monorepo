@@ -3,7 +3,7 @@ import { OrganizationService } from '../services/organizationService';
 import { RoleService } from '../services/roleService';
 import { SubscriptionService } from '../services/subscriptionService';
 import { GroupService } from '../services/groupService';
-import { nanoid } from 'nanoid';
+import { generateShortID } from '../../../utils/utils';
 
 export class AuthIntegration {
   private organizationService: OrganizationService;
@@ -36,9 +36,10 @@ export class AuthIntegration {
       // and use a generic name for the organization
       
       // 2. Create a new organization for the user
-      const orgName = isEnterprise ? `Enterprise Org ${userId.slice(0, 6)}` : `org-${nanoid(8)}`;
+      const orgName = isEnterprise ? `Enterprise Org ${userId.slice(0, 6)}` : `org-${generateShortID(8)}`;
       const organization = await this.organizationService.createOrganization({
         name: orgName,
+        ownerId: userId,
         isEnterprise
       });
       
@@ -47,7 +48,7 @@ export class AuthIntegration {
       }
       
       // 3. Create a default group for the organization
-      const groupName = isEnterprise ? 'Default Group' : `group-${nanoid(6)}`;
+      const groupName = isEnterprise ? 'Default Group' : `group-${generateShortID(6)}`;
       const group = await this.groupService.createGroup({
         name: groupName,
         organizationId: organization.id

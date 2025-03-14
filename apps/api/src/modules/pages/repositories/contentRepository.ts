@@ -1,10 +1,10 @@
 import { D1Database } from '@cloudflare/workers-types';
-import { v7 as uuidv7 } from 'uuid';
 import { 
   PageContent, 
   CreatePageContentRequest
 } from '../models/schemas';
 import { IContentRepository } from '../services/interfaces';
+import { generateUUID } from '../../../utils/utils';
 
 export class ContentRepository implements IContentRepository {
   constructor(private readonly db: D1Database) {}
@@ -16,7 +16,7 @@ export class ContentRepository implements IContentRepository {
       return null;
     }
     
-    const id = uuidv7();
+    const id = generateUUID();
     
     const content: PageContent = {
       id,

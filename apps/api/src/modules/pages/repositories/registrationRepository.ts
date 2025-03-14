@@ -1,16 +1,16 @@
 import { D1Database } from '@cloudflare/workers-types';
-import { v7 as uuidv7 } from 'uuid';
 import { 
   Registration, 
   CreateRegistrationRequest
 } from '../models/schemas';
 import { IRegistrationRepository } from '../services/interfaces';
+import { generateUUID } from '../../../utils/utils';
 
 export class RegistrationRepository implements IRegistrationRepository {
   constructor(private readonly db: D1Database) {}
 
   async createRegistration(pageId: string, request: CreateRegistrationRequest): Promise<Registration> {
-    const id = uuidv7();
+    const id = generateUUID();
     const now = new Date().toISOString();
     
     const registration: Registration = {

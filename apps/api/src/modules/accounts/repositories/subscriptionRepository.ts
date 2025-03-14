@@ -1,6 +1,6 @@
 import { D1Database } from '@cloudflare/workers-types';
 import { Subscription, SubscriptionStatus } from '../models/schemas';
-import { v4 as uuidv4 } from 'uuid';
+import { generateUUID } from '../../../utils/utils';
 
 export class SubscriptionRepository {
   constructor(private readonly db: D1Database) {}
@@ -32,7 +32,7 @@ export class SubscriptionRepository {
   }
   
   async createSubscription(subscription: Omit<Subscription, 'id'>): Promise<Subscription> {
-    const id = `sub_${uuidv4()}`;
+    const id = generateUUID();
     
     await this.db.prepare(
       `INSERT INTO "Subscription" (id, userId, planId, startDate, endDate, status, stripeSubscriptionId, createdAt, updatedAt)

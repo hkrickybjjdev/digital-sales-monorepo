@@ -1,6 +1,6 @@
 import { D1Database } from '@cloudflare/workers-types';
 import { Role } from '../models/schemas';
-import { v4 as uuidv4 } from 'uuid';
+import { generateUUID } from '../../../utils/utils';
 
 export class RoleRepository {
   constructor(private readonly db: D1Database) {}
@@ -30,7 +30,7 @@ export class RoleRepository {
   }
   
   async createRole(name: string): Promise<Role> {
-    const id = `role_${uuidv4()}`;
+    const id = generateUUID();
     
     await this.db.prepare(
       `INSERT INTO "Role" (id, name)

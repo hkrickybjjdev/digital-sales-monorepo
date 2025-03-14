@@ -1,12 +1,12 @@
 import { D1Database } from '@cloudflare/workers-types';
 import { Group } from '../models/schemas';
-import { v4 as uuidv4 } from 'uuid';
+import { generateUUID } from '../../../utils/utils';
 
 export class GroupRepository {
   constructor(private readonly db: D1Database) {}
   
   async createGroup(name: string, organizationId: string): Promise<Group> {
-    const id = `group_${uuidv4()}`;
+    const id = generateUUID();
     const now = new Date().toISOString();
     
     await this.db.prepare(

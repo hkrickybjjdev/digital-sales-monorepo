@@ -1,13 +1,13 @@
 import { D1Database } from '@cloudflare/workers-types';
 import { Organization, OrganizationWithGroups, Group } from '../models/schemas';
-import { v4 as uuidv4 } from 'uuid';
+import { generateUUID } from '../../../utils/utils';
 
 // Create a class that takes the database as a constructor parameter
 export class OrganizationRepository {
   constructor(private readonly db: D1Database) {}
   
   async createOrganization(name: string, ownerId:string, isEnterprise = false): Promise<Organization> {
-    const id = `org_${uuidv4()}`;
+    const id = generateUUID();
     const now = new Date().toISOString();
     
     await this.db.prepare(

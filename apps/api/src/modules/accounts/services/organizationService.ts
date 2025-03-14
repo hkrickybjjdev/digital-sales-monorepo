@@ -5,7 +5,7 @@ import {
   Organization, 
   OrganizationWithGroups 
 } from '../models/schemas';
-import { v4 as uuidv4 } from 'uuid';
+import { generateShortID } from '../../../utils/utils';
 
 export class OrganizationService {
   private organizationRepository: OrganizationRepository;
@@ -53,11 +53,11 @@ export class OrganizationService {
   async createDefaultOrganization(ownerId:string, isEnterprise: boolean = false): Promise<{ organization: Organization; group: any }> {
     // Create a new organization with a random name for non-enterprise users
     // For enterprise users, a proper name should be provided later
-    const orgName = isEnterprise ? 'Enterprise Organization' : `Organization-${uuidv4().substring(0, 8)}`;
+    const orgName = isEnterprise ? 'Enterprise Organization' : `Organization-${generateShortID(8)}`;
     const organization = await this.organizationRepository.createOrganization(orgName, ownerId, isEnterprise);
     
     // Create a default group within the organization
-    const groupName = isEnterprise ? 'Default Group' : `Group-${uuidv4().substring(0, 8)}`;
+    const groupName = isEnterprise ? 'Default Group' : `Group-${generateShortID(8)}`;
     const group = await this.groupRepository.createGroup(groupName, organization.id);
     
     return { organization, group };

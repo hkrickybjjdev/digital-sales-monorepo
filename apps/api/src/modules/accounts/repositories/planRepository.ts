@@ -1,6 +1,6 @@
 import { D1Database } from '@cloudflare/workers-types';
 import { Plan, PlanFeatures } from '../models/schemas';
-import { v4 as uuidv4 } from 'uuid';
+import { generateUUID } from '../../../utils/utils';
 
 export class PlanRepository {
   constructor(private readonly db: D1Database) {}
@@ -24,7 +24,7 @@ export class PlanRepository {
   }
   
   async createPlan(plan: Omit<Plan, 'id'>): Promise<Plan> {
-    const id = `plan_${uuidv4()}`;
+    const id = generateUUID();
     
     await this.db.prepare(
       `INSERT INTO "Plan" (id, name, description, priceInCents, currency, interval, isVisible, features)

@@ -1,6 +1,6 @@
 import { User, Session } from '../models/schemas';
 import { Env } from '../../../types';
-import { v7 as uuidv7 } from 'uuid';
+import { generateUUID } from '../../../utils/utils';
 import { IUserRepository } from '../services/interfaces';
 
 export class UserRepository implements IUserRepository {
@@ -30,7 +30,7 @@ export class UserRepository implements IUserRepository {
 
   async createUser(user: Omit<User, 'id' | 'createdAt' | 'updatedAt'>): Promise<User> {
     const now = Date.now();
-    const id = uuidv7();
+    const id = generateUUID();
 
     const stmt = this.db.prepare(`
       INSERT INTO User (id, email, name, passwordHash, createdAt, updatedAt, stripeAccount) 
@@ -59,7 +59,7 @@ export class UserRepository implements IUserRepository {
   }
 
   async createSession(userId: string, expiresInSeconds: number = 60 * 60 * 24 * 7): Promise<Session> {
-    const id = uuidv7();
+    const id = generateUUID();
     const now = Date.now();
     const expiresAt = now + (expiresInSeconds * 1000);
 

@@ -1,6 +1,4 @@
 import { D1Database } from '@cloudflare/workers-types';
-import { nanoid } from 'nanoid';
-import { v7 as uuidv7 } from 'uuid';
 import { 
   Page, 
   CreatePageRequest, 
@@ -8,6 +6,7 @@ import {
   PageType
 } from '../models/schemas';
 import { IPageRepository } from '../services/interfaces';
+import { generateUUID, generateShortID } from '../../../utils/utils';
 
 const SHORT_ID_LENGTH = 8;
 
@@ -15,8 +14,8 @@ export class PageRepository implements IPageRepository {
   constructor(private readonly db: D1Database) {}
 
   async createPage(userId: string, request: CreatePageRequest): Promise<Page> {
-    const id = uuidv7();
-    const shortId = nanoid(SHORT_ID_LENGTH);
+    const id = generateUUID();
+    const shortId = generateShortID(SHORT_ID_LENGTH);
     const now = new Date().toISOString();
     
     const page: Page = {
