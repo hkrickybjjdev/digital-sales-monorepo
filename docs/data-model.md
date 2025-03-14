@@ -10,7 +10,6 @@ This document outlines the core data structures, relationships, and storage solu
 erDiagram
     USER {
         string id PK
-        string organizationId FK
         string groupId FK
         string email
         string name
@@ -20,8 +19,7 @@ erDiagram
     }
 
     ORGANIZATION {
-        string id PK
-        string ownerId FK
+        string id PK      
         string name
         boolean isEnterprise
         timestamp createdAt
@@ -174,7 +172,6 @@ Represents a customer organization.
 | Field | Type | Description |
 |-------|------|-------------|
 | id | UUID | Primary identifier |
-| ownerId | UUID (FK) | Reference to user who owns the organization |
 | name | String | Organization name |
 | isEnterprise | Boolean | Indicates if the organization is an enterprise customer |
 | createdAt | Timestamp | Creation date |
@@ -199,7 +196,6 @@ Represents platform users who create and sell digital products or collect regist
 | Field | Type | Description |
 |-------|------|-------------|
 | id | UUID | Primary identifier |
-| organizationId | UUID (FK) | Reference to organization |
 | groupId | UUID (FK) | Reference to group |
 | email | String | Email address, used for login |
 | name | String | Display name |

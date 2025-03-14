@@ -8,8 +8,7 @@ CREATE TABLE IF NOT EXISTS "Session" (
 
 -- User table
 CREATE TABLE IF NOT EXISTS "User" (
-  id TEXT PRIMARY KEY,
-  organizationId TEXT REFERENCES "Organization"(id),
+  id TEXT PRIMARY KEY,  
   groupId TEXT REFERENCES "Group"(id),
   email TEXT UNIQUE NOT NULL,
   name TEXT NOT NULL,
@@ -100,7 +99,6 @@ CREATE TABLE IF NOT EXISTS "Registration" (
 -- Organization table
 CREATE TABLE IF NOT EXISTS "Organization" (
   id TEXT PRIMARY KEY,
-  ownerId TEXT REFERENCES "User"(id),
   name TEXT NOT NULL,
   isEnterprise INTEGER NOT NULL DEFAULT 0,
   createdAt INTEGER NOT NULL,
@@ -179,7 +177,6 @@ CREATE INDEX IF NOT EXISTS idx_file_productId ON "File"(productId);
 
 CREATE INDEX IF NOT EXISTS idx_organization_name ON "Organization"(name);
 CREATE INDEX IF NOT EXISTS idx_group_organizationId ON "Group"(organizationId);
-CREATE INDEX IF NOT EXISTS idx_user_organizationId ON "User"(organizationId);
 CREATE INDEX IF NOT EXISTS idx_user_groupId ON "User"(groupId);
 CREATE INDEX IF NOT EXISTS idx_userrole_userId ON "UserRole"(userId);
 CREATE INDEX IF NOT EXISTS idx_userrole_roleId ON "UserRole"(roleId);

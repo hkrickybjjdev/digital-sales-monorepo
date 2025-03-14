@@ -44,8 +44,7 @@ export class UserSetupService {
         : `Organization ${Math.floor(Math.random() * 1000000)}`;
       
       const organization = await this.organizationService.createOrganization({
-        name: orgName,
-        ownerId: userId,
+        name: orgName,        
         isEnterprise: isEnterprise
       });
       

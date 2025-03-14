@@ -69,6 +69,38 @@ export const register = async (c: Context<{ Bindings: Env }>) => {
     const container = getAuthContainer(c.env);
     const result = await container.authService.register(data);
     
+    // Call the accounts module to set up the user
+    try {
+      // Construct the base URL from the request
+      const url = new URL(c.req.url);
+      // Reset the path to create the proper base URL
+      url.pathname = '/api/v1/accounts/integrations/user-registration';
+      
+      // Internal API call to accounts integration
+      const registrationResponse = await fetch(url.toString(), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + result.token
+        },
+        body: JSON.stringify({
+          userId: result.user.id,
+          isEnterprise: false // default to false, can be configured based on registration data if needed
+        })
+      });
+      
+      if (!registrationResponse.ok) {
+        console.error('Failed to complete user onboarding', await registrationResponse.text());
+        // We don't want to fail the registration if this fails
+        // Just log the error and continue
+      } else {
+        console.log('User onboarding completed successfully');
+      }
+    } catch (integrationError) {
+      console.error('Error calling user registration integration:', integrationError);
+      // We don't fail the registration if the integration call fails
+    }
+    
     return formatResponse(c, result, 201);
   } catch (error) {
     if (error instanceof Error && error.message === 'User with this email already exists') {

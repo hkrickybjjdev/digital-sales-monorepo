@@ -38,8 +38,7 @@ export class AuthIntegration {
       // 2. Create a new organization for the user
       const orgName = isEnterprise ? `Enterprise Org ${userId.slice(0, 6)}` : `org-${generateShortID(8)}`;
       const organization = await this.organizationService.createOrganization({
-        name: orgName,
-        ownerId: userId,
+        name: orgName,        
         isEnterprise
       });
       
@@ -58,35 +57,26 @@ export class AuthIntegration {
       // Since we don't have a UserRepository, we'll use the GroupService to assign the user to the group
       await this.groupService.assignUserToGroup(userId, group.id);
       
-      // 5. Assign default role (viewer for regular users, admin for enterprise)
+      // 5. Assign default role
       let defaultRoleId;
       
-      if (isEnterprise) {
-        const adminRole = await this.roleService.getRoleByName('admin');
-        if (adminRole) {
-          await this.roleService.assignRoleToUser(userId, adminRole.id);
-          defaultRoleId = adminRole.id;
-        }
-      } else {
-        const viewerRole = await this.roleService.getRoleByName('viewer');
-        if (viewerRole) {
-          await this.roleService.assignRoleToUser(userId, viewerRole.id);
-          defaultRoleId = viewerRole.id;
-        }
+      const adminRole = await this.roleService.getRoleByName('admin');
+      if (adminRole) {
+        await this.roleService.assignRoleToUser(userId, adminRole.id);
+        defaultRoleId = adminRole.id;
       }
       
-      // 6. Create a subscription (free plan for regular users, trial for enterprise)
-      let subscription;
+      // 6. Create a subscription (free plan for regular users, trial for enterprise)      
       
       // For simplicity, we'll just assign the free plan to all users
       // In a real implementation, you'd have logic to determine the appropriate plan
-      subscription = await this.subscriptionService.assignFreePlanToUser(userId);
+      const subscription = await this.subscriptionService.assignFreePlanToUser(userId);
       
       return {
         organizationId: organization.id,
-        groupId: group ? group.id : undefined,
+        groupId: group.id,
         defaultRoleId,
-        subscriptionId: subscription ? subscription.id : undefined
+        subscriptionId: subscription!.id
       };
     } catch (error) {
       console.error('Error in onUserRegistration:', error);

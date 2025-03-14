@@ -135,12 +135,11 @@ export class SubscriptionService {
   }
   
   async assignFreePlanToUser(userId: string): Promise<Subscription | null> {
-    const freePlan = await this.planRepository.getPlanById('plan_free');
-    if (!freePlan) return null;
+    const freePlan = await this.planRepository.getPlanById('plan_free');    
     
     return this.createSubscription({
       userId,
-      planId: freePlan.id
+      planId: freePlan!.id
     });
   }
 }

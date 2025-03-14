@@ -6,20 +6,19 @@ import { generateUUID } from '../../../utils/utils';
 export class OrganizationRepository {
   constructor(private readonly db: D1Database) {}
   
-  async createOrganization(name: string, ownerId:string, isEnterprise = false): Promise<Organization> {
+  async createOrganization(name: string, isEnterprise = false): Promise<Organization> {
     const id = generateUUID();
     const now = Date.now();
     
     await this.db.prepare(
-      `INSERT INTO "Organization" (id, ownerId, name, isEnterprise, createdAt, updatedAt)
+      `INSERT INTO "Organization" (id, name, isEnterprise, createdAt, updatedAt)
        VALUES (?, ?, ?, ?, ?)`
     )
-    .bind(id, ownerId, name, isEnterprise ? 1 : 0, now, now)
+    .bind(id, name, isEnterprise ? 1 : 0, now, now)
     .run();
     
     return {
       id,
-      ownerId,
       name,
       isEnterprise,
       createdAt: now,

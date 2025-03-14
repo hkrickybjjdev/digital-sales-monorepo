@@ -3,7 +3,6 @@ import { z } from 'zod';
 // Organization schema
 export const organizationSchema = z.object({
   id: z.string().uuid(),
-  ownerId: z.string().uuid(),
   name: z.string().min(2).max(100),
   isEnterprise: z.boolean().default(false),
   createdAt: z.number(),
@@ -13,7 +12,6 @@ export const organizationSchema = z.object({
 // Create organization request schema
 export const createOrganizationSchema = z.object({
   name: z.string().min(2).max(100),
-  ownerId: z.string().uuid(),
   isEnterprise: z.boolean().optional().default(false),
 });
 
