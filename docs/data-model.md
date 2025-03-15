@@ -17,6 +17,7 @@ erDiagram
         timestamp updatedAt
         timestamp lockedAt
         boolean emailVerified
+        integer failedAttempts
     }
 
     TEAM {
@@ -200,9 +201,9 @@ Represents platform users who create and manage content.
 | passwordHash | String | Hashed password for authentication |
 | createdAt | Timestamp | Account creation date |
 | updatedAt | Timestamp | Last account update |
-| stripeAccount | Object | Stripe Connect account details |
 | lockedAt | Timestamp | When the account was locked (NULL if not locked) |
 | emailVerified | Boolean | Indicates if the email address has been verified |
+| failedAttempts | Integer | Number of consecutive failed login attempts |
 
 ### Plan
 

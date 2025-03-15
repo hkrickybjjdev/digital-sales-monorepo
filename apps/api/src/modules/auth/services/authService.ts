@@ -7,9 +7,10 @@ import { IAuthService } from './interfaces';
 
 export class AuthService implements IAuthService {
   private jwtSecret: string;
+  private readonly MAX_LOGIN_ATTEMPTS = 5;
 
   constructor(
-    private readonly env: Env, 
+    private readonly env: Env,
     private readonly userRepository: UserRepository
   ) {
     this.jwtSecret = env.JWT_SECRET;
@@ -18,11 +19,12 @@ export class AuthService implements IAuthService {
   /**
    * Register a new user
    */
-  async register(data: RegisterRequest): Promise<AuthResponse> {
+  async register(data: RegisterRequest): Promise<{ error?: string } & Partial<AuthResponse>> {
+
     // Check if user already exists
     const existingUser = await this.userRepository.getUserByEmail(data.email);
     if (existingUser) {
-      throw new Error('User with this email already exists');
+      return { error: 'User with this email already exists' };
     }
 
     // Hash password
@@ -32,39 +34,64 @@ export class AuthService implements IAuthService {
     const user = await this.userRepository.createUser({
       email: data.email,
       name: data.name,
-      passwordHash: passwordHash
+      passwordHash: passwordHash,
+      lockedAt: null,
+      emailVerified: 0,
+      failedAttempts: 0
     });
 
     // Create session and generate JWT
-    return this.generateAuthResponse(user);
+    const authResponse = await this.generateAuthResponse(user);
+    return authResponse;
+
   }
 
   /**
    * Login an existing user
    */
-  async login(data: LoginRequest): Promise<AuthResponse> {
+  async login(data: LoginRequest): Promise<{ error?: string } & Partial<AuthResponse>> {
+
     // Find user by email
     const user = await this.userRepository.getUserByEmail(data.email);
     if (!user) {
-      throw new Error('Invalid email or password');
+      return { error: 'Invalid email or password' };
+    }
+
+    // Check if account is locked
+    if (user.lockedAt) {
+      return { error: 'Account is locked. Please contact support.' };
     }
 
     // Verify password
     const isPasswordValid = await this.verifyPassword(data.password, user.passwordHash);
     if (!isPasswordValid) {
-      throw new Error('Invalid email or password');
+      // Increment failed attempts
+      const failedAttempts = await this.userRepository.incrementFailedAttempts(user.id);
+
+      // Lock account if max attempts exceeded
+      if (failedAttempts >= this.MAX_LOGIN_ATTEMPTS) {
+        await this.userRepository.lockAccount(user.id);
+        return { error: 'Account has been locked due to too many failed attempts. Please contact support.' };
+      }
+
+      return { error: 'Invalid email or password' };
     }
 
+    // Reset failed attempts on successful login
+    await this.userRepository.resetFailedAttempts(user.id);
+
     // Create session and generate JWT
-    return this.generateAuthResponse(user);
+    const authResponse = await this.generateAuthResponse(user);
+    return authResponse;
   }
 
   /**
    * Get user by ID
    */
   async getUserById(id: string): Promise<Omit<User, 'passwordHash'> | null> {
+
     const user = await this.userRepository.getUserById(id);
-    
+
     if (!user) {
       return null;
     }
@@ -81,9 +108,9 @@ export class AuthService implements IAuthService {
     const secret = new TextEncoder().encode(this.jwtSecret);
     const alg = 'HS256';
 
-    return new jose.SignJWT({ 
+    return new jose.SignJWT({
       sub: userId,
-      sid: sessionId 
+      sid: sessionId
     })
       .setProtectedHeader({ alg })
       .setIssuedAt()
@@ -97,7 +124,7 @@ export class AuthService implements IAuthService {
   private async generateAuthResponse(user: User): Promise<AuthResponse> {
     // Create session
     const session = await this.userRepository.createSession(user.id);
-    
+
     // Generate JWT token
     const token = await this.generateToken(user.id, session.id);
 

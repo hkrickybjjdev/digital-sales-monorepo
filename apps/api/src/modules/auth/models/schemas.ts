@@ -8,7 +8,9 @@ export const userSchema = z.object({
   passwordHash: z.string(),
   createdAt: z.number(),
   updatedAt: z.number(),
-  stripeAccount: z.string().nullable().optional(),
+  lockedAt: z.number().nullable(),
+  emailVerified: z.number().default(0),
+  failedAttempts: z.number().default(0)
 });
 
 // Login request schema

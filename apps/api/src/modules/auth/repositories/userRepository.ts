@@ -33,8 +33,8 @@ export class UserRepository implements IUserRepository {
     const id = generateUUID();
 
     const stmt = this.db.prepare(`
-      INSERT INTO User (id, email, name, passwordHash, createdAt, updatedAt, stripeAccount) 
-      VALUES (?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO User (id, email, name, passwordHash, createdAt, updatedAt, lockedAt, emailVerified, failedAttempts) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).bind(
       id,
       user.email.toLowerCase(),
@@ -42,7 +42,9 @@ export class UserRepository implements IUserRepository {
       user.passwordHash,
       now,
       now,
-      user.stripeAccount || null
+      null,
+      user.emailVerified || 0,
+      user.failedAttempts || 0
     );
 
     await stmt.run();
@@ -54,8 +56,46 @@ export class UserRepository implements IUserRepository {
       passwordHash: user.passwordHash,
       createdAt: now,
       updatedAt: now,
-      stripeAccount: user.stripeAccount || null
+      lockedAt: null,
+      emailVerified: user.emailVerified || 0,
+      failedAttempts: user.failedAttempts || 0
     };
+  }
+
+  async lockAccount(userId: string): Promise<void> {
+    const now = Date.now();
+    await this.db.prepare(`
+      UPDATE User 
+      SET lockedAt = ?
+      WHERE id = ? AND lockedAt IS NULL
+    `).bind(now, userId).run();
+  }
+
+  async unlockAccount(userId: string): Promise<void> {
+    await this.db.prepare(`
+      UPDATE User 
+      SET lockedAt = NULL
+      WHERE id = ?
+    `).bind(userId).run();
+  }
+
+  async incrementFailedAttempts(userId: string): Promise<number> {
+    const result = await this.db.prepare(`
+      UPDATE User 
+      SET failedAttempts = failedAttempts + 1
+      WHERE id = ?
+      RETURNING failedAttempts
+    `).bind(userId).first();
+
+    return result ? Number(result.failedAttempts) : 0;
+  }
+
+  async resetFailedAttempts(userId: string): Promise<void> {
+    await this.db.prepare(`
+      UPDATE User 
+      SET failedAttempts = 0
+      WHERE id = ?
+    `).bind(userId).run();
   }
 
   async createSession(userId: string, expiresInSeconds: number = 60 * 60 * 24 * 7): Promise<Session> {

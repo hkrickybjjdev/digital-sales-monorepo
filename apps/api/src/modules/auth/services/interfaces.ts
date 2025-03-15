@@ -5,8 +5,8 @@ import { User, AuthResponse, LoginRequest, RegisterRequest } from '../models/sch
  * Defines the contract that any auth service implementation should follow
  */
 export interface IAuthService {
-  register(data: RegisterRequest): Promise<AuthResponse>;
-  login(data: LoginRequest): Promise<AuthResponse>;
+  register(data: RegisterRequest): Promise<{ error?: string } & Partial<AuthResponse>>;
+  login(data: LoginRequest): Promise<{ error?: string } & Partial<AuthResponse>>;
   getUserById(id: string): Promise<Omit<User, 'passwordHash'> | null>;
   cleanupExpiredSessions(): Promise<void>;
 }
@@ -23,4 +23,8 @@ export interface IUserRepository {
   getSessionById(id: string): Promise<{ id: string; userId: string; expiresAt: number; createdAt: number } | null>;
   deleteSession(id: string): Promise<void>;
   deleteExpiredSessions(): Promise<void>;
+  lockAccount(userId: string): Promise<void>;
+  unlockAccount(userId: string): Promise<void>;
+  incrementFailedAttempts(userId: string): Promise<number>;
+  resetFailedAttempts(userId: string): Promise<void>;
 }

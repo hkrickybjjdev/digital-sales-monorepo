@@ -22,12 +22,17 @@ export const login = async (c: Context<{ Bindings: Env }>) => {
     const container = getAuthContainer(c.env);
     const result = await container.authService.login(data);
     
-    return formatResponse(c, result);
-  } catch (error) {
-    if (error instanceof Error && error.message === 'Invalid email or password') {
-      return formatError(c, error.message, 'Unauthorized', 401);
+    if (result.error) {
+      if (result.error === 'Invalid email or password') {
+        return formatError(c, result.error, 'Unauthorized', 401);
+      } else if (result.error.includes('Account is locked')) {
+        return formatError(c, result.error, 'AccountLocked', 403);
+      }
+      return formatError(c, result.error, 'AuthError', 400);
     }
     
+    return formatResponse(c, result);
+  } catch (error) {
     console.error('Login error:', error);
     return format500Error(error as Error);
   }
@@ -38,17 +43,17 @@ export const logout = async (c: Context<{ Bindings: Env }>) => {
     // Get session ID from JWT payload
     const sessionId = c.get('jwtPayload').sid;
     if (!sessionId) {
-      return c.json({ error: 'Invalid session' }, 400);
+      return formatError(c, 'Invalid session', 'InvalidSession', 400);
     }
     
     // Use the DI container
     const container = getAuthContainer(c.env);
     await container.userRepository.deleteSession(sessionId);
     
-    return c.json({ success: true, message: 'Logged out successfully' });
+    return formatResponse(c, { success: true, message: 'Logged out successfully' });
   } catch (error) {
     console.error('Logout error:', error);
-    return c.json({ error: 'Failed to log out' }, 500);
+    return format500Error(error as Error);
   }
 };
 
@@ -68,13 +73,16 @@ export const register = async (c: Context<{ Bindings: Env }>) => {
     // Use the DI container
     const container = getAuthContainer(c.env);
     const result = await container.authService.register(data);
+    
+    if (result.error) {
+      if (result.error === 'User with this email already exists') {
+        return formatError(c, result.error, 'ConflictError', 409);
+      }
+      return formatError(c, result.error, 'RegistrationError', 400);
+    }
    
     return formatResponse(c, result, 201);
   } catch (error) {
-    if (error instanceof Error && error.message === 'User with this email already exists') {
-      return formatError(c, error.message, 'ConflictError', 409);
-    }
-    
     console.error('Registration error:', error);
     return format500Error(error as Error);
   }
@@ -85,7 +93,7 @@ export const getCurrentUser = async (c: Context<{ Bindings: Env }>) => {
     // Get user ID from JWT token (set by the JWT middleware)
     const userId = c.get('jwtPayload').sub;
     if (!userId) {
-      return c.json({ error: 'User not found' }, 404);
+      return formatError(c, 'User not found', 'ResourceNotFound', 404);
     }
     
     // Use the DI container
@@ -93,12 +101,12 @@ export const getCurrentUser = async (c: Context<{ Bindings: Env }>) => {
     const user = await container.authService.getUserById(userId);
     
     if (!user) {
-      return c.json({ error: 'User not found' }, 404);
+      return formatError(c, 'User not found', 'ResourceNotFound', 404);
     }
     
-    return c.json({ user });
+    return formatResponse(c, { user });
   } catch (error) {
     console.error('Get current user error:', error);
-    return c.json({ error: 'Failed to retrieve user information' }, 500);
+    return format500Error(error as Error);
   }
 };
