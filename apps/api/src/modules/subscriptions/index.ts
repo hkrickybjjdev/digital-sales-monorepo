@@ -4,9 +4,15 @@ import { validateJWT } from '../auth/middleware/authMiddleware';
 import { formatResponse } from '../../utils/api-response';
 import * as planHandlers from './controllers/planHandlers';
 import * as subscriptionHandlers from './controllers/subscriptionHandlers';
+import { createWebhookRouter } from './webhooks/routes';
 
 // Create the subscriptions module router
 const subscriptionsModule = new Hono<{ Bindings: Env }>();
+
+// Add webhook routes
+// Note: These are not protected by JWT authentication since they need
+// to be called by other modules without user context
+subscriptionsModule.route('/webhooks', createWebhookRouter());
 
 // Documentation route
 subscriptionsModule.get('/', (c) => {
@@ -20,7 +26,9 @@ subscriptionsModule.get('/', (c) => {
       { path: '/teams/:teamId/subscriptions', method: 'POST', description: 'Create a new subscription for a team' },
       { path: '/subscriptions/:subscriptionId', method: 'GET', description: 'Get subscription details by ID' },
       { path: '/subscriptions/:subscriptionId', method: 'PUT', description: 'Update a subscription' },
-      { path: '/subscriptions/:subscriptionId/cancel', method: 'POST', description: 'Cancel a subscription' }
+      { path: '/subscriptions/:subscriptionId/cancel', method: 'POST', description: 'Cancel a subscription' },
+      { path: '/webhooks/teams/team-created', method: 'POST', description: 'Webhook for team creation (no auth)' },
+      { path: '/webhooks/teams/team-deleted', method: 'POST', description: 'Webhook for team deletion (no auth)' }
     ]
   });
 });

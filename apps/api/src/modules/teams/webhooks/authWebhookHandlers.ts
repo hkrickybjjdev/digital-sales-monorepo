@@ -7,6 +7,7 @@ import {
   UserUpdatedWebhookSchema, 
   UserDeletedWebhookSchema 
 } from '../models/webhookSchemas';
+import { TeamsWebhookService } from '../services/webhookService';
 
 /**
  * Validate webhook signature
@@ -43,8 +44,7 @@ async function validateWebhookSignature(c: Context<{ Bindings: Env }>, body: str
  * Handle user created webhook from auth module
  * 
  * - Creates a new team for the user
- * - Adds the user as the team owner
- * - Provisions a free subscription plan
+ * - Triggers a team created event for the subscriptions module
  */
 export async function handleUserCreated(c: Context<{ Bindings: Env }>) {
   try {
@@ -78,23 +78,14 @@ export async function handleUserCreated(c: Context<{ Bindings: Env }>) {
     
     // The team service automatically adds the user as owner, so no need to call addTeamMember
     
-    // Get subscription service container to provision free plan
-    // We need to import this separately to avoid circular dependencies
-    const { getSubscriptionsContainer } = await import('../../subscriptions/di/container');
-    const subscriptionsContainer = getSubscriptionsContainer(c.env);
-    
-    // Determine the free plan ID (in a real app, you'd have a way to get this)
-    const plans = await subscriptionsContainer.planService.getPlans();
-    const freePlan = plans.find(plan => plan.name.toLowerCase().includes('free'));
-    
-    if (freePlan) {
-      // Create subscription with free plan
-      await subscriptionsContainer.subscriptionService.createSubscription(user.id, {
-        teamId: team.id,
-        planId: freePlan.id,
-        interval: 'month' // Default interval for free plan
-      });
-    }
+    // Emit team created event instead of directly interacting with subscriptions
+    const teamsWebhookService = new TeamsWebhookService(c.env);
+    await teamsWebhookService.triggerTeamCreated({
+      id: team.id,
+      name: team.name,
+      userId: user.id, // Owner ID
+      createdAt: Date.now()
+    });
     
     return formatResponse(c, {
       message: 'User onboarded successfully',
@@ -242,22 +233,8 @@ export async function handleUserDeleted(c: Context<{ Bindings: Env }>) {
             // In this example, we'll delete the team, but archiving might be better
             await container.teamService.deleteTeam(team.id, user.id);
             
-            // Cancel team subscriptions
-            const { getSubscriptionsContainer } = await import('../../subscriptions/di/container');
-            const subscriptionsContainer = getSubscriptionsContainer(c.env);
-            
-            const subscriptions = await subscriptionsContainer.subscriptionService.getTeamSubscriptions(
-              team.id,
-              user.id
-            );
-            
-            // Cancel each subscription
-            for (const subscription of subscriptions) {
-              await subscriptionsContainer.subscriptionService.cancelSubscription(
-                subscription.id,
-                user.id
-              );
-            }
+            // Note: We no longer need to directly interact with subscriptions here
+            // The subscriptions module should handle team deletion events
           }
         } else {
           // User is not the owner, just remove them from the team

@@ -22,13 +22,22 @@ let teamRepositoryInstance: ITeamRepository | null = null;
 let teamMemberRepositoryInstance: ITeamMemberRepository | null = null;
 let teamServiceInstance: ITeamService | null = null;
 let teamMemberServiceInstance: ITeamMemberService | null = null;
+let containerEnv: Env | null = null;
 
 /**
  * Returns a container with all the Teams module dependencies
  * Uses singleton pattern for stateless services
  */
 export function getTeamsContainer(env: Env): TeamsContainer {
-  // Create repository instances if they don't exist or environment changed
+  // If environment changes, recreate all instances
+  if (containerEnv && env !== containerEnv) {
+    resetTeamsContainer();
+  }
+  
+  // Store current environment
+  containerEnv = env;
+  
+  // Create repository instances if they don't exist
   if (!teamRepositoryInstance) {
     teamRepositoryInstance = new TeamRepository(env.DB);
   }
@@ -37,12 +46,13 @@ export function getTeamsContainer(env: Env): TeamsContainer {
     teamMemberRepositoryInstance = new TeamMemberRepository(env.DB);
   }
   
-  // Create service instances if they don't exist or environment changed
+  // Create service instances if they don't exist
   // Pass repositories to services
   if (!teamServiceInstance) {
     teamServiceInstance = new TeamService(
       teamRepositoryInstance, 
-      teamMemberRepositoryInstance
+      teamMemberRepositoryInstance,
+      env
     );
   }
   
@@ -59,4 +69,16 @@ export function getTeamsContainer(env: Env): TeamsContainer {
     teamService: teamServiceInstance,
     teamMemberService: teamMemberServiceInstance
   };
+}
+
+/**
+ * Reset all container instances
+ * Useful for testing and when environment changes
+ */
+export function resetTeamsContainer(): void {
+  teamRepositoryInstance = null;
+  teamMemberRepositoryInstance = null;
+  teamServiceInstance = null;
+  teamMemberServiceInstance = null;
+  containerEnv = null;
 }
