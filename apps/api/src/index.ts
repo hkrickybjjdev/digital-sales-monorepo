@@ -11,7 +11,6 @@ import { productsModule } from './modules/products';
 import { paymentsModule } from './modules/payments';
 import { storageModule } from './modules/storage';
 import { analyticsModule } from './modules/analytics';
-import { accountsModule } from './modules/accounts';
 import { Env } from './types';
 import { getAllVersions, getLatestVersion, LATEST_VERSION } from './utils/versioning';
 import { versionMiddleware } from './middleware/versionMiddleware';
@@ -68,7 +67,6 @@ v1.route('/products', productsModule);
 v1.route('/payments', paymentsModule);
 v1.route('/storage', storageModule);
 v1.route('/analytics', analyticsModule);
-v1.route('/accounts', accountsModule);
 
 // v2 API routes
 const v2 = new Hono<{ Bindings: Env }>();
@@ -83,8 +81,6 @@ v2.route('/products', productsModule);
 v2.route('/payments', paymentsModule);
 v2.route('/storage', storageModule);
 v2.route('/analytics', analyticsModule);
-v2.route('/accounts', accountsModule);
-
 // Mount v1 API to /api/v1
 app.route('/api/v1', v1);
 
