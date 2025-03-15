@@ -51,11 +51,20 @@ erDiagram
         string id PK
         string name
         string description
-        int priceInCents
-        string currency
-        string interval
         boolean isVisible
         JSON features
+    }
+
+    PRICE {
+        string id PK
+        string planId FK
+        string productId FK
+        string currency
+        string interval
+        timestamp createdAt
+        timestamp updatedAt
+        string billingScheme
+        string type
     }
 
     SUBSCRIPTION {
@@ -83,7 +92,6 @@ erDiagram
         string userId FK
         string name
         string description
-        int priceInCents
         string currency
         timestamp createdAt
         timestamp updatedAt
@@ -235,11 +243,24 @@ Represents a pricing plan.
 | id | UUID | Primary identifier |
 | name | String | Plan name (e.g., Free, Basic, Premium) |
 | description | String | Plan details |
-| priceInCents | Integer | Price in smallest currency unit |
-| currency | String | ISO currency code (e.g., USD) |
-| interval | String | Billing interval (e.g., month, year) |
 | isVisible | Boolean | Whether the plan is visible to users |
 | features | JSON | Plan-specific features and limits |
+
+### Price
+
+Represents different pricing tiers, billing intervals, and currencies for a plan or product.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| id | UUID | Primary identifier |
+| planId | UUID (FK) | Reference to plan (if applicable) |
+| productId | UUID (FK) | Reference to product (if applicable) |
+| currency | String | ISO currency code (e.g., USD) |
+| interval | String | Billing interval (e.g., month, year) |
+| createdAt | Timestamp | Creation date |
+| updatedAt | Timestamp | Last update date |
+| billingScheme | String | Indicates how the price is determined. Common values: `flat_rate`: A fixed price, regardless of usage. `per_unit`: Price is calculated based on the quantity of units consumed. `tiered`: Price varies based on usage tiers (e.g., different prices for the first 100 units, the next 1000 units, etc.). `volume`: Similar to tiered, but the price for all units is determined by the tier reached. |
+| type | String | Type of price. Common values: `recurring`: A price that is charged on a regular interval (e.g., monthly, yearly). `one_time`: A price that is charged only once. `usage`: A price that is based on usage (e.g., pay-as-you-go). |
 
 ### Subscription
 
@@ -279,7 +300,6 @@ Digital items that users upload and sell through the platform.
 | userId | UUID (FK) | Reference to user |
 | name | String | Product name |
 | description | String | Product details |
-| priceInCents | Integer | Price in smallest currency unit |
 | currency | String | ISO currency code (e.g., USD) |
 | createdAt | Timestamp | Creation date |
 | updatedAt | Timestamp | Last update date |

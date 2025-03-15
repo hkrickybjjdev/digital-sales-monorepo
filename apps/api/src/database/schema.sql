@@ -25,7 +25,6 @@ CREATE TABLE IF NOT EXISTS "Product" (
   userId TEXT NOT NULL REFERENCES "User"(id),
   name TEXT NOT NULL,
   description TEXT,
-  priceInCents INTEGER NOT NULL,
   currency TEXT NOT NULL,
   createdAt INTEGER NOT NULL,
   updatedAt INTEGER NOT NULL,
@@ -133,11 +132,25 @@ CREATE TABLE IF NOT EXISTS "Plan" (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
   description TEXT NOT NULL,
-  priceInCents INTEGER NOT NULL,
-  currency TEXT NOT NULL,
-  interval TEXT NOT NULL,
   isVisible INTEGER NOT NULL DEFAULT 1,
   features TEXT NOT NULL DEFAULT '{}'
+);
+
+-- Price table for recurring billing
+CREATE TABLE IF NOT EXISTS "Price" (
+  id TEXT PRIMARY KEY,
+  planId TEXT REFERENCES "Plan"(id) ON DELETE CASCADE,
+  productId TEXT REFERENCES "Product"(id) ON DELETE CASCADE,
+  currency TEXT NOT NULL,
+  interval TEXT NOT NULL,
+  createdAt INTEGER NOT NULL,
+  updatedAt INTEGER NOT NULL,
+  billingScheme TEXT NOT NULL,
+  type TEXT NOT NULL,
+  CHECK (
+    (planId IS NOT NULL AND productId IS NULL) OR
+    (planId IS NULL AND productId IS NOT NULL)
+  )
 );
 
 -- Subscription table
