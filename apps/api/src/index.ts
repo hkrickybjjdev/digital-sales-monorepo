@@ -11,6 +11,7 @@ import { productsModule } from './modules/products';
 import { paymentsModule } from './modules/payments';
 import { storageModule } from './modules/storage';
 import { analyticsModule } from './modules/analytics';
+import { teamsModule } from './modules/teams'; // Import the teams module
 import { Env } from './types';
 import { getAllVersions, getLatestVersion, LATEST_VERSION } from './utils/versioning';
 import { versionMiddleware } from './middleware/versionMiddleware';
@@ -62,6 +63,7 @@ const v1 = new Hono<{ Bindings: Env }>();
 
 // Mount the modules to v1
 v1.route('/auth', authModule);
+v1.route('/teams', teamsModule); // Mount the teams module
 v1.route('/pages', pagesModule);
 v1.route('/products', productsModule);
 v1.route('/payments', paymentsModule);
@@ -76,6 +78,7 @@ const v2 = new Hono<{ Bindings: Env }>();
 v2.route('/auth', authModuleV2);
 
 // For other modules, use v1 implementations until v2 versions are ready
+v2.route('/teams', teamsModule); // Mount the teams module in v2 as well
 v2.route('/pages', pagesModule);
 v2.route('/products', productsModule);
 v2.route('/payments', paymentsModule);

@@ -11,8 +11,7 @@ CREATE TABLE IF NOT EXISTS "Team" (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
   createdAt INTEGER NOT NULL,
-  updatedAt INTEGER NOT NULL,
-  isEnterprise INTEGER NOT NULL DEFAULT 0
+  updatedAt INTEGER NOT NULL
 );
 
 -- TeamMember table

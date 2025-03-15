@@ -22,8 +22,7 @@ erDiagram
 
     TEAM {
         string id PK      
-        string name
-        boolean isEnterprise
+        string name        
         timestamp createdAt
         timestamp updatedAt
     }
@@ -172,7 +171,6 @@ Represents a team of users working together.
 |-------|------|-------------|
 | id | UUID | Primary identifier |
 | name | String | Team name |
-| isEnterprise | Boolean | Indicates if the team has enterprise features |
 | createdAt | Timestamp | Creation date |
 | updatedAt | Timestamp | Last update date |
 
