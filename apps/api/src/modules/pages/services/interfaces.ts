@@ -6,9 +6,9 @@ import {
   PageContent,
   CreatePageContentRequest,
   Registration,
-  CreateRegistrationRequest
+  CreateRegistrationRequest,
+  PageStats
 } from '../models/schemas';
-import { PageStats } from '../types';
 
 /**
  * Interface for PageService

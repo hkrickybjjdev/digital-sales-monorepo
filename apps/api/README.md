@@ -267,9 +267,9 @@ modules/
 The pages module follows a clean architecture pattern:
 
 1. **Models Layer** (`models/schemas.ts`)
-   - Defines data structures using Zod schemas
-   - Provides type definitions derived from schemas
-   - Handles validation rules for all data entities
+   - Defines data structures using Zod schemas for validation and type safety.
+   - Provides type definitions derived from schemas, ensuring type consistency across the application.
+   - Centralizes the definition of data shapes, making it easier to manage and update data structures.
 
 2. **Repository Layer** (`repositories/`)
    - Handles database operations
@@ -293,7 +293,13 @@ The pages module follows a clean architecture pattern:
    - Formats responses according to API standards
    - Example: `pageHandlers.ts`, `contentHandlers.ts`, `registrationHandlers.ts`
 
-5. **Module Entry Point** (`index.ts`)
+5. **Dependency Injection** (`di/container.ts`)
+   - Manages dependencies between different layers of the application.
+   - Implements a simple container pattern to provide instances of repositories and services.
+   - Promotes loose coupling and improves testability by allowing dependencies to be easily swapped or mocked.
+   - Uses singleton instances for stateless services to optimize performance.
+
+6. **Module Entry Point** (`index.ts`)
    - Defines routes and connects them to handler functions
    - Applies middleware like authentication
    - Exports the module router
