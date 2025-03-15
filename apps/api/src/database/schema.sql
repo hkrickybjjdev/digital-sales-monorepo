@@ -16,7 +16,8 @@ CREATE TABLE IF NOT EXISTS "User" (
   createdAt INTEGER NOT NULL,
   updatedAt INTEGER NOT NULL,
   stripeAccount TEXT,
-  lockedAt INTEGER
+  lockedAt INTEGER,
+  emailVerified INTEGER NOT NULL DEFAULT 0
 );
 
 -- Product table
@@ -161,7 +162,8 @@ CREATE TABLE IF NOT EXISTS "Subscription" (
   startDate INTEGER NOT NULL,
   endDate INTEGER,
   status TEXT NOT NULL,
-  stripeSubscriptionId TEXT,
+  paymentGateway TEXT NOT NULL,
+  subscriptionId TEXT,
   createdAt INTEGER NOT NULL,
   updatedAt INTEGER NOT NULL,
   cancelAt INTEGER

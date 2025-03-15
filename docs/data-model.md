@@ -18,6 +18,7 @@ erDiagram
         timestamp updatedAt
         object stripeAccount
         timestamp lockedAt
+        boolean emailVerified
     }
 
     ORGANIZATION {
@@ -74,7 +75,8 @@ erDiagram
         timestamp startDate
         timestamp endDate
         string status
-        string stripeSubscriptionId
+        string paymentGateway
+        string subscriptionId
         timestamp createdAt
         timestamp updatedAt
         timestamp cancelAt
@@ -215,6 +217,7 @@ Represents platform users who create and sell digital products or collect regist
 | updatedAt | Timestamp | Last account update |
 | stripeAccount | Object | Stripe Connect account details |
 | lockedAt | Timestamp | When the account was locked (NULL if not locked) |
+| emailVerified | Boolean | Indicates if the email address has been verified |
 
 ### Role
 
@@ -274,7 +277,8 @@ Represents a user's subscription to a plan, including free plans.
 | startDate | Timestamp | Subscription start date |
 | endDate | Timestamp | Subscription end date |
 | status | String | Subscription status (e.g., active, canceled, past_due, free) |
-| stripeSubscriptionId | String | Stripe subscription ID (if applicable, NULL for free plans) |
+| paymentGateway | String | Payment gateway used (e.g., stripe, paypal) |
+| subscriptionId | String | Payment gateway subscription ID |
 | createdAt | Timestamp | Subscription creation date |
 | updatedAt | Timestamp | Last Subscription update |
 | cancelAt | Timestamp | When the subscription was canceled (NULL if not canceled) |
