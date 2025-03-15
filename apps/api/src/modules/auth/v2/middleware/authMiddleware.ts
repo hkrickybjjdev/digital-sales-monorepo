@@ -1,5 +1,6 @@
 import { Context, Next } from 'hono';
 import { Env } from '../../../../types';
+import { formatError } from '../../../../utils/api-response';
 
 // Define a user type
 interface User {
@@ -31,7 +32,7 @@ export async function validateJWT(c: Context<{ Bindings: Env }>, next: Next) {
     const authHeader = c.req.header('Authorization');
     
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return c.json({ error: 'Authorization header is required' }, 401);
+      return formatError(c, 'Authorization header is required', 'Unauthorized', 401);
     }
     
     // Extract the token
@@ -49,7 +50,7 @@ export async function validateJWT(c: Context<{ Bindings: Env }>, next: Next) {
     
     // Sample implementation for demonstration purposes
     if (token === 'invalid') {
-      return c.json({ error: 'Invalid token' }, 401);
+      return formatError(c, 'Invalid token', 'InvalidToken', 401);
     }
     
     // Simulate token verification
@@ -57,7 +58,7 @@ export async function validateJWT(c: Context<{ Bindings: Env }>, next: Next) {
     const isTokenValid = token.startsWith('jwt_');
     
     if (!isTokenValid) {
-      return c.json({ error: 'Invalid or expired token' }, 401);
+      return formatError(c, 'Invalid or expired token', 'InvalidToken', 401);
     }
     
     // Simulate user lookup from token
@@ -79,10 +80,7 @@ export async function validateJWT(c: Context<{ Bindings: Env }>, next: Next) {
       // 2. Require re-authentication
       // 3. Block the request
       
-      return c.json({ 
-        error: 'Unauthorized device',
-        message: 'This device is not authorized to access your account'
-      }, 403);
+      return formatError(c, 'This device is not authorized to access your account', 'UnauthorizedDevice', 403);
     }
     
     // Set the user in the context for downstream handlers
@@ -93,6 +91,6 @@ export async function validateJWT(c: Context<{ Bindings: Env }>, next: Next) {
     
   } catch (error) {
     console.error('Auth middleware error:', error);
-    return c.json({ error: 'Authentication failed' }, 401);
+    return formatError(c, 'Authentication failed', 'AuthenticationError', 401);
   }
-} 
+}

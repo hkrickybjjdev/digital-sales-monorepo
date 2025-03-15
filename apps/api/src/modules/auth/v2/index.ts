@@ -6,13 +6,14 @@ import { getCurrentUserHandler } from './controllers/userController';
 import { logoutHandler } from './controllers/logoutController';
 import { validateJWT } from './middleware/authMiddleware';
 import { mfaVerifyHandler } from './controllers/mfaController';
+import { formatResponse } from '../../../utils/api-response';
 
 // Create the auth module router for v2
 const authModuleV2 = new Hono<{ Bindings: Env }>();
 
 // Documentation route
 authModuleV2.get('/', (c) => {
-  return c.json({
+  return formatResponse(c, {
     module: 'Auth v2',
     version: '2.0.0',
     endpoints: [
@@ -43,4 +44,4 @@ authModuleV2.get('/me', getCurrentUserHandler);
 authModuleV2.use('/logout', validateJWT);
 authModuleV2.post('/logout', logoutHandler);
 
-export { authModuleV2 }; 
+export { authModuleV2 };

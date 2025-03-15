@@ -2,13 +2,14 @@ import { Hono } from 'hono';
 import { Env } from '../../types';
 import * as authHandlers from './controllers/authHandlers';
 import { validateJWT } from './middleware/authMiddleware';
+import { formatResponse } from '../../utils/api-response';
 
 // Create the auth module router
 const authModule = new Hono<{ Bindings: Env }>();
 
 // Documentation route
 authModule.get('/', (c) => {
-  return c.json({
+  return formatResponse(c, {
     module: 'Auth',
     endpoints: [
       { path: '/register', method: 'POST', description: 'Register a new user' },
