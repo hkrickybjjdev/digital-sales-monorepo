@@ -149,7 +149,7 @@ CREATE TABLE IF NOT EXISTS "Subscription" (
   startDate INTEGER NOT NULL,
   endDate INTEGER,
   status TEXT NOT NULL,
-  paymentGateway TEXT NOT NULL,
+  paymentGateway TEXT,
   subscriptionId TEXT,
   createdAt INTEGER NOT NULL,
   updatedAt INTEGER NOT NULL,

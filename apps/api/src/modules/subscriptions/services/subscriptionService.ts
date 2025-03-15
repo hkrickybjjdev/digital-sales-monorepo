@@ -41,7 +41,7 @@ export class SubscriptionService implements ISubscriptionService {
       startDate: now,
       endDate: null, // For now, we're creating ongoing subscriptions
       status: 'active',
-      paymentGateway: 'stripe', // Default to stripe for now
+      paymentGateway: null,
       subscriptionId: null, // This would be filled with the actual gateway subscription ID
       createdAt: now,
       updatedAt: now,

@@ -41,7 +41,7 @@ export const subscriptionSchema = z.object({
   startDate: z.number(),
   endDate: z.number().nullable(),
   status: z.string(),
-  paymentGateway: z.string(),
+  paymentGateway: z.string().nullable(),
   subscriptionId: z.string().nullable(),
   createdAt: z.number(),
   updatedAt: z.number(),

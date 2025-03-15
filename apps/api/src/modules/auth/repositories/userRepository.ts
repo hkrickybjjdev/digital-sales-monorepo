@@ -148,4 +148,77 @@ export class UserRepository implements IUserRepository {
     
     await stmt.run();
   }
+
+  async updateUser(userId: string, data: { name?: string; email?: string }): Promise<User | null> {
+    // First, check if the user exists
+    const user = await this.getUserById(userId);
+    if (!user) {
+      return null;
+    }
+
+    // Build the update query dynamically based on provided fields
+    const updateFields: string[] = [];
+    const values: any[] = [];
+
+    if (data.name !== undefined) {
+      updateFields.push('name = ?');
+      values.push(data.name);
+    }
+
+    if (data.email !== undefined) {
+      updateFields.push('email = ?');
+      values.push(data.email.toLowerCase());
+    }
+
+    // Add updatedAt to the fields to update
+    updateFields.push('updatedAt = ?');
+    values.push(Date.now());
+
+    // Add userId as the last value for the WHERE clause
+    values.push(userId);
+
+    // If no fields to update, return the existing user
+    if (updateFields.length === 0) {
+      return user;
+    }
+
+    // Execute the update query
+    const stmt = this.db.prepare(`
+      UPDATE User
+      SET ${updateFields.join(', ')}
+      WHERE id = ?
+    `).bind(...values);
+
+    await stmt.run();
+
+    // Return the updated user
+    return this.getUserById(userId);
+  }
+
+  async deleteUser(userId: string): Promise<boolean> {
+    // First, check if the user exists
+    const user = await this.getUserById(userId);
+    if (!user) {
+      return false;
+    }
+
+    // Delete all sessions for the user
+    const deleteSessionsStmt = this.db.prepare(`
+      DELETE FROM Session
+      WHERE userId = ?
+    `).bind(userId);
+
+    await deleteSessionsStmt.run();
+
+    // Delete the user
+    const deleteUserStmt = this.db.prepare(`
+      DELETE FROM User
+      WHERE id = ?
+    `).bind(userId);
+
+    const result = await deleteUserStmt.run();
+    
+    // Return true if at least one row was affected
+    return result.meta.changes > 0;
+  }
 }

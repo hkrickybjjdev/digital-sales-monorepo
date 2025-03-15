@@ -4,14 +4,21 @@ import * as teamHandlers from './controllers/teamHandlers';
 import * as teamMemberHandlers from './controllers/teamMemberHandlers';
 import { validateJWT } from '../auth/middleware/authMiddleware';
 import { formatResponse } from '../../utils/api-response';
+import { createWebhookRouter } from './webhooks/routes';
 
 // Create the teams module router
 const teamsModule = new Hono<{ Bindings: Env }>();
 
-// Use JWT authentication for all routes
-teamsModule.use('*', validateJWT);
+// Use JWT authentication for all routes EXCEPT webhooks
+// We'll add webhook routes before applying the JWT middleware
+// to keep them accessible without authentication
 
-// Documentation route
+// Add webhook routes
+// Note: These are not protected by JWT authentication since they need
+// to be called by other modules without user context
+teamsModule.route('/webhooks', createWebhookRouter());
+
+// Documentation route updated to include webhooks
 teamsModule.get('/', (c) => {
   return formatResponse(c, {
     module: 'Teams',
@@ -24,10 +31,17 @@ teamsModule.get('/', (c) => {
       { path: '/:teamId/members', method: 'GET', description: 'Get team members' },
       { path: '/:teamId/members', method: 'POST', description: 'Add a member to the team' },
       { path: '/:teamId/members/:memberId', method: 'PUT', description: 'Update a team member\'s role' },
-      { path: '/:teamId/members/:memberId', method: 'DELETE', description: 'Remove a member from the team' }
+      { path: '/:teamId/members/:memberId', method: 'DELETE', description: 'Remove a member from the team' },
+      { path: '/webhooks/auth/user-created', method: 'POST', description: 'Webhook for user creation (no auth)' },
+      { path: '/webhooks/auth/user-updated', method: 'POST', description: 'Webhook for user updates (no auth)' },
+      { path: '/webhooks/auth/user-deleted', method: 'POST', description: 'Webhook for user deletion (no auth)' }
     ]
   });
 });
+
+// Use JWT authentication for all routes EXCEPT webhooks
+// We apply this middleware AFTER adding webhook routes
+teamsModule.use('*', validateJWT);
 
 // Team routes
 teamsModule.get('/', teamHandlers.getUserTeams);

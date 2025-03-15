@@ -1,7 +1,7 @@
 import { D1Database } from '@cloudflare/workers-types';
 import { ITeamMemberRepository } from './interfaces';
 import { TeamMember, TeamMemberWithUser } from '../models/schemas';
-import { nanoid } from 'nanoid';
+import { generateUUID } from '@/utils/utils';
 
 export class TeamMemberRepository implements ITeamMemberRepository {
   private db: D1Database;
@@ -11,7 +11,7 @@ export class TeamMemberRepository implements ITeamMemberRepository {
   }
 
   async addTeamMember(teamMember: Omit<TeamMember, 'id' | 'createdAt' | 'updatedAt'>): Promise<TeamMember> {
-    const id = nanoid();
+    const id = generateUUID();
     const now = Math.floor(Date.now() / 1000);
     
     await this.db.prepare(`

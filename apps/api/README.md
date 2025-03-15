@@ -258,6 +258,8 @@ modules/
   ├── pages/                # Page management
   ├── products/             # Digital product handling
   ├── payments/             # Stripe integration
+  ├── teams/                # Team and subscription management
+  │   ├── webhooks/         # Integration with other modules
   ├── storage/              # File upload and delivery
   └── analytics/            # Usage tracking and reporting
 ```
@@ -305,6 +307,83 @@ The pages module follows a clean architecture pattern:
    - Exports the module router
 
 This architecture provides clear separation of concerns, making the code more maintainable, testable, and scalable.
+
+#### Integration Endpoints
+
+The modules/teams/webhooks/authWebhookHandlers.ts exposes webhook endpoints to seamlessly integrate with other modules:
+
+##### Auth Module Webhooks
+```
+POST /api/v1/teams/webhooks/auth/user-created
+POST /api/v1/teams/webhooks/auth/user-updated
+POST /api/v1/teams/webhooks/auth/user-deleted
+```
+
+These endpoints handle user lifecycle events:
+
+- **User Registration Webhook** (`/user-created`)
+  - Automatically creates a new team for the user
+  - Adds the user as the team owner
+  - Provisions a free subscription plan
+  - Example payload:
+  ```json
+  {
+    "event": "user.created",
+    "user": {
+      "id": "user_123",
+      "email": "user@example.com",
+      "name": "John Doe",
+      "createdAt": 1742052443000
+    }
+  }
+  ```
+
+- **User Update Webhook** (`/user-updated`)
+  - Updates team member information when user details change
+  - Ensures team member data stays in sync with user data
+  - Example payload:
+  ```json
+  {
+    "event": "user.updated",
+    "user": {
+      "id": "user_123",
+      "email": "updated@example.com",
+      "name": "John Updated",
+      "updatedAt": 1742052443000
+    },
+    "previous": {
+      "email": "user@example.com",
+      "name": "John Doe"
+    }
+  }
+  ```
+
+- **User Deletion Webhook** (`/user-deleted`)
+  - Handles user account deletion
+  - Transfers team ownership if possible, or archives the team
+  - Cancels subscriptions associated with the user
+  - Example payload:
+  ```json
+  {
+    "event": "user.deleted",
+    "user": {
+      "id": "user_123",
+      "deletedAt": 1742052443000
+    }
+  }
+  ```
+
+#### Auto-Provisioning Flow
+
+When a new user registers:
+
+1. Auth module emits a `user.created` event to the webhook endpoint
+2. TeamService creates a new team with the user as owner
+3. TeamMemberService adds the user as a team member with admin role
+4. SubscriptionService provisions a free subscription plan
+5. The user can immediately access the platform with their team and free plan
+
+This zero-friction onboarding experience allows users to start using the platform immediately after registration, with the option to upgrade to paid plans later.
 
 ## Database
 

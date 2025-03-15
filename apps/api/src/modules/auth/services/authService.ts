@@ -1,6 +1,7 @@
 import * as bcrypt from 'bcryptjs';
 import * as jose from 'jose';
 import { UserRepository } from '../repositories/userRepository';
+import { WebhookService } from './webhookService';
 import { User, AuthResponse, LoginRequest, RegisterRequest } from '../models/schemas';
 import { Env } from '../../../types';
 import { IAuthService } from './interfaces';
@@ -8,12 +9,14 @@ import { IAuthService } from './interfaces';
 export class AuthService implements IAuthService {
   private jwtSecret: string;
   private readonly MAX_LOGIN_ATTEMPTS = 5;
+  private webhookService: WebhookService;
 
   constructor(
     private readonly env: Env,
     private readonly userRepository: UserRepository
   ) {
     this.jwtSecret = env.JWT_SECRET;
+    this.webhookService = new WebhookService(env);
   }
 
   /**
@@ -40,10 +43,22 @@ export class AuthService implements IAuthService {
       failedAttempts: 0
     });
 
+    // Trigger webhook for user creation
+    try {
+      await this.webhookService.triggerUserCreated({
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        createdAt: Date.now()
+      });
+    } catch (error) {
+      console.error('Failed to trigger user created webhook:', error);
+      // Continue with registration even if webhook fails
+    }
+
     // Create session and generate JWT
     const authResponse = await this.generateAuthResponse(user);
     return authResponse;
-
   }
 
   /**
@@ -158,5 +173,75 @@ export class AuthService implements IAuthService {
    */
   async cleanupExpiredSessions(): Promise<void> {
     await this.userRepository.deleteExpiredSessions();
+  }
+
+  /**
+   * Update a user's profile
+   */
+  async updateUser(userId: string, data: { name?: string; email?: string }): Promise<Omit<User, 'passwordHash'> | null> {
+    // Get the current user data for comparison
+    const currentUser = await this.userRepository.getUserById(userId);
+    if (!currentUser) {
+      return null;
+    }
+
+    // Store previous values for webhook
+    const previous = {
+      name: currentUser.name,
+      email: currentUser.email
+    };
+
+    // Update the user
+    const updatedUser = await this.userRepository.updateUser(userId, data);
+    if (!updatedUser) {
+      return null;
+    }
+
+    // Trigger webhook for user update
+    try {
+      await this.webhookService.triggerUserUpdated({
+        id: updatedUser.id,
+        email: updatedUser.email,
+        name: updatedUser.name,
+        updatedAt: Date.now()
+      }, previous);
+    } catch (error) {
+      console.error('Failed to trigger user updated webhook:', error);
+      // Continue with update even if webhook fails
+    }
+
+    // Return the updated user without the password hash
+    const { passwordHash, ...userWithoutPassword } = updatedUser;
+    return userWithoutPassword;
+  }
+
+  /**
+   * Delete a user account
+   */
+  async deleteUser(userId: string): Promise<boolean> {
+    // Get the user to ensure they exist
+    const user = await this.userRepository.getUserById(userId);
+    if (!user) {
+      return false;
+    }
+
+    // Delete the user
+    const success = await this.userRepository.deleteUser(userId);
+    if (!success) {
+      return false;
+    }
+
+    // Trigger webhook for user deletion
+    try {
+      await this.webhookService.triggerUserDeleted({
+        id: userId,
+        deletedAt: Date.now()
+      });
+    } catch (error) {
+      console.error('Failed to trigger user deleted webhook:', error);
+      // Continue with deletion even if webhook fails
+    }
+
+    return true;
   }
 }
