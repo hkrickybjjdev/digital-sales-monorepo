@@ -18,27 +18,6 @@ const teamsModule = new Hono<{ Bindings: Env }>();
 // to be called by other modules without user context
 teamsModule.route('/webhooks', createWebhookRouter());
 
-// Documentation route updated to include webhooks
-teamsModule.get('/', (c) => {
-  return formatResponse(c, {
-    module: 'Teams',
-    endpoints: [
-      { path: '/', method: 'GET', description: 'Get teams that the current user belongs to' },
-      { path: '/', method: 'POST', description: 'Create a new team' },
-      { path: '/:teamId', method: 'GET', description: 'Get team details' },
-      { path: '/:teamId', method: 'PUT', description: 'Update team details' },
-      { path: '/:teamId', method: 'DELETE', description: 'Delete a team' },
-      { path: '/:teamId/members', method: 'GET', description: 'Get team members' },
-      { path: '/:teamId/members', method: 'POST', description: 'Add a member to the team' },
-      { path: '/:teamId/members/:memberId', method: 'PUT', description: 'Update a team member\'s role' },
-      { path: '/:teamId/members/:memberId', method: 'DELETE', description: 'Remove a member from the team' },
-      { path: '/webhooks/auth/user-created', method: 'POST', description: 'Webhook for user creation (no auth)' },
-      { path: '/webhooks/auth/user-updated', method: 'POST', description: 'Webhook for user updates (no auth)' },
-      { path: '/webhooks/auth/user-deleted', method: 'POST', description: 'Webhook for user deletion (no auth)' }
-    ]
-  });
-});
-
 // Use JWT authentication for all routes EXCEPT webhooks
 // We apply this middleware AFTER adding webhook routes
 teamsModule.use('*', validateJWT);

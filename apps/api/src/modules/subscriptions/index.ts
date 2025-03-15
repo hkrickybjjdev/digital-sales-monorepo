@@ -14,25 +14,6 @@ const subscriptionsModule = new Hono<{ Bindings: Env }>();
 // to be called by other modules without user context
 subscriptionsModule.route('/webhooks', createWebhookRouter());
 
-// Documentation route
-subscriptionsModule.get('/', (c) => {
-  return formatResponse(c, {
-    module: 'Subscriptions',
-    description: 'Plan and subscription management',
-    endpoints: [
-      { path: '/plans', method: 'GET', description: 'Get all available plans' },
-      { path: '/plans/:planId', method: 'GET', description: 'Get plan details by ID' },
-      { path: '/teams/:teamId/subscriptions', method: 'GET', description: 'Get all subscriptions for a team' },
-      { path: '/teams/:teamId/subscriptions', method: 'POST', description: 'Create a new subscription for a team' },
-      { path: '/subscriptions/:subscriptionId', method: 'GET', description: 'Get subscription details by ID' },
-      { path: '/subscriptions/:subscriptionId', method: 'PUT', description: 'Update a subscription' },
-      { path: '/subscriptions/:subscriptionId/cancel', method: 'POST', description: 'Cancel a subscription' },
-      { path: '/webhooks/teams/team-created', method: 'POST', description: 'Webhook for team creation (no auth)' },
-      { path: '/webhooks/teams/team-deleted', method: 'POST', description: 'Webhook for team deletion (no auth)' }
-    ]
-  });
-});
-
 // Public routes - plans are publicly viewable
 subscriptionsModule.get('/plans', planHandlers.getPlans);
 subscriptionsModule.get('/plans/:planId', planHandlers.getPlanById);
