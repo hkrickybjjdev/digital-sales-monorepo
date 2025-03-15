@@ -15,7 +15,8 @@ CREATE TABLE IF NOT EXISTS "User" (
   passwordHash TEXT NOT NULL,
   createdAt INTEGER NOT NULL,
   updatedAt INTEGER NOT NULL,
-  stripeAccount TEXT
+  stripeAccount TEXT,
+  lockedAt INTEGER
 );
 
 -- Product table
@@ -149,7 +150,8 @@ CREATE TABLE IF NOT EXISTS "Subscription" (
   status TEXT NOT NULL,
   stripeSubscriptionId TEXT,
   createdAt INTEGER NOT NULL,
-  updatedAt INTEGER NOT NULL
+  updatedAt INTEGER NOT NULL,
+  cancelAt INTEGER
 );
 
 -- Create indexes for frequently accessed columns

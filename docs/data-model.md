@@ -13,9 +13,11 @@ erDiagram
         string groupId FK
         string email
         string name
+        string passwordHash
         timestamp createdAt
         timestamp updatedAt
         object stripeAccount
+        timestamp lockedAt
     }
 
     ORGANIZATION {
@@ -66,6 +68,7 @@ erDiagram
         string stripeSubscriptionId
         timestamp createdAt
         timestamp updatedAt
+        timestamp cancelAt
     }
     
     SESSION {
@@ -199,9 +202,11 @@ Represents platform users who create and sell digital products or collect regist
 | groupId | UUID (FK) | Reference to group |
 | email | String | Email address, used for login |
 | name | String | Display name |
+| passwordHash | String | Hashed password for authentication |
 | createdAt | Timestamp | Account creation date |
 | updatedAt | Timestamp | Last account update |
 | stripeAccount | Object | Stripe Connect account details |
+| lockedAt | Timestamp | When the account was locked (NULL if not locked) |
 
 ### Role
 
@@ -251,6 +256,7 @@ Represents a user's subscription to a plan, including free plans.
 | stripeSubscriptionId | String | Stripe subscription ID (if applicable, NULL for free plans) |
 | createdAt | Timestamp | Subscription creation date |
 | updatedAt | Timestamp | Last Subscription update |
+| cancelAt | Timestamp | When the subscription was canceled (NULL if not canceled) |
 
 ### Session
 
