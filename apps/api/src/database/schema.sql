@@ -189,8 +189,26 @@ CREATE INDEX IF NOT EXISTS idx_teammember_userId ON "TeamMember"(userId);
 CREATE INDEX IF NOT EXISTS idx_teammember_role ON "TeamMember"(role);
 
 -- Insert default plans
-INSERT OR IGNORE INTO "Plan" (id, name, description, priceInCents, currency, interval, isVisible, features) VALUES 
-('plan_free', 'Free', 'Basic features for individuals', 0, 'USD', 'month', 1, '{"pageLimit": 3, "fileStorage": 100, "analytics": false}'),
-('plan_basic', 'Basic', 'Essential features for small teams', 1999, 'USD', 'month', 1, '{"pageLimit": 10, "fileStorage": 1000, "analytics": true}'),
-('plan_premium', 'Premium', 'Advanced features for growing businesses', 4999, 'USD', 'month', 1, '{"pageLimit": 50, "fileStorage": 10000, "analytics": true, "customDomain": true}'),
-('plan_enterprise', 'Enterprise', 'Full feature set for large organizations', 9999, 'USD', 'month', 0, '{"pageLimit": -1, "fileStorage": -1, "analytics": true, "customDomain": true, "dedicatedSupport": true}');
+INSERT OR IGNORE INTO "Plan" (id, name, description, isVisible, features) VALUES 
+('plan_free', 'Free', 'Basic features for individuals', 1, '{"pageLimit": 3, "fileStorage": 100, "analytics": false}'),
+('plan_basic', 'Basic', 'Essential features for small teams', 1, '{"pageLimit": 10, "fileStorage": 1000, "analytics": true}'),
+('plan_premium', 'Premium', 'Advanced features for growing businesses', 1, '{"pageLimit": 50, "fileStorage": 10000, "analytics": true, "customDomain": true}'),
+('plan_enterprise', 'Enterprise', 'Full feature set for large organizations', 0, '{"pageLimit": -1, "fileStorage": -1, "analytics": true, "customDomain": true, "dedicatedSupport": true}');
+
+-- Insert default prices for plans
+INSERT OR IGNORE INTO "Price" (id, planId, currency, interval, createdAt, updatedAt, billingScheme, type) VALUES
+-- Free plan
+('price_free_monthly', 'plan_free', 'USD', 'month', strftime('%s','now'), strftime('%s','now'), 'flat_rate', 'recurring'),
+('price_free_yearly', 'plan_free', 'USD', 'year', strftime('%s','now'), strftime('%s','now'), 'flat_rate', 'recurring'),
+
+-- Basic plan
+('price_basic_monthly', 'plan_basic', 'USD', 'month', strftime('%s','now'), strftime('%s','now'), 'flat_rate', 'recurring'),
+('price_basic_yearly', 'plan_basic', 'USD', 'year', strftime('%s','now'), strftime('%s','now'), 'flat_rate', 'recurring'),
+
+-- Premium plan
+('price_premium_monthly', 'plan_premium', 'USD', 'month', strftime('%s','now'), strftime('%s','now'), 'flat_rate', 'recurring'),
+('price_premium_yearly', 'plan_premium', 'USD', 'year', strftime('%s','now'), strftime('%s','now'), 'flat_rate', 'recurring'),
+
+-- Enterprise plan
+('price_enterprise_monthly', 'plan_enterprise', 'USD', 'month', strftime('%s','now'), strftime('%s','now'), 'flat_rate', 'recurring'),
+('price_enterprise_yearly', 'plan_enterprise', 'USD', 'year', strftime('%s','now'), strftime('%s','now'), 'flat_rate', 'recurring');
