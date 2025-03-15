@@ -58,7 +58,7 @@ erDiagram
 
     SUBSCRIPTION {
         string id PK
-        string userId FK
+        string teamId FK
         string planId FK
         timestamp startDate
         timestamp endDate
@@ -156,7 +156,7 @@ erDiagram
     USER ||--o{ PAGE : owns
     USER ||--o{ TEAM_MEMBER : belongs to
     TEAM ||--o{ TEAM_MEMBER : has
-    USER ||--o{ SUBSCRIPTION : subscribes to
+    TEAM ||--o{ SUBSCRIPTION : subscribes to
     PLAN ||--o{ SUBSCRIPTION : provides
     USER ||--o{ SESSION : has
 ```
@@ -239,7 +239,7 @@ Represents a user's subscription to a plan, including free plans.
 | Field | Type | Description |
 |-------|------|-------------|
 | id | UUID | Primary identifier |
-| userId | UUID (FK) | Reference to user |
+| teamId | UUID (FK) | Reference to team |
 | planId | UUID (FK) | Reference to plan |
 | startDate | Timestamp | Subscription start date |
 | endDate | Timestamp | Subscription end date |

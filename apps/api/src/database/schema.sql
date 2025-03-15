@@ -144,7 +144,7 @@ CREATE TABLE IF NOT EXISTS "Price" (
 -- Subscription table
 CREATE TABLE IF NOT EXISTS "Subscription" (
   id TEXT PRIMARY KEY,
-  userId TEXT NOT NULL REFERENCES "User"(id) ON DELETE CASCADE,
+  teamId TEXT NOT NULL REFERENCES "Team"(id) ON DELETE CASCADE,
   planId TEXT NOT NULL REFERENCES "Plan"(id),
   startDate INTEGER NOT NULL,
   endDate INTEGER,
@@ -179,7 +179,7 @@ CREATE INDEX IF NOT EXISTS idx_registration_email ON "Registration"(email);
 CREATE INDEX IF NOT EXISTS idx_product_userId ON "Product"(userId);
 CREATE INDEX IF NOT EXISTS idx_file_productId ON "File"(productId);
 
-CREATE INDEX IF NOT EXISTS idx_subscription_userId ON "Subscription"(userId);
+CREATE INDEX IF NOT EXISTS idx_subscription_teamId ON "Subscription"(teamId);
 CREATE INDEX IF NOT EXISTS idx_subscription_planId ON "Subscription"(planId);
 CREATE INDEX IF NOT EXISTS idx_subscription_status ON "Subscription"(status);
 
