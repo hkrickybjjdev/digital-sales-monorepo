@@ -10,18 +10,16 @@ This document outlines the core data structures, relationships, and storage solu
 erDiagram
     USER {
         string id PK
-        string groupId FK
         string email
         string name
         string passwordHash
         timestamp createdAt
         timestamp updatedAt
-        object stripeAccount
         timestamp lockedAt
         boolean emailVerified
     }
 
-    ORGANIZATION {
+    TEAM {
         string id PK      
         string name
         boolean isEnterprise
@@ -29,23 +27,13 @@ erDiagram
         timestamp updatedAt
     }
 
-    GROUP {
+    TEAM_MEMBER {
         string id PK
-        string organizationId FK
-        string name
+        string teamId FK
+        string userId FK
+        string role
         timestamp createdAt
         timestamp updatedAt
-    }
-
-    ROLE {
-        string id PK
-        string name
-    }
-
-    USER_ROLE {
-        string userId FK
-        string roleId FK
-        PRIMARY KEY (userId, roleId)
     }
 
     PLAN {
@@ -160,17 +148,14 @@ erDiagram
         object customFields
     }
     
-    USER ||--o{ PRODUCT : creates
-    USER ||--o{ PAGE : owns
     PRODUCT ||--|| FILE : contains
     PAGE ||--o{ PAGE_CONTENT : displays
     PRODUCT ||--o{ ORDER : generates
     PAGE ||--o{ REGISTRATION : collects
-    USER ||--o{ ORGANIZATION : belongs to
-    USER ||--o{ GROUP : belongs to
-    ORGANIZATION ||--o{ GROUP : has
-    USER ||--o{ USER_ROLE : has
-    ROLE ||--o{ USER_ROLE : assigned to
+    USER ||--o{ PRODUCT : creates
+    USER ||--o{ PAGE : owns
+    USER ||--o{ TEAM_MEMBER : belongs to
+    TEAM ||--o{ TEAM_MEMBER : has
     USER ||--o{ SUBSCRIPTION : subscribes to
     PLAN ||--o{ SUBSCRIPTION : provides
     USER ||--o{ SESSION : has
@@ -178,38 +163,38 @@ erDiagram
 
 ## Core Entities
 
-### Organization
+### Team
 
-Represents a customer organization.
+Represents a team of users working together.
 
 | Field | Type | Description |
 |-------|------|-------------|
 | id | UUID | Primary identifier |
-| name | String | Organization name |
-| isEnterprise | Boolean | Indicates if the organization is an enterprise customer |
+| name | String | Team name |
+| isEnterprise | Boolean | Indicates if the team has enterprise features |
 | createdAt | Timestamp | Creation date |
 | updatedAt | Timestamp | Last update date |
 
-### Group
+### TeamMember
 
-Represents a group within an organization.
+Represents a user's membership in a team.
 
 | Field | Type | Description |
 |-------|------|-------------|
 | id | UUID | Primary identifier |
-| organizationId | UUID (FK) | Reference to organization |
-| name | String | Group name |
-| createdAt | Timestamp | Creation date |
+| teamId | UUID (FK) | Reference to team |
+| userId | UUID (FK) | Reference to user |
+| role | Enum | Role in team ('owner', 'admin', 'member', 'viewer') |
+| createdAt | Timestamp | Join date |
 | updatedAt | Timestamp | Last update date |
 
 ### User
 
-Represents platform users who create and sell digital products or collect registrations.
+Represents platform users who create and manage content.
 
 | Field | Type | Description |
 |-------|------|-------------|
 | id | UUID | Primary identifier |
-| groupId | UUID (FK) | Reference to group |
 | email | String | Email address, used for login |
 | name | String | Display name |
 | passwordHash | String | Hashed password for authentication |
@@ -218,24 +203,6 @@ Represents platform users who create and sell digital products or collect regist
 | stripeAccount | Object | Stripe Connect account details |
 | lockedAt | Timestamp | When the account was locked (NULL if not locked) |
 | emailVerified | Boolean | Indicates if the email address has been verified |
-
-### Role
-
-Represents a predefined role in the system.
-
-| Field | Type | Description |
-|-------|------|-------------|
-| id | UUID | Primary identifier |
-| name | String | Role name (e.g., admin, manager, editor, viewer) |
-
-### User Role
-
-Represents the assignment of a role to a user.
-
-| Field | Type | Description |
-|-------|------|-------------|
-| userId | UUID (FK) | Reference to user |
-| roleId | UUID (FK) | Reference to role |
 
 ### Plan
 
@@ -513,15 +480,37 @@ Frequently accessed read-only data is cached at the edge:
    - Send confirmation email/SMS
    - Update registration count metrics
 
-## Role-Based Access Control (RBAC)
+## Team-Based Access Control
 
-The platform employs RBAC to manage user permissions. Predefined roles are stored in the `ROLE` table (e.g., `admin`, `manager`, `editor`, `viewer`). The `USER_ROLE` table maps users to their assigned roles. A user can have multiple roles.
+The platform employs a team-based access control model where permissions are determined by a user's role within a team. Each user can be a member of multiple teams with different roles in each team.
 
-Permissions are associated with roles, and users are assigned roles within their groups.
+### Team Member Roles
 
-## Non-Enterprise Plan Considerations
+Team members can have one of four predefined roles:
+- **Owner**: Full control over team settings and members
+- **Admin**: Can manage pages, products, and team members
+- **Member**: Can create and edit content
+- **Viewer**: Read-only access to team content
 
-For organizations not on the Enterprise plan, the `organization.name` and `group.name` fields are randomly generated to simplify the setup process. These names are not intended to be user-customizable.
+### Role Permissions
+
+| Permission | Owner | Admin | Member | Viewer |
+|------------|-------|-------|--------|--------|
+| View content | ✓ | ✓ | ✓ | ✓ |
+| Create/edit pages | ✓ | ✓ | ✓ | - |
+| Manage products | ✓ | ✓ | ✓ | - |
+| View analytics | ✓ | ✓ | ✓ | ✓ |
+| Manage team members | ✓ | ✓ | - | - |
+| Delete team | ✓ | - | - | - |
+| Billing management | ✓ | - | - | - |
+
+## Team Plan Considerations
+
+For teams not on the Enterprise plan:
+- Limited number of team members based on plan tier
+- Restricted access to advanced collaboration features
+- Standard team naming without custom branding options
+- Pre-defined role templates without customization
 
 ## Data Retention and Compliance
 

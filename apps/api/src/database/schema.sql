@@ -6,16 +6,34 @@ CREATE TABLE IF NOT EXISTS "Session" (
   createdAt INTEGER NOT NULL
 );
 
+-- Team table
+CREATE TABLE IF NOT EXISTS "Team" (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  createdAt INTEGER NOT NULL,
+  updatedAt INTEGER NOT NULL,
+  isEnterprise INTEGER NOT NULL DEFAULT 0
+);
+
+-- TeamMember table
+CREATE TABLE IF NOT EXISTS "TeamMember" (
+  id TEXT PRIMARY KEY,
+  teamId TEXT NOT NULL REFERENCES "Team"(id) ON DELETE CASCADE,
+  userId TEXT NOT NULL REFERENCES "User"(id) ON DELETE CASCADE,
+  role TEXT NOT NULL CHECK (role IN ('owner', 'admin', 'member', 'viewer')),
+  createdAt INTEGER NOT NULL,
+  updatedAt INTEGER NOT NULL,
+  UNIQUE (teamId, userId)
+);
+
 -- User table
 CREATE TABLE IF NOT EXISTS "User" (
-  id TEXT PRIMARY KEY,  
-  groupId TEXT REFERENCES "Group"(id),
+  id TEXT PRIMARY KEY,
   email TEXT UNIQUE NOT NULL,
   name TEXT NOT NULL,
   passwordHash TEXT NOT NULL,
   createdAt INTEGER NOT NULL,
   updatedAt INTEGER NOT NULL,
-  stripeAccount TEXT,
   lockedAt INTEGER,
   emailVerified INTEGER NOT NULL DEFAULT 0
 );
@@ -97,37 +115,6 @@ CREATE TABLE IF NOT EXISTS "Registration" (
   customFields TEXT NOT NULL DEFAULT '{}'
 );
 
--- Organization table
-CREATE TABLE IF NOT EXISTS "Organization" (
-  id TEXT PRIMARY KEY,
-  name TEXT NOT NULL,
-  isEnterprise INTEGER NOT NULL DEFAULT 0,
-  createdAt INTEGER NOT NULL,
-  updatedAt INTEGER NOT NULL
-);
-
--- Group table
-CREATE TABLE IF NOT EXISTS "Group" (
-  id TEXT PRIMARY KEY,
-  organizationId TEXT NOT NULL REFERENCES "Organization"(id) ON DELETE CASCADE,
-  name TEXT NOT NULL,
-  createdAt INTEGER NOT NULL,
-  updatedAt INTEGER NOT NULL
-);
-
--- Role table
-CREATE TABLE IF NOT EXISTS "Role" (
-  id TEXT PRIMARY KEY,
-  name TEXT UNIQUE NOT NULL
-);
-
--- User Role mapping table
-CREATE TABLE IF NOT EXISTS "UserRole" (
-  userId TEXT NOT NULL REFERENCES "User"(id) ON DELETE CASCADE,
-  roleId TEXT NOT NULL REFERENCES "Role"(id) ON DELETE CASCADE,
-  PRIMARY KEY (userId, roleId)
-);
-
 -- Plan table
 CREATE TABLE IF NOT EXISTS "Plan" (
   id TEXT PRIMARY KEY,
@@ -192,21 +179,14 @@ CREATE INDEX IF NOT EXISTS idx_registration_email ON "Registration"(email);
 CREATE INDEX IF NOT EXISTS idx_product_userId ON "Product"(userId);
 CREATE INDEX IF NOT EXISTS idx_file_productId ON "File"(productId);
 
-CREATE INDEX IF NOT EXISTS idx_organization_name ON "Organization"(name);
-CREATE INDEX IF NOT EXISTS idx_group_organizationId ON "Group"(organizationId);
-CREATE INDEX IF NOT EXISTS idx_user_groupId ON "User"(groupId);
-CREATE INDEX IF NOT EXISTS idx_userrole_userId ON "UserRole"(userId);
-CREATE INDEX IF NOT EXISTS idx_userrole_roleId ON "UserRole"(roleId);
 CREATE INDEX IF NOT EXISTS idx_subscription_userId ON "Subscription"(userId);
 CREATE INDEX IF NOT EXISTS idx_subscription_planId ON "Subscription"(planId);
 CREATE INDEX IF NOT EXISTS idx_subscription_status ON "Subscription"(status);
 
--- Insert default roles
-INSERT OR IGNORE INTO "Role" (id, name) VALUES 
-('role_admin', 'admin'),
-('role_manager', 'manager'),
-('role_editor', 'editor'),
-('role_viewer', 'viewer');
+CREATE INDEX IF NOT EXISTS idx_team_name ON "Team"(name);
+CREATE INDEX IF NOT EXISTS idx_teammember_teamId ON "TeamMember"(teamId);
+CREATE INDEX IF NOT EXISTS idx_teammember_userId ON "TeamMember"(userId);
+CREATE INDEX IF NOT EXISTS idx_teammember_role ON "TeamMember"(role);
 
 -- Insert default plans
 INSERT OR IGNORE INTO "Plan" (id, name, description, priceInCents, currency, interval, isVisible, features) VALUES 

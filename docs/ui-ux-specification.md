@@ -176,7 +176,7 @@ The platform uses Shadcn UI as its component library foundation with the followi
 *   Recent activity feed (new registrations, sales, etc.)
 *   Performance overview charts
 *   Upcoming expirations and launches
-*   **Organization and Subscription Status**
+*   Team and Subscription Status
 
 **Organization**:
 
@@ -184,7 +184,7 @@ The platform uses Shadcn UI as its component library foundation with the followi
 *   Date range selector for historical data
 *   Saved views for frequently accessed metrics
 *   Export functionality for reports
-*   **Organization and User Management Section**
+*   Team management section
 
 #### 2. Page Type Selector
 
@@ -211,7 +211,7 @@ The platform uses Shadcn UI as its component library foundation with the followi
 *   SEO metadata configuration
 *   Tracking and analytics integration
 *   Product selection and association (for product-based pages)
-*   **Organization and Group Assignment**
+*   Team assignment
 
 **Type-Specific Builders**:
 
@@ -359,32 +359,32 @@ graph TD
     K --> L[Monitor Performance]
 ```
 
-#### Organization Management Flow
+#### Team Management Flow
 
 ```mermaid
 graph TD
-    A[Access Console] --> B[Select "Organization Settings"]
-    B --> C[View Organization Details]
-    C --> D{Edit Organization?}
-    D -- Yes --> E[Modify Organization Details]
+    A[Access Console] --> B[Select "Team Settings"]
+    B --> C[View Team Details]
+    C --> D{Edit Team?}
+    D -- Yes --> E[Modify Team Details]
     E --> F[Save Changes]
     D -- No --> G[Return to Dashboard]
 ```
 
-#### User and Role Management Flow
+#### Team Member Management Flow
 
 ```mermaid
 graph TD
-    A[Access Console] --> B[Select "User Management"]
-    B --> C[View User List]
-    C --> D{Add New User?}
-    D -- Yes --> E[Enter User Details]
-    E --> F[Assign Role]
-    F --> G[Save User]
-    D -- No --> H{Edit User?}
-    H -- Yes --> I[Modify User Details]
+    A[Access Console] --> B[Select "Team Members"]
+    B --> C[View Member List]
+    C --> D{Add New Member?}
+    D -- Yes --> E[Enter Email Address]
+    E --> F[Select Member Role]
+    F --> G[Send Invitation]
+    D -- No --> H{Edit Member?}
+    H -- Yes --> I[Change Member Role]
     I --> J[Save Changes]
-    H -- No --> K[Return to User List]
+    H -- No --> K[Return to Members]
 ```
 
 #### Subscription Management Flow
@@ -512,11 +512,19 @@ graph TD
 - Version control for design assets in Figma
 - Changelog for significant UI/UX updates
 
-## Role-Based Access Control (RBAC) in UI
+## Access Control in UI
 
-The UI reflects RBAC by:
+The UI reflects team-based access control by:
 
-*   **Hiding or disabling features based on the user's role.**
-*   **Displaying different levels of access to data based on the user's role.**
-*   **Providing specific dashboards and reports tailored to each role.**
-*   **Restricting access to organization and user management functions based on role.**
+- **Hiding or disabling features based on the team member's role**
+- **Displaying different levels of access to data based on team permissions**
+- **Providing specific dashboards and reports tailored to each team role**
+- **Restricting access to team and user management functions based on role**
+
+## Team-Based Access Control
+
+Team members can have one of four roles:
+- **Owner**: Full control over team settings and members
+- **Admin**: Can manage pages, products, and members
+- **Member**: Can create and edit content
+- **Viewer**: Read-only access to team content

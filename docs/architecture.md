@@ -19,12 +19,13 @@ The Temporary Pages Platform is designed as a modern, serverless architecture le
 - **Modular Monolith Approach**: A single worker with modular internal organization rather than separate microservices
 - **Domain-Driven Modules**: Organized into distinct functional modules:
   - `auth`: User authentication and authorization
+  - `teams`: Team and team member management
   - `pages`: Page creation, management, and delivery
   - `products`: Digital product handling
   - `payments`: Stripe integration and transaction processing
   - `storage`: File upload and secure delivery
   - `analytics`: Usage and performance tracking
-  - `accounts`: Organization, Group, Role, User Role, Plan, and Subscription management
+  - `subscriptions`: Plan and subscription management
 - **Shared Core Services**: Common utilities and middleware used across modules:
   - Security (HMAC, rate limiting)
   - Logging and monitoring
@@ -48,14 +49,14 @@ The platform employs a modular monolith approach for the following reasons:
 - **Cloudflare R2**: Object storage for digital products (PDFs, images, etc.)
 - **Cloudflare D1**: For structured data storage:
   - User accounts, page configurations, products, files, orders, registrations
-  - Organizations, Groups, Roles, User Roles, Plans, Subscriptions
+  - Team, TeamMember, Plans, Subscriptions
   - Separation of read and write models for scalability
 
 ### Authentication & Security
 
 - **Auth Layer**: JWT-based authentication with configurable session expiration
 - **HMAC Signing**: For tamper-proof URLs and parameters
-- **Role-Based Access Control**: Implemented using the `ROLE` and `USER_ROLE` entities to manage user permissions.
+- **Team-Based Access Control**: Implemented using the TeamMember roles to manage user permissions
 - **Rate Limiting**: Implemented at the edge level with Cloudflare Workers
 - **IP Validation**: Using CF-Connecting-IP headers for access control
 
@@ -93,7 +94,7 @@ graph TD
 
 1.  User creates a temporary page through the console frontend
 2.  Selects page type (countdown, flash sale, event registration, limited-time offer)
-3.  **System verifies user's organization, group, plan, and role.**
+3.  System verifies user's team membership, role, and subscription plan
 4.  Configures page-specific settings and customizations
 5.  For product-based pages, associates products or uploads new products
 6.  Next.js API routes process configuration and generate a unique shortened UUID
@@ -200,8 +201,8 @@ stateDiagram-v2
 - Separation of read and write paths
 - Asynchronous processing for non-critical operations
 - Optimized database access patterns for high-traffic periods
-- **Scalability of the `accounts` module, especially during user creation and subscription management, should be considered.**
-- **Caching of organization, group, and role data to reduce database load.**
+- **Scalability of the `teams` module, especially during team member management**
+- **Caching of team membership data to reduce database load**
 - Selective Extraction Strategy: Design modules to be extractable into separate workers if specific components need independent scaling
 
 ## Monitoring and Observability
@@ -227,3 +228,11 @@ stateDiagram-v2
 - Event-driven architecture for complex workflows
 - Integration with additional payment processors beyond Stripe
 - Advanced analytics with machine learning for conversion optimization
+
+## Role-Based Access Control (RBAC) in Teams
+
+Team members can have one of four roles:
+- **Owner**: Full control over team settings and members
+- **Admin**: Can manage pages, products, and members
+- **Member**: Can create and edit content
+- **Viewer**: Read-only access to team content
