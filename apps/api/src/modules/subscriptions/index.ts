@@ -4,6 +4,7 @@ import { validateJWT } from '../auth/middleware/authMiddleware';
 import { formatResponse } from '../../utils/api-response';
 import * as planHandlers from './controllers/planHandlers';
 import * as subscriptionHandlers from './controllers/subscriptionHandlers';
+import * as stripeHandlers from './controllers/stripeHandlers';
 import { createWebhookRouter } from './webhooks/routes';
 
 // Create the subscriptions module router
@@ -30,6 +31,10 @@ protectedRoutes.post('/teams/:teamId/subscriptions', subscriptionHandlers.create
 protectedRoutes.get('/subscriptions/:subscriptionId', subscriptionHandlers.getSubscriptionById);
 protectedRoutes.put('/subscriptions/:subscriptionId', subscriptionHandlers.updateSubscription);
 protectedRoutes.post('/subscriptions/:subscriptionId/cancel', subscriptionHandlers.cancelSubscription);
+
+// Stripe Checkout and Portal routes
+protectedRoutes.post('/checkout-session', stripeHandlers.createCheckoutSession);
+protectedRoutes.post('/portal-session', stripeHandlers.createPortalSession);
 
 // Mount protected routes
 subscriptionsModule.route('/', protectedRoutes);

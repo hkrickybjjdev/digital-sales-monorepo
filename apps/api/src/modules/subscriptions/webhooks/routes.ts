@@ -4,6 +4,7 @@ import {
   handleTeamCreated,
   handleTeamDeleted
 } from './teamWebhookHandlers';
+import { handleStripeWebhook } from './stripeWebhookHandlers';
 
 /**
  * Create webhook router
@@ -18,13 +19,21 @@ export function createWebhookRouter(): Hono<{ Bindings: Env }> {
   router.post('/teams/team-created', handleTeamCreated);
   router.post('/teams/team-deleted', handleTeamDeleted);
   
+  // Stripe webhooks
+  router.post('/stripe', async (c) => {
+    // Stripe webhooks need raw body for signature verification
+    // Hono parses the body by default, so we need to handle it specially
+    return handleStripeWebhook(c);
+  });
+  
   // Documentation endpoint
   router.get('/', (c) => {
     return c.json({
       module: 'Subscriptions',
       webhooks: [
         { path: '/teams/team-created', method: 'POST', description: 'Handle team creation events from teams module' },
-        { path: '/teams/team-deleted', method: 'POST', description: 'Handle team deletion events from teams module' }
+        { path: '/teams/team-deleted', method: 'POST', description: 'Handle team deletion events from teams module' },
+        { path: '/stripe', method: 'POST', description: 'Handle Stripe webhook events' }
       ]
     });
   });

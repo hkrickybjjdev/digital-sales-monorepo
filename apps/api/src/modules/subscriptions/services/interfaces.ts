@@ -7,6 +7,7 @@ import {
   CreateSubscriptionRequest,
   UpdateSubscriptionRequest
 } from '../models/schemas';
+import Stripe from 'stripe';
 
 /**
  * Interface for PlanService
@@ -106,6 +107,11 @@ export interface ISubscriptionRepository {
    * Check if user has access to team
    */
   checkUserTeamAccess(teamId: string, userId: string): Promise<boolean>;
+
+  /**
+   * Find subscriptions by Stripe subscription ID
+   */
+  findByStripeSubscriptionId(stripeSubscriptionId: string): Promise<Subscription[]>;
 }
 
 export interface IPriceRepository {
@@ -120,4 +126,34 @@ export interface IPriceRepository {
    * Get Price By Id
    */
   getPriceById(id: string): Promise<Price | null>;
+}
+
+export interface IStripeService {
+  /**
+   * Create a checkout session for subscription
+   */
+  createCheckoutSession(options: {
+    teamId: string;
+    lookupKey: string;
+    successUrl: string;
+    cancelUrl: string;
+  }): Promise<{ url: string }>;
+
+  /**
+   * Create a billing portal session
+   */
+  createPortalSession(options: {
+    customerId: string;
+    returnUrl: string;
+  }): Promise<{ url: string }>;
+
+  /**
+   * Retrieve a checkout session
+   */
+  retrieveCheckoutSession(sessionId: string): Promise<Stripe.Checkout.Session>;
+
+  /**
+   * Verify webhook signature
+   */
+  verifyWebhookSignature(payload: string, signature: string): Stripe.Event;
 }

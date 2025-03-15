@@ -1,9 +1,10 @@
 import { Env } from '../../../types';
-import { IPlanRepository, IPlanService, ISubscriptionRepository, ISubscriptionService } from '../services/interfaces';
+import { IPlanRepository, IPlanService, ISubscriptionRepository, ISubscriptionService, IStripeService } from '../services/interfaces';
 import { PlanRepository } from '../repositories/planRepository';
 import { SubscriptionRepository } from '../repositories/subscriptionRepository';
 import { PlanService } from '../services/planService';
 import { SubscriptionService } from '../services/subscriptionService';
+import { StripeService } from '../services/stripeService';
 
 /**
  * Interface for the subscriptions module's DI container
@@ -16,6 +17,7 @@ export interface SubscriptionsContainer {
   // Services
   planService: IPlanService;
   subscriptionService: ISubscriptionService;
+  stripeService: IStripeService;
 }
 
 // Singleton instances
@@ -23,6 +25,7 @@ let planRepositoryInstance: IPlanRepository | null = null;
 let subscriptionRepositoryInstance: ISubscriptionRepository | null = null;
 let planServiceInstance: IPlanService | null = null;
 let subscriptionServiceInstance: ISubscriptionService | null = null;
+let stripeServiceInstance: IStripeService | null = null;
 let containerEnv: Env | null = null;
 
 /**
@@ -57,13 +60,18 @@ export function getSubscriptionsContainer(env: Env): SubscriptionsContainer {
       planRepositoryInstance
     );
   }
+
+  if (!stripeServiceInstance) {
+    stripeServiceInstance = new StripeService(env);
+  }
   
   // Return the container with all dependencies
   return {
     planRepository: planRepositoryInstance,
     subscriptionRepository: subscriptionRepositoryInstance,
     planService: planServiceInstance,
-    subscriptionService: subscriptionServiceInstance
+    subscriptionService: subscriptionServiceInstance,
+    stripeService: stripeServiceInstance
   };
 }
 
@@ -75,5 +83,6 @@ export function resetSubscriptionsContainer(): void {
   subscriptionRepositoryInstance = null;
   planServiceInstance = null;
   subscriptionServiceInstance = null;
+  stripeServiceInstance = null;
   containerEnv = null;
 }

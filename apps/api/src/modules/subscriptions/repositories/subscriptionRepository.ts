@@ -105,6 +105,18 @@ export class SubscriptionRepository implements ISubscriptionRepository {
     
     return result !== null && result.count > 0;
   }
+
+  async findByStripeSubscriptionId(stripeSubscriptionId: string): Promise<Subscription[]> {
+    const result = await this.db.prepare(`
+      SELECT * FROM "Subscription" 
+      WHERE subscriptionId = ? AND paymentGateway = 'stripe'
+      ORDER BY createdAt DESC
+    `).bind(stripeSubscriptionId).all();
+    
+    if (!result.results) return [];
+    
+    return result.results.map(row => this.parseSubscriptionResult(row));
+  }
   
   private parseSubscriptionResult(row: any): Subscription {
     return {
