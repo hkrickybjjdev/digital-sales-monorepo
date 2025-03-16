@@ -1,20 +1,23 @@
 import { UserRepository } from '../repositories/userRepository';
 import { AuthService } from '../services/authService';
 import { WebhookService } from '../services/webhookService';
+import { EmailService } from '../services/emailService';
 import { Env } from '../../../types';
-import { IAuthService, IUserRepository, IWebhookService } from '../services/interfaces';
+import { IAuthService, IUserRepository, IWebhookService, IEmailService } from '../services/interfaces';
 
 // Interface for the auth module's DI container
 export interface AuthContainer {
   userRepository: IUserRepository;
   authService: IAuthService;
   webhookService: IWebhookService;
+  emailService: IEmailService;
 }
 
 // Singleton instances with their associated environment
 let userRepositoryInstance: UserRepository | null = null;
 let authServiceInstance: AuthService | null = null;
 let webhookServiceInstance: WebhookService | null = null;
+let emailServiceInstance: EmailService | null = null;
 let containerEnv: Env | null = null;
 
 // Factory function to create the auth container
@@ -32,20 +35,26 @@ export function getAuthContainer(env: Env): AuthContainer {
     userRepositoryInstance = new UserRepository(env);
   }
   
-  // Create the services with their dependencies as singletons
-  if (!authServiceInstance) {
-    authServiceInstance = new AuthService(env, userRepositoryInstance);
-  }
-  
   // Create the webhook service as a singleton
   if (!webhookServiceInstance) {
     webhookServiceInstance = new WebhookService(env);
   }
   
+  // Create the email service as a singleton
+  if (!emailServiceInstance) {
+    emailServiceInstance = new EmailService(env);
+  }
+  
+  // Create the services with their dependencies as singletons
+  if (!authServiceInstance) {
+    authServiceInstance = new AuthService(env, userRepositoryInstance);
+  }
+  
   return {
     userRepository: userRepositoryInstance,
     authService: authServiceInstance,
-    webhookService: webhookServiceInstance
+    webhookService: webhookServiceInstance,
+    emailService: emailServiceInstance
   };
 }
 
@@ -54,5 +63,6 @@ export function resetAuthContainer(): void {
   userRepositoryInstance = null;
   authServiceInstance = null;
   webhookServiceInstance = null;
+  emailServiceInstance = null;
   containerEnv = null;
 }

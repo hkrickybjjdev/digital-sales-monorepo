@@ -2,14 +2,25 @@ import * as bcrypt from 'bcryptjs';
 import * as jose from 'jose';
 import { UserRepository } from '../repositories/userRepository';
 import { WebhookService } from './webhookService';
-import { User, AuthResponse, LoginRequest, RegisterRequest } from '../models/schemas';
+import { EmailService } from './emailService';
+import { 
+  User, 
+  AuthResponse, 
+  LoginRequest, 
+  RegisterRequest, 
+  ActivationResponse,
+  ResendActivationRequest 
+} from '../models/schemas';
 import { Env } from '../../../types';
 import { IAuthService } from './interfaces';
+import { generateUUID } from '../../../utils/utils';
 
 export class AuthService implements IAuthService {
   private jwtSecret: string;
   private readonly MAX_LOGIN_ATTEMPTS = 5;
   private webhookService: WebhookService;
+  private emailService: EmailService;
+  private baseUrl: string;
 
   constructor(
     private readonly env: Env,
@@ -17,13 +28,16 @@ export class AuthService implements IAuthService {
   ) {
     this.jwtSecret = env.JWT_SECRET;
     this.webhookService = new WebhookService(env);
+    this.emailService = new EmailService(env);
+    this.baseUrl = env.ENVIRONMENT === 'production' 
+      ? 'https://app.tempages.app' 
+      : 'http://localhost:3000';
   }
 
   /**
    * Register a new user
    */
   async register(data: RegisterRequest): Promise<{ error?: string } & Partial<AuthResponse>> {
-
     // Check if user already exists
     const existingUser = await this.userRepository.getUserByEmail(data.email);
     if (existingUser) {
@@ -33,15 +47,32 @@ export class AuthService implements IAuthService {
     // Hash password
     const passwordHash = await this.hashPassword(data.password);
 
-    // Create user
+    // Generate activation token and set expiration (24 hours from now)
+    const activationToken = generateUUID();
+    const activationTokenExpiresAt = Date.now() + (24 * 60 * 60 * 1000);
+
+    // Create user with activation token
     const user = await this.userRepository.createUser({
       email: data.email,
       name: data.name,
       passwordHash: passwordHash,
       lockedAt: null,
-      emailVerified: 0,
-      failedAttempts: 0
+      emailVerified: 0, // Set to 0 (not verified) by default
+      failedAttempts: 0,
+      activationToken,
+      activationTokenExpiresAt
     });
+
+    // Generate activation link
+    const activationLink = `${this.baseUrl}/activate?token=${activationToken}`;
+
+    // Send activation email
+    try {
+      await this.emailService.sendActivationEmail(user.email, user.name, activationLink);
+    } catch (error) {
+      console.error('Failed to send activation email:', error);
+      // Continue with registration even if email fails
+    }
 
     // Trigger webhook for user creation
     try {
@@ -56,16 +87,20 @@ export class AuthService implements IAuthService {
       // Continue with registration even if webhook fails
     }
 
-    // Create session and generate JWT
-    const authResponse = await this.generateAuthResponse(user);
-    return authResponse;
+    // Return user info without generating a JWT (since the account is not activated yet)
+    return {
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name
+      }
+    };
   }
 
   /**
    * Login an existing user
    */
   async login(data: LoginRequest): Promise<{ error?: string } & Partial<AuthResponse>> {
-
     // Find user by email
     const user = await this.userRepository.getUserByEmail(data.email);
     if (!user) {
@@ -75,6 +110,24 @@ export class AuthService implements IAuthService {
     // Check if account is locked
     if (user.lockedAt) {
       return { error: 'Account is locked. Please contact support.' };
+    }
+
+    // Check if account is activated/verified
+    if (!user.emailVerified) {
+      // Generate a new activation token if the current one is expired
+      if (!user.activationToken || !user.activationTokenExpiresAt || user.activationTokenExpiresAt < Date.now()) {
+        const activationToken = generateUUID();
+        const activationTokenExpiresAt = Date.now() + (24 * 60 * 60 * 1000);
+        
+        await this.userRepository.setActivationToken(user.id, activationToken, activationTokenExpiresAt);
+        
+        const activationLink = `${this.baseUrl}/activate?token=${activationToken}`;
+        await this.emailService.sendActivationEmail(user.email, user.name, activationLink);
+      }
+      
+      return { 
+        error: 'Account not activated. Please check your email for the activation link or request a new one.'
+      };
     }
 
     // Verify password
@@ -101,10 +154,103 @@ export class AuthService implements IAuthService {
   }
 
   /**
+   * Activate a user account
+   */
+  async activateUser(token: string): Promise<ActivationResponse> {
+    // Find user by activation token
+    const user = await this.userRepository.getUserByActivationToken(token);
+    
+    if (!user) {
+      return { 
+        success: false, 
+        message: 'Invalid or expired activation token. Please request a new activation link.' 
+      };
+    }
+
+    // Activate the user
+    await this.userRepository.activateUser(user.id);
+
+    // Send welcome email
+    try {
+      await this.emailService.sendWelcomeEmail(user.email, user.name);
+    } catch (error) {
+      console.error('Failed to send welcome email:', error);
+      // Continue with activation even if email fails
+    }
+
+    // Trigger webhook for user activation
+    try {
+      await this.webhookService.triggerUserActivated({
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        activatedAt: Date.now()
+      });
+    } catch (error) {
+      console.error('Failed to trigger user activated webhook:', error);
+      // Continue with activation even if webhook fails
+    }
+
+    return { 
+      success: true, 
+      message: 'Account activated successfully. You can now log in.' 
+    };
+  }
+
+  /**
+   * Resend activation email
+   */
+  async resendActivationEmail(data: ResendActivationRequest): Promise<ActivationResponse> {
+    // Find user by email
+    const user = await this.userRepository.getUserByEmail(data.email);
+    
+    if (!user) {
+      // Return success even if user doesn't exist to prevent email enumeration
+      return { 
+        success: true, 
+        message: 'If the email address exists in our system, an activation link has been sent.' 
+      };
+    }
+
+    // Check if user is already activated
+    if (user.emailVerified) {
+      return { 
+        success: false, 
+        message: 'This account is already activated. Please login.' 
+      };
+    }
+
+    // Generate new activation token
+    const activationToken = generateUUID();
+    const activationTokenExpiresAt = Date.now() + (24 * 60 * 60 * 1000);
+    
+    // Update user with new activation token
+    await this.userRepository.setActivationToken(user.id, activationToken, activationTokenExpiresAt);
+    
+    // Generate activation link
+    const activationLink = `${this.baseUrl}/activate?token=${activationToken}`;
+
+    // Send activation email
+    try {
+      await this.emailService.sendActivationEmail(user.email, user.name, activationLink);
+    } catch (error) {
+      console.error('Failed to send activation email:', error);
+      return { 
+        success: false, 
+        message: 'Failed to send activation email. Please try again later.' 
+      };
+    }
+
+    return { 
+      success: true, 
+      message: 'Activation link has been sent to your email address.' 
+    };
+  }
+
+  /**
    * Get user by ID
    */
   async getUserById(id: string): Promise<Omit<User, 'passwordHash'> | null> {
-
     const user = await this.userRepository.getUserById(id);
 
     if (!user) {

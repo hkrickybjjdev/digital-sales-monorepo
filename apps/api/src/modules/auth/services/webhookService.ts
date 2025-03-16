@@ -59,6 +59,21 @@ export class WebhookService {
   }
   
   /**
+   * Trigger a webhook event for user activation
+   */
+  async triggerUserActivated(user: {
+    id: string;
+    email: string;
+    name: string;
+    activatedAt: number;
+  }): Promise<void> {
+    await this.sendWebhook('/api/v1/teams/webhooks/auth/user-activated', {
+      event: 'user.activated',
+      user
+    });
+  }
+  
+  /**
    * Send a webhook payload to the specified endpoint
    */
   private async sendWebhook(endpoint: string, payload: any): Promise<void> {
@@ -91,4 +106,4 @@ export class WebhookService {
       console.error(`Failed to send webhook to ${endpoint}:`, error);
     }
   }
-} 
+}

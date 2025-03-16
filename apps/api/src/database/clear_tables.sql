@@ -7,7 +7,7 @@ DELETE FROM "Registration";
 DELETE FROM "Order";
 DELETE FROM "PageContent";
 DELETE FROM "Session";
-DELETE FROM "Price";
+--DELETE FROM "Price";
 
 -- Then clear the primary tables
 DELETE FROM "Subscription";
@@ -15,4 +15,4 @@ DELETE FROM "Page";
 DELETE FROM "Product";
 DELETE FROM "Team";
 DELETE FROM "User";
-DELETE FROM "Plan";
+--DELETE FROM "Plan";

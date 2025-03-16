@@ -10,7 +10,9 @@ export const userSchema = z.object({
   updatedAt: z.number(),
   lockedAt: z.number().nullable(),
   emailVerified: z.number().default(0),
-  failedAttempts: z.number().default(0)
+  failedAttempts: z.number().default(0),
+  activationToken: z.string().nullable(),
+  activationTokenExpiresAt: z.number().nullable()
 });
 
 // Login request schema
@@ -50,3 +52,18 @@ export interface Session {
   expiresAt: number;
   createdAt: number;
 }
+
+// Activation response schema
+export const activationResponseSchema = z.object({
+  success: z.boolean(),
+  message: z.string()
+});
+
+export type ActivationResponse = z.infer<typeof activationResponseSchema>;
+
+// Resend activation schema
+export const resendActivationSchema = z.object({
+  email: z.string().email()
+});
+
+export type ResendActivationRequest = z.infer<typeof resendActivationSchema>;

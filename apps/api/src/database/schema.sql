@@ -35,7 +35,9 @@ CREATE TABLE IF NOT EXISTS "User" (
   updatedAt INTEGER NOT NULL,
   lockedAt INTEGER,
   emailVerified INTEGER NOT NULL DEFAULT 0,
-  failedAttempts INTEGER NOT NULL DEFAULT 0
+  failedAttempts INTEGER NOT NULL DEFAULT 0,
+  activationToken TEXT,
+  activationTokenExpiresAt INTEGER
 );
 
 -- Product table

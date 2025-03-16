@@ -1,4 +1,4 @@
-import { User, Session, AuthResponse, LoginRequest, RegisterRequest } from '../models/schemas';
+import { User, Session, AuthResponse, LoginRequest, RegisterRequest, ActivationResponse, ResendActivationRequest } from '../models/schemas';
 
 /**
  * Interface for the AuthService
@@ -11,6 +11,8 @@ export interface IAuthService {
   updateUser(userId: string, data: { name?: string; email?: string }): Promise<Omit<User, 'passwordHash'> | null>;
   deleteUser(userId: string): Promise<boolean>;
   cleanupExpiredSessions(): Promise<void>;
+  activateUser(token: string): Promise<ActivationResponse>;
+  resendActivationEmail(data: ResendActivationRequest): Promise<ActivationResponse>;
 }
 
 /**
@@ -20,6 +22,7 @@ export interface IAuthService {
 export interface IUserRepository {
   getUserByEmail(email: string): Promise<User | null>;
   getUserById(id: string): Promise<User | null>;
+  getUserByActivationToken(token: string): Promise<User | null>;
   createUser(user: Omit<User, 'id' | 'createdAt' | 'updatedAt'>): Promise<User>;
   lockAccount(userId: string): Promise<void>;
   unlockAccount(userId: string): Promise<void>;
@@ -31,6 +34,8 @@ export interface IUserRepository {
   getSessionById(id: string): Promise<Session | null>;
   deleteSession(id: string): Promise<void>;
   deleteExpiredSessions(): Promise<void>;
+  activateUser(userId: string): Promise<void>;
+  setActivationToken(userId: string, token: string, expiresAt: number): Promise<void>;
 }
 
 /**
@@ -67,4 +72,29 @@ export interface IWebhookService {
     id: string;
     deletedAt: number;
   }): Promise<void>;
+  
+  /**
+   * Trigger a webhook event for user activation
+   */
+  triggerUserActivated(user: {
+    id: string;
+    email: string;
+    name: string;
+    activatedAt: number;
+  }): Promise<void>;
+}
+
+/**
+ * Interface for email service
+ */
+export interface IEmailService {
+  /**
+   * Send an activation email to the user
+   */
+  sendActivationEmail(to: string, name: string, activationLink: string): Promise<boolean>;
+  
+  /**
+   * Send a welcome email to the user after successful activation
+   */
+  sendWelcomeEmail(to: string, name: string): Promise<boolean>;
 }

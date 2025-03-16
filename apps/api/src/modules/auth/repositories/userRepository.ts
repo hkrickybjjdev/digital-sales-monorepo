@@ -27,14 +27,23 @@ export class UserRepository implements IUserRepository {
     const result = await stmt.first();
     return result as User | null;
   }
+  
+  async getUserByActivationToken(token: string): Promise<User | null> {
+    const stmt = this.db.prepare(
+      'SELECT * FROM User WHERE activationToken = ? AND activationTokenExpiresAt > ?'
+    ).bind(token, Date.now());
+
+    const result = await stmt.first();
+    return result as User | null;
+  }
 
   async createUser(user: Omit<User, 'id' | 'createdAt' | 'updatedAt'>): Promise<User> {
     const now = Date.now();
     const id = generateUUID();
 
     const stmt = this.db.prepare(`
-      INSERT INTO User (id, email, name, passwordHash, createdAt, updatedAt, lockedAt, emailVerified, failedAttempts) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO User (id, email, name, passwordHash, createdAt, updatedAt, lockedAt, emailVerified, failedAttempts, activationToken, activationTokenExpiresAt) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).bind(
       id,
       user.email.toLowerCase(),
@@ -44,7 +53,9 @@ export class UserRepository implements IUserRepository {
       now,
       null,
       user.emailVerified || 0,
-      user.failedAttempts || 0
+      user.failedAttempts || 0,
+      user.activationToken || null,
+      user.activationTokenExpiresAt || null
     );
 
     await stmt.run();
@@ -58,7 +69,9 @@ export class UserRepository implements IUserRepository {
       updatedAt: now,
       lockedAt: null,
       emailVerified: user.emailVerified || 0,
-      failedAttempts: user.failedAttempts || 0
+      failedAttempts: user.failedAttempts || 0,
+      activationToken: user.activationToken || null,
+      activationTokenExpiresAt: user.activationTokenExpiresAt || null
     };
   }
 
@@ -96,6 +109,29 @@ export class UserRepository implements IUserRepository {
       SET failedAttempts = 0
       WHERE id = ?
     `).bind(userId).run();
+  }
+  
+  async activateUser(userId: string): Promise<void> {
+    const now = Date.now();
+    await this.db.prepare(`
+      UPDATE User 
+      SET emailVerified = 1, 
+          activationToken = NULL, 
+          activationTokenExpiresAt = NULL,
+          updatedAt = ?
+      WHERE id = ?
+    `).bind(now, userId).run();
+  }
+  
+  async setActivationToken(userId: string, token: string, expiresAt: number): Promise<void> {
+    const now = Date.now();
+    await this.db.prepare(`
+      UPDATE User 
+      SET activationToken = ?, 
+          activationTokenExpiresAt = ?,
+          updatedAt = ?
+      WHERE id = ?
+    `).bind(token, expiresAt, now, userId).run();
   }
 
   async createSession(userId: string, expiresInSeconds: number = 60 * 60 * 24 * 7): Promise<Session> {
