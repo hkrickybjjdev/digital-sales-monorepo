@@ -7,6 +7,7 @@ DELETE FROM "Registration";
 DELETE FROM "Order";
 DELETE FROM "PageContent";
 DELETE FROM "Session";
+DELETE FROM "PasswordReset";
 --DELETE FROM "Price";
 
 -- Then clear the primary tables

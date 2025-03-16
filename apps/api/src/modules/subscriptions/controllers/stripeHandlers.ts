@@ -34,7 +34,7 @@ export const createCheckoutSession = async (c: Context<{ Bindings: Env }>) => {
     const { teamId, lookupKey } = parseResult.data;
     
     // Default URLs if not provided
-    const baseUrl = c.env.APP_URL || 'http://localhost:3000';
+    const baseUrl = c.env.APP_URL || 'http://localhost:8787';
     const successUrl = parseResult.data.successUrl || 
       `${baseUrl}/teams/${teamId}/billing?success=true&session_id={CHECKOUT_SESSION_ID}`;
     const cancelUrl = parseResult.data.cancelUrl || 
@@ -110,7 +110,7 @@ export const createPortalSession = async (c: Context<{ Bindings: Env }>) => {
     }
     
     // Default return URL
-    const baseUrl = c.env.APP_URL || 'http://localhost:3000';
+    const baseUrl = c.env.APP_URL || 'http://localhost:8787';
     const returnUrl = `${baseUrl}/teams/${teamId}/billing`;
     
     // Create portal session

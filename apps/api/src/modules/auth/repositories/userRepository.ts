@@ -231,6 +231,17 @@ export class UserRepository implements IUserRepository {
     return this.getUserById(userId);
   }
 
+  async updateUserPassword(userId: string, passwordHash: string): Promise<boolean> {
+    const now = Math.floor(Date.now() / 1000);
+    const result = await this.db.prepare(
+      `UPDATE "User" SET passwordHash = ?, updatedAt = ? WHERE id = ?`
+    )
+    .bind(passwordHash, now, userId)
+    .run();
+    
+    return result.success;
+  }
+
   async deleteUser(userId: string): Promise<boolean> {
     // First, check if the user exists
     const user = await this.getUserById(userId);

@@ -39,11 +39,31 @@ export const authResponseSchema = z.object({
   expiresAt: z.number(),
 });
 
+// Password reset request schema
+export const forgotPasswordSchema = z.object({
+  email: z.string().email(),
+});
+
+// Reset password request schema
+export const resetPasswordSchema = z.object({
+  token: z.string(),
+  password: z.string().min(8),
+});
+
+// Password reset response schema
+export const resetResponseSchema = z.object({
+  success: z.boolean(),
+  message: z.string(),
+});
+
 // Types derived from schemas
 export type User = z.infer<typeof userSchema>;
 export type LoginRequest = z.infer<typeof loginSchema>;
 export type RegisterRequest = z.infer<typeof registerSchema>;
 export type AuthResponse = z.infer<typeof authResponseSchema>;
+export type ForgotPasswordRequest = z.infer<typeof forgotPasswordSchema>;
+export type ResetPasswordRequest = z.infer<typeof resetPasswordSchema>;
+export type ResetResponse = z.infer<typeof resetResponseSchema>;
 
 // Session type
 export interface Session {
@@ -67,3 +87,14 @@ export const resendActivationSchema = z.object({
 });
 
 export type ResendActivationRequest = z.infer<typeof resendActivationSchema>;
+
+// Password reset database entity
+export interface PasswordReset {
+  id: string;
+  userId: string;
+  token: string;
+  expiresAt: number;
+  used: number;
+  createdAt: number;
+  updatedAt: number;
+}

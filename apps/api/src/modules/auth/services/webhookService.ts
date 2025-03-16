@@ -1,16 +1,17 @@
 import { Env } from '../../../types';
+import { IWebhookService } from './interfaces';
 
 /**
  * Service responsible for triggering webhook events to other modules
  * when user-related events occur in the auth module.
  */
-export class WebhookService {
+export class WebhookService implements IWebhookService {
   private env: Env;
-  
+
   constructor(env: Env) {
     this.env = env;
   }
-  
+
   /**
    * Trigger a webhook event to the Teams module for user creation
    */
@@ -25,7 +26,7 @@ export class WebhookService {
       user
     });
   }
-  
+
   /**
    * Trigger a webhook event to the Teams module for user updates
    */
@@ -44,7 +45,7 @@ export class WebhookService {
       previous
     });
   }
-  
+
   /**
    * Trigger a webhook event to the Teams module for user deletion
    */
@@ -57,7 +58,7 @@ export class WebhookService {
       user
     });
   }
-  
+
   /**
    * Trigger a webhook event for user activation
    */
@@ -72,7 +73,21 @@ export class WebhookService {
       user
     });
   }
-  
+
+  /**
+ * Notify password reset
+ */
+  async notifyPasswordReset(user: {
+    id: string;
+    resetAt: number;
+  }): Promise<void> {
+    await this.sendWebhook('/api/v1/teams/webhooks/auth/password-reset', {
+      event: 'user.password_reset',
+      user
+    });
+  }
+
+
   /**
    * Send a webhook payload to the specified endpoint
    */
@@ -80,14 +95,14 @@ export class WebhookService {
     try {
       // Get the base URL from the environment or use a default for local development
       const baseUrl = this.env.API_URL || 'http://localhost:8787';
-      
+
       // Get the webhook secret from the environment
       const secret = this.env.WEBHOOK_SECRET || 'dev-webhook-secret';
-      
+
       // Create a simple signature for the payload
       // In production, you'd want a more secure signature algorithm
       const signature = `sha256=${secret}-${JSON.stringify(payload).slice(0, 10)}`;
-      
+
       // Send the webhook
       const response = await fetch(`${baseUrl}${endpoint}`, {
         method: 'POST',
@@ -97,7 +112,7 @@ export class WebhookService {
         },
         body: JSON.stringify(payload)
       });
-      
+
       if (!response.ok) {
         const errorText = await response.text();
         console.error(`Error sending webhook to ${endpoint}: ${response.status} ${response.statusText}`, errorText);

@@ -6,6 +6,17 @@ CREATE TABLE IF NOT EXISTS "Session" (
   createdAt INTEGER NOT NULL
 );
 
+-- PasswordReset table
+CREATE TABLE IF NOT EXISTS "PasswordReset" (
+  id TEXT PRIMARY KEY,
+  userId TEXT NOT NULL REFERENCES "User"(id) ON DELETE CASCADE,
+  token TEXT NOT NULL UNIQUE,
+  expiresAt INTEGER NOT NULL,
+  used INTEGER NOT NULL DEFAULT 0,
+  createdAt INTEGER NOT NULL,
+  updatedAt INTEGER NOT NULL
+);
+
 -- Team table
 CREATE TABLE IF NOT EXISTS "Team" (
   id TEXT PRIMARY KEY,
@@ -163,6 +174,10 @@ CREATE INDEX IF NOT EXISTS idx_users_email ON "User"(email);
 
 CREATE INDEX IF NOT EXISTS idx_session_userId ON "Session"(userId);
 CREATE INDEX IF NOT EXISTS idx_session_expiresAt ON "Session"(expiresAt);
+
+CREATE INDEX IF NOT EXISTS idx_password_reset_userId ON "PasswordReset"(userId);
+CREATE INDEX IF NOT EXISTS idx_password_reset_token ON "PasswordReset"(token);
+CREATE INDEX IF NOT EXISTS idx_password_reset_expiresAt ON "PasswordReset"(expiresAt);
 
 CREATE INDEX IF NOT EXISTS idx_page_userId ON "Page"(userId);
 CREATE INDEX IF NOT EXISTS idx_page_shortId ON "Page"(shortId);

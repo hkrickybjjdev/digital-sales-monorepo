@@ -20,6 +20,16 @@ erDiagram
         integer failedAttempts
     }
 
+    PASSWORD_RESET {
+        string id PK
+        string userId FK
+        string token
+        timestamp expiresAt
+        boolean used
+        timestamp createdAt
+        timestamp updatedAt
+    }
+
     TEAM {
         string id PK      
         string name        
@@ -159,6 +169,7 @@ erDiagram
     TEAM ||--o{ SUBSCRIPTION : subscribes to
     PLAN ||--o{ SUBSCRIPTION : provides
     USER ||--o{ SESSION : has
+    USER ||--o{ PASSWORD_RESET : requests
 ```
 
 ## Core Entities
@@ -202,6 +213,20 @@ Represents platform users who create and manage content.
 | lockedAt | Timestamp | When the account was locked (NULL if not locked) |
 | emailVerified | Boolean | Indicates if the email address has been verified |
 | failedAttempts | Integer | Number of consecutive failed login attempts |
+
+### PasswordReset
+
+Represents a password reset request.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| id | UUID | Primary identifier |
+| userId | UUID (FK) | Reference to user |
+| token | String | Unique reset token |
+| expiresAt | Timestamp | Token expiration date |
+| used | Boolean | Whether token has been used |
+| createdAt | Timestamp | Request creation date |
+| updatedAt | Timestamp | Last update date |
 
 ### Plan
 
@@ -526,6 +551,7 @@ For teams not on the Enterprise plan:
 - `page.shortId`: For public URL resolution
 - `order.customerId`: For customer order history
 - `registration.email`: For lead management
+- `passwordReset.token`: For lookup during password reset process
 
 ### Secondary Indices
 
@@ -533,6 +559,8 @@ For teams not on the Enterprise plan:
 - `page.userId`: For listing user's pages
 - `page.expiresAt`: For expiration checks
 - `registration.pageId`: For campaign performance analysis
+- `passwordReset.userId`: For managing user's reset requests
+- `passwordReset.expiresAt`: For cleanup of expired tokens
 
 ## Data Migration and Versioning
 

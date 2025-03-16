@@ -1,4 +1,15 @@
-import { User, Session, AuthResponse, LoginRequest, RegisterRequest, ActivationResponse, ResendActivationRequest } from '../models/schemas';
+import { 
+  User, 
+  Session, 
+  AuthResponse, 
+  LoginRequest, 
+  RegisterRequest, 
+  ActivationResponse, 
+  ResendActivationRequest,
+  ResetResponse,
+  ForgotPasswordRequest,
+  ResetPasswordRequest
+} from '../models/schemas';
 
 /**
  * Interface for the AuthService
@@ -13,6 +24,8 @@ export interface IAuthService {
   cleanupExpiredSessions(): Promise<void>;
   activateUser(token: string): Promise<ActivationResponse>;
   resendActivationEmail(data: ResendActivationRequest): Promise<ActivationResponse>;
+  forgotPassword(request: ForgotPasswordRequest): Promise<ResetResponse>;
+  resetPassword(request: ResetPasswordRequest): Promise<ResetResponse>;
 }
 
 /**
@@ -82,6 +95,14 @@ export interface IWebhookService {
     name: string;
     activatedAt: number;
   }): Promise<void>;
+
+  /**
+   * Trigger a webhook event for password reset
+   */
+  notifyPasswordReset( user: {
+    id: string,
+    resetAt: number
+  }): Promise<void>;
 }
 
 /**
@@ -97,4 +118,9 @@ export interface IEmailService {
    * Send a welcome email to the user after successful activation
    */
   sendWelcomeEmail(to: string, name: string): Promise<boolean>;
+
+  /**
+   * Send a password reset email to the user
+   */
+  sendPasswordResetEmail(to: string, name: string, resetUrl: string): Promise<boolean>;
 }

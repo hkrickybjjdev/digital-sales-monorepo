@@ -1,4 +1,5 @@
 import { UserRepository } from '../repositories/userRepository';
+import { PasswordResetRepository } from '../repositories/passwordResetRepository';
 import { AuthService } from '../services/authService';
 import { WebhookService } from '../services/webhookService';
 import { EmailService } from '../services/emailService';
@@ -8,6 +9,7 @@ import { IAuthService, IUserRepository, IWebhookService, IEmailService } from '.
 // Interface for the auth module's DI container
 export interface AuthContainer {
   userRepository: IUserRepository;
+  passwordResetRepository: PasswordResetRepository;
   authService: IAuthService;
   webhookService: IWebhookService;
   emailService: IEmailService;
@@ -15,6 +17,7 @@ export interface AuthContainer {
 
 // Singleton instances with their associated environment
 let userRepositoryInstance: UserRepository | null = null;
+let passwordResetRepositoryInstance: PasswordResetRepository | null = null;
 let authServiceInstance: AuthService | null = null;
 let webhookServiceInstance: WebhookService | null = null;
 let emailServiceInstance: EmailService | null = null;
@@ -35,6 +38,10 @@ export function getAuthContainer(env: Env): AuthContainer {
     userRepositoryInstance = new UserRepository(env);
   }
   
+  if (!passwordResetRepositoryInstance) {
+    passwordResetRepositoryInstance = new PasswordResetRepository(env.DB);
+  }
+  
   // Create the webhook service as a singleton
   if (!webhookServiceInstance) {
     webhookServiceInstance = new WebhookService(env);
@@ -49,7 +56,8 @@ export function getAuthContainer(env: Env): AuthContainer {
   if (!authServiceInstance) {
     authServiceInstance = new AuthService(
       env, 
-      userRepositoryInstance, 
+      userRepositoryInstance,
+      passwordResetRepositoryInstance,
       webhookServiceInstance, 
       emailServiceInstance
     );
@@ -57,6 +65,7 @@ export function getAuthContainer(env: Env): AuthContainer {
   
   return {
     userRepository: userRepositoryInstance,
+    passwordResetRepository: passwordResetRepositoryInstance,
     authService: authServiceInstance,
     webhookService: webhookServiceInstance,
     emailService: emailServiceInstance
@@ -66,6 +75,7 @@ export function getAuthContainer(env: Env): AuthContainer {
 // For testing purposes - allows resetting the singletons
 export function resetAuthContainer(): void {
   userRepositoryInstance = null;
+  passwordResetRepositoryInstance = null;
   authServiceInstance = null;
   webhookServiceInstance = null;
   emailServiceInstance = null;
