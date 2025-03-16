@@ -12,23 +12,21 @@ import {
   ResendActivationRequest 
 } from '../models/schemas';
 import { Env } from '../../../types';
-import { IAuthService } from './interfaces';
+import { IAuthService, IWebhookService, IEmailService } from './interfaces';
 import { generateUUID } from '../../../utils/utils';
 
 export class AuthService implements IAuthService {
   private jwtSecret: string;
   private readonly MAX_LOGIN_ATTEMPTS = 5;
-  private webhookService: WebhookService;
-  private emailService: EmailService;
   private baseUrl: string;
 
   constructor(
     private readonly env: Env,
-    private readonly userRepository: UserRepository
+    private readonly userRepository: UserRepository,
+    private readonly webhookService: IWebhookService,
+    private readonly emailService: IEmailService
   ) {
     this.jwtSecret = env.JWT_SECRET;
-    this.webhookService = new WebhookService(env);
-    this.emailService = new EmailService(env);
     this.baseUrl = env.ENVIRONMENT === 'production' 
       ? 'https://app.tempages.app' 
       : 'http://localhost:3000';

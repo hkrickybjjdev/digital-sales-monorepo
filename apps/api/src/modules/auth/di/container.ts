@@ -47,7 +47,12 @@ export function getAuthContainer(env: Env): AuthContainer {
   
   // Create the services with their dependencies as singletons
   if (!authServiceInstance) {
-    authServiceInstance = new AuthService(env, userRepositoryInstance);
+    authServiceInstance = new AuthService(
+      env, 
+      userRepositoryInstance, 
+      webhookServiceInstance, 
+      emailServiceInstance
+    );
   }
   
   return {
