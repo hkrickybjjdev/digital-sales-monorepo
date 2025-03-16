@@ -176,6 +176,40 @@ export class AuthService implements IAuthService {
       // Continue with activation even if email fails
     }
 
+    // Check if the user has a team and subscription
+    // To do this, we need to verify if the initial onboarding flow was successful
+    // This is a defensive measure to ensure users have a team even if the webhook failed
+    try {
+      // We need to check the teams DB first to see if the user has a team
+      const userHasTeam = await this.verifyUserHasTeam(user.id);
+      
+      if (!userHasTeam) {
+        console.log(`User ${user.id} has no team. Re-triggering user creation webhook...`);
+        // If no team exists for this user, re-trigger the user.created webhook
+        // This will recreate the team and provisioning flow as if the user just registered
+        await this.webhookService.triggerUserCreated({
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          createdAt: Date.now()
+        });
+      } else {
+        // If they have a team, check if they have a subscription
+        const teamHasSubscription = await this.verifyTeamHasSubscription(user.id);
+        if (!teamHasSubscription) {
+          console.log(`User ${user.id} has a team but no subscription. Re-triggering team events...`);
+          // Re-trigger the team.created event to ensure subscription is set up
+          const teams = await this.getUserTeams(user.id);
+          if (teams.length > 0) {
+            await this.retriggerTeamCreatedEvent(teams[0].id, user.id, teams[0].name);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error verifying team and subscription setup:', error);
+      // Continue with activation even if verification fails - it's a supplementary check
+    }
+
     // Trigger webhook for user activation
     try {
       await this.webhookService.triggerUserActivated({
@@ -193,6 +227,108 @@ export class AuthService implements IAuthService {
       success: true, 
       message: 'Account activated successfully. You can now log in.' 
     };
+  }
+
+  /**
+   * Check if the user has any teams
+   */
+  private async verifyUserHasTeam(userId: string): Promise<boolean> {
+    const teams = await this.getUserTeams(userId);
+    return teams.length > 0;
+  }
+
+  /**
+   * Get user teams by querying the Team module's database
+   */
+  private async getUserTeams(userId: string): Promise<{id: string, name: string}[]> {
+    try {
+      const result = await this.env.DB.prepare(`
+        SELECT t.id, t.name
+        FROM "Team" t
+        JOIN "TeamMember" tm ON t.id = tm.teamId
+        WHERE tm.userId = ?
+      `).bind(userId).all();
+
+      if (!result.results || result.results.length === 0) {
+        return [];
+      }
+
+      return result.results.map(team => ({
+        id: team.id as string,
+        name: team.name as string
+      }));
+    } catch (error) {
+      console.error(`Error getting teams for user ${userId}:`, error);
+      return [];
+    }
+  }
+
+  /**
+   * Check if user's teams have a subscription
+   */
+  private async verifyTeamHasSubscription(userId: string): Promise<boolean> {
+    try {
+      // Get user teams
+      const teams = await this.getUserTeams(userId);
+      if (teams.length === 0) {
+        return false;
+      }
+
+      // Check for subscriptions for the first team
+      const teamId = teams[0].id;
+      
+      const result = await this.env.DB.prepare(`
+        SELECT COUNT(*) as count
+        FROM "Subscription"
+        WHERE teamId = ? AND (status = 'active' OR status = 'trialing')
+      `).bind(teamId).first<{ count: number }>();
+
+      return result !== null && result.count > 0;
+    } catch (error) {
+      console.error(`Error verifying subscription for user ${userId}:`, error);
+      return false;
+    }
+  }
+
+  /**
+   * Retrigger team creation event to set up subscription
+   */
+  private async retriggerTeamCreatedEvent(teamId: string, userId: string, teamName: string): Promise<void> {
+    // Call the team webhook service to trigger a team.created event
+    // This will cause the subscription service to provision a free plan
+    try {
+      const baseUrl = this.env.API_URL || 'http://localhost:8787';
+      const secret = this.env.WEBHOOK_SECRET || 'dev-webhook-secret';
+      
+      const payload = {
+        event: 'team.created',
+        team: {
+          id: teamId,
+          name: teamName,
+          userId: userId, // Owner ID
+          createdAt: Date.now()
+        }
+      };
+      
+      const signature = `sha256=${secret}-${JSON.stringify(payload).slice(0, 10)}`;
+      
+      // Send directly to the subscriptions webhook handler
+      const response = await fetch(`${baseUrl}/api/v1/subscriptions/webhooks/teams/team-created`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Webhook-Signature': signature
+        },
+        body: JSON.stringify(payload)
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`Error re-triggering team created webhook: ${response.status} ${response.statusText}`, errorText);
+      }
+    } catch (error) {
+      console.error('Failed to re-trigger team created webhook:', error);
+    }
   }
 
   /**
