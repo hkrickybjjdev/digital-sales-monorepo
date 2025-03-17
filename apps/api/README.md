@@ -166,6 +166,94 @@ npm run dev
 npm run build
 ```
 
+## Linting
+
+This project uses ESLint for linting TypeScript code.
+
+### Running ESLint
+
+To run ESLint and check for linting errors:
+
+```bash
+npm run lint
+```
+
+### Fixing Linting Errors
+
+To automatically fix linting errors:
+
+```bash
+npm run lint:fix
+```
+
+## Formatting
+
+This project uses Prettier for code formatting.
+
+### Running Prettier
+
+To format the code:
+
+```bash
+npm run format
+```
+
+### Checking Formatting
+
+To check if the code is formatted correctly without applying changes:
+
+```bash
+npm run format:check
+```
+
+## Testing
+
+This project uses Jest for unit testing.
+
+### Running Tests
+
+To run the tests:
+
+```bash
+npm run test
+```
+
+### Running Tests in Watch Mode
+
+To run the tests in watch mode:
+
+```bash
+npm run test:watch
+```
+
+### Generating Coverage Reports
+
+To generate coverage reports:
+
+```bash
+npm run test:coverage
+```
+
+## End-to-End Testing
+
+This project uses Playwright for end-to-end testing.
+
+### Running End-to-End Tests
+
+To run the end-to-end tests:
+
+```bash
+npm run test:e2e
+```
+
+### Running End-to-End Tests in UI Mode
+
+To run the end-to-end tests in UI mode:
+
+```bash
+npm run test:e2e:ui
+```
+
 ## Architecture
 
 The backend follows a modular monolith architecture pattern, organizing functionality into domain-driven modules while maintaining a single deployment unit for simplicity and performance.
