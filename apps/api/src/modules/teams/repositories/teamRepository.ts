@@ -1,10 +1,10 @@
 import { D1Database } from '@cloudflare/workers-types';
 
+import { generateUUID } from '@/utils/utils';
+
 import { Team, TeamWithMemberCount } from '../models/schemas';
 
 import { ITeamRepository } from './interfaces';
-
-import { generateUUID } from '@/utils/utils';
 
 export class TeamRepository implements ITeamRepository {
   private db: D1Database;

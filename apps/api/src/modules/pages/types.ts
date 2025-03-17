@@ -1,8 +1,7 @@
 import { Page as DbPage } from './models/schemas';
 
-export interface Page extends DbPage {
-  // Additional properties can be defined here
-}
+// Re-export the DbPage type directly
+export type { DbPage as Page };
 
 export interface PageStats {
   views: number;

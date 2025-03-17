@@ -70,7 +70,7 @@ export function formatError(c: Context, message: string, code: string, status: n
 // Defaulting to development mode if we can't determine the environment
 const isProduction = (): boolean => {
   try {
-    // @ts-ignore - Checking if environment is accessible in runtime
+    // @ts-expect-error - ENVIRONMENT is only available at runtime in Cloudflare Workers
     return globalThis?.ENVIRONMENT === 'production';
   } catch {
     return false; // Default to development mode for safety
