@@ -429,7 +429,7 @@ export class AuthService implements IAuthService {
     }
 
     // Don't return password hash
-    const { passwordHash, ...userWithoutPassword } = user;
+    const { passwordHash: _, ...userWithoutPassword } = user;
     return userWithoutPassword;
   }
 
