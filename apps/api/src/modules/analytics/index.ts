@@ -1,13 +1,14 @@
 import { Hono } from 'hono';
+
 import { Env } from '../../types';
-import { validateJWT } from '../auth/middleware/authMiddleware';
 import { formatResponse, formatError, format500Error } from '../../utils/api-response';
+import { validateJWT } from '../auth/middleware/authMiddleware';
 
 // Create the analytics module router
 const analyticsModule = new Hono<{ Bindings: Env }>();
 
 // Public endpoint to track page views and events
-analyticsModule.post('/event', async (c) => {
+analyticsModule.post('/event', async c => {
   try {
     // Record anonymous event data (page views, interactions)
     // No authentication required as this is called from visitor-facing pages
@@ -22,7 +23,7 @@ analyticsModule.post('/event', async (c) => {
 analyticsModule.use('/*', validateJWT);
 
 // Dashboard analytics
-analyticsModule.get('/dashboard', async (c) => {
+analyticsModule.get('/dashboard', async c => {
   try {
     // Return summary analytics for dashboard display
     return formatResponse(c, {
@@ -36,7 +37,7 @@ analyticsModule.get('/dashboard', async (c) => {
 });
 
 // Page-specific analytics
-analyticsModule.get('/pages/:pageId', async (c) => {
+analyticsModule.get('/pages/:pageId', async c => {
   try {
     const pageId = c.req.param('pageId');
     // Return analytics for a specific page
@@ -51,7 +52,7 @@ analyticsModule.get('/pages/:pageId', async (c) => {
 });
 
 // Product-specific analytics
-analyticsModule.get('/products/:productId', async (c) => {
+analyticsModule.get('/products/:productId', async c => {
   try {
     const productId = c.req.param('productId');
     // Return analytics for a specific product
@@ -66,7 +67,7 @@ analyticsModule.get('/products/:productId', async (c) => {
 });
 
 // Time-series analytics
-analyticsModule.get('/time-series', async (c) => {
+analyticsModule.get('/time-series', async c => {
   try {
     // Return time-series data for charts
     // Query parameters will control metric, timeframe, etc.
@@ -81,7 +82,7 @@ analyticsModule.get('/time-series', async (c) => {
 });
 
 // Export analytics data
-analyticsModule.get('/export', async (c) => {
+analyticsModule.get('/export', async c => {
   try {
     // Generate and return a CSV or JSON export of analytics data
     // Query parameters will control what data to export

@@ -1,17 +1,20 @@
 import { Context } from 'hono';
+
 import { Env } from '../../../types';
-import { 
-  CreateRegistrationRequestSchema,
-  Registration
-} from '../models/schemas';
-import { formatResponse, formatError, formatPaginatedResponse, format500Error } from '../../../utils/api-response';
+import {
+  formatResponse,
+  formatError,
+  formatPaginatedResponse,
+  format500Error,
+} from '../../../utils/api-response';
 import { getPagesContainer } from '../di/container';
+import { CreateRegistrationRequestSchema, Registration } from '../models/schemas';
 
 // Helper function to serialize Registration to JSON-safe object
 function serializeRegistration(registration: Registration) {
   return {
     ...registration,
-    customFields: registration.customFields || {}
+    customFields: registration.customFields || {},
   };
 }
 
@@ -27,8 +30,11 @@ export const createRegistration = async (c: Context<{ Bindings: Env }>) => {
     }
 
     const container = getPagesContainer(c.env);
-    const { registration, error } = await container.registrationService.createRegistration(shortId, result.data);
-    
+    const { registration, error } = await container.registrationService.createRegistration(
+      shortId,
+      result.data
+    );
+
     if (!registration) {
       // Handle specific error cases
       if (error === 'Page not found') {
@@ -47,7 +53,8 @@ export const createRegistration = async (c: Context<{ Bindings: Env }>) => {
     }
 
     // Track conversion without waiting for the result
-    container.pageCacheService.incrementConversions(registration.pageId, shortId)
+    container.pageCacheService
+      .incrementConversions(registration.pageId, shortId)
       .catch(error => console.error('Error tracking conversion:', error));
 
     return formatResponse(c, serializeRegistration(registration), 201);
@@ -61,30 +68,30 @@ export const listRegistrations = async (c: Context<{ Bindings: Env }>) => {
   try {
     const userId = c.get('jwtPayload').sub;
     const pageId = c.req.param('pageId');
-    
+
     // Get pagination params from query
     const limit = Number(c.req.query('limit') || 100);
     const page = Number(c.req.query('page') || 1);
     const offset = (page - 1) * limit;
-    
+
     const container = getPagesContainer(c.env);
-    
+
     // First verify page ownership
     const pageExists = await container.pageService.getPageById(pageId);
     if (!pageExists || pageExists.userId !== userId) {
       return formatError(c, 'Page not found or access denied', 'ResourceNotFound', 404);
     }
-    
+
     const { registrations, total } = await container.registrationService.getRegistrations(
-      pageId, 
+      pageId,
       userId,
       limit,
       offset
     );
-    
+
     // Generate pagination URL
     const url = new URL(c.req.url);
-    
+
     return formatPaginatedResponse(
       c,
       registrations.map(reg => serializeRegistration(reg)),
@@ -103,21 +110,21 @@ export const exportRegistrations = async (c: Context<{ Bindings: Env }>) => {
   try {
     const userId = c.get('jwtPayload').sub;
     const pageId = c.req.param('pageId');
-    
+
     const container = getPagesContainer(c.env);
-    
+
     // First verify page ownership
     const pageExists = await container.pageService.getPageById(pageId);
     if (!pageExists || pageExists.userId !== userId) {
       return formatError(c, 'Page not found or access denied', 'ResourceNotFound', 404);
     }
-    
+
     const csvContent = await container.registrationService.exportRegistrationsAsCsv(pageId, userId);
-    
+
     // Set headers for CSV download
     c.header('Content-Type', 'text/csv');
     c.header('Content-Disposition', `attachment; filename="registrations-${pageId}.csv"`);
-    
+
     return c.text(csvContent);
   } catch (error) {
     console.error('Error exporting registrations:', error);

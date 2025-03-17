@@ -1,4 +1,5 @@
 import { Env } from '../../../types';
+
 import { IWebhookService } from './interfaces';
 
 /**
@@ -23,39 +24,39 @@ export class WebhookService implements IWebhookService {
   }): Promise<void> {
     await this.sendWebhook('/api/v1/teams/webhooks/auth/user-created', {
       event: 'user.created',
-      user
+      user,
     });
   }
 
   /**
    * Trigger a webhook event to the Teams module for user updates
    */
-  async triggerUserUpdated(user: {
-    id: string;
-    email: string;
-    name: string;
-    updatedAt: number;
-  }, previous: {
-    email?: string;
-    name?: string;
-  }): Promise<void> {
+  async triggerUserUpdated(
+    user: {
+      id: string;
+      email: string;
+      name: string;
+      updatedAt: number;
+    },
+    previous: {
+      email?: string;
+      name?: string;
+    }
+  ): Promise<void> {
     await this.sendWebhook('/api/v1/teams/webhooks/auth/user-updated', {
       event: 'user.updated',
       user,
-      previous
+      previous,
     });
   }
 
   /**
    * Trigger a webhook event to the Teams module for user deletion
    */
-  async triggerUserDeleted(user: {
-    id: string;
-    deletedAt: number;
-  }): Promise<void> {
+  async triggerUserDeleted(user: { id: string; deletedAt: number }): Promise<void> {
     await this.sendWebhook('/api/v1/teams/webhooks/auth/user-deleted', {
       event: 'user.deleted',
-      user
+      user,
     });
   }
 
@@ -70,23 +71,19 @@ export class WebhookService implements IWebhookService {
   }): Promise<void> {
     await this.sendWebhook('/api/v1/teams/webhooks/auth/user-activated', {
       event: 'user.activated',
-      user
+      user,
     });
   }
 
   /**
- * Notify password reset
- */
-  async notifyPasswordReset(user: {
-    id: string;
-    resetAt: number;
-  }): Promise<void> {
+   * Notify password reset
+   */
+  async notifyPasswordReset(user: { id: string; resetAt: number }): Promise<void> {
     await this.sendWebhook('/api/v1/teams/webhooks/auth/password-reset', {
       event: 'user.password_reset',
-      user
+      user,
     });
   }
-
 
   /**
    * Send a webhook payload to the specified endpoint
@@ -108,14 +105,17 @@ export class WebhookService implements IWebhookService {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-Webhook-Signature': signature
+          'X-Webhook-Signature': signature,
         },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error(`Error sending webhook to ${endpoint}: ${response.status} ${response.statusText}`, errorText);
+        console.error(
+          `Error sending webhook to ${endpoint}: ${response.status} ${response.statusText}`,
+          errorText
+        );
       }
     } catch (error) {
       console.error(`Failed to send webhook to ${endpoint}:`, error);

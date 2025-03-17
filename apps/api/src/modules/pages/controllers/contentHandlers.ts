@@ -1,17 +1,15 @@
 import { Context } from 'hono';
+
 import { Env } from '../../../types';
-import { 
-  CreatePageContentRequestSchema,
-  PageContent
-} from '../models/schemas';
 import { formatResponse, formatError, format500Error } from '../../../utils/api-response';
 import { getPagesContainer } from '../di/container';
+import { CreatePageContentRequestSchema, PageContent } from '../models/schemas';
 
 // Helper function to serialize PageContent to JSON-safe object
 function serializeContent(content: PageContent) {
   return {
     ...content,
-    metadata: content.metadata || {}
+    metadata: content.metadata || {},
   };
 }
 
@@ -29,7 +27,7 @@ export const createPageContent = async (c: Context<{ Bindings: Env }>) => {
 
     const container = getPagesContainer(c.env);
     const content = await container.contentService.createPageContent(pageId, userId, result.data);
-    
+
     if (!content) {
       return formatError(c, 'Page not found or access denied', 'ResourceNotFound', 404);
     }
@@ -48,15 +46,15 @@ export const getPageContent = async (c: Context<{ Bindings: Env }>) => {
     const contentId = c.req.param('contentId');
 
     const container = getPagesContainer(c.env);
-    
+
     // First verify page ownership
     const page = await container.pageService.getPageById(pageId);
     if (!page || page.userId !== userId) {
       return formatError(c, 'Page not found or access denied', 'ResourceNotFound', 404);
     }
-    
+
     const content = await container.contentService.getPageContentById(contentId);
-    
+
     if (!content || content.pageId !== pageId) {
       return formatError(c, 'Content not found', 'ResourceNotFound', 404);
     }
@@ -74,15 +72,15 @@ export const listPageContents = async (c: Context<{ Bindings: Env }>) => {
     const pageId = c.req.param('pageId');
 
     const container = getPagesContainer(c.env);
-    
+
     // First verify page ownership
     const page = await container.pageService.getPageById(pageId);
     if (!page || page.userId !== userId) {
       return formatError(c, 'Page not found or access denied', 'ResourceNotFound', 404);
     }
-    
+
     const contents = await container.contentService.getPageContents(pageId);
-    
+
     return formatResponse(c, contents.map(serializeContent));
   } catch (error) {
     console.error('Content listing error:', error);
@@ -110,7 +108,7 @@ export const updatePageContent = async (c: Context<{ Bindings: Env }>) => {
       userId,
       result.data
     );
-    
+
     if (!updatedContent) {
       return formatError(c, 'Content not found or access denied', 'ResourceNotFound', 404);
     }
@@ -130,7 +128,7 @@ export const deletePageContent = async (c: Context<{ Bindings: Env }>) => {
 
     const container = getPagesContainer(c.env);
     const deleted = await container.contentService.deletePageContent(contentId, pageId, userId);
-    
+
     if (!deleted) {
       return formatError(c, 'Content not found or access denied', 'ResourceNotFound', 404);
     }

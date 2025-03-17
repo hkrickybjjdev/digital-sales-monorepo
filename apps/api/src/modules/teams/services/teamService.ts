@@ -1,14 +1,15 @@
-import { 
-  Team, 
-  CreateTeamRequest, 
-  UpdateTeamRequest, 
-  TeamWithMemberCount,
-  TeamMemberWithUser
-} from '../models/schemas';
-import { ITeamService } from './interfaces';
-import { ITeamRepository, ITeamMemberRepository } from '../repositories/interfaces';
-import { TeamsWebhookService } from './webhookService';
 import { Env } from '../../../types';
+import {
+  Team,
+  CreateTeamRequest,
+  UpdateTeamRequest,
+  TeamWithMemberCount,
+  TeamMemberWithUser,
+} from '../models/schemas';
+import { ITeamRepository, ITeamMemberRepository } from '../repositories/interfaces';
+
+import { ITeamService } from './interfaces';
+import { TeamsWebhookService } from './webhookService';
 
 export class TeamService implements ITeamService {
   private teamRepository: ITeamRepository;
@@ -18,7 +19,7 @@ export class TeamService implements ITeamService {
   private webhookService: TeamsWebhookService;
 
   constructor(
-    teamRepository: ITeamRepository, 
+    teamRepository: ITeamRepository,
     teamMemberRepository: ITeamMemberRepository,
     env: Env,
     maxTeamsPerUser: number = 5
@@ -34,19 +35,21 @@ export class TeamService implements ITeamService {
     // Check if user has reached the limit of teams they can create
     const teamCount = await this.teamRepository.getTeamCountByUserId(userId);
     if (teamCount >= this.maxTeamsPerUser) {
-      throw new Error(`You can only create up to ${this.maxTeamsPerUser} teams with your current plan`);
+      throw new Error(
+        `You can only create up to ${this.maxTeamsPerUser} teams with your current plan`
+      );
     }
 
     // Create the team
     const team = await this.teamRepository.createTeam({
-      name: data.name      
+      name: data.name,
     });
 
     // Add the creator as the owner
     await this.teamMemberRepository.addTeamMember({
       teamId: team.id,
       userId,
-      role: 'owner'
+      role: 'owner',
     });
 
     return team;
@@ -68,7 +71,7 @@ export class TeamService implements ITeamService {
     }
 
     return this.teamRepository.updateTeam(teamId, {
-      name: data.name
+      name: data.name,
     });
   }
 
@@ -78,16 +81,16 @@ export class TeamService implements ITeamService {
     if (!hasPermission) {
       throw new Error('Only team owners can delete teams');
     }
-    
+
     // Get team details before deletion to use in webhook
     const team = await this.teamRepository.getTeamById(teamId);
     if (!team) {
       throw new Error('Team not found');
     }
-    
+
     // Delete the team from the database
     const success = await this.teamRepository.deleteTeam(teamId);
-    
+
     if (success) {
       // Emit team deleted event
       try {
@@ -95,7 +98,7 @@ export class TeamService implements ITeamService {
           id: teamId,
           name: team.name,
           userId: userId, // User who deleted the team
-          createdAt: team.createdAt
+          createdAt: team.createdAt,
         });
       } catch (error) {
         console.error('Failed to trigger team deleted webhook:', error);
@@ -106,13 +109,22 @@ export class TeamService implements ITeamService {
     return success;
   }
 
-  async checkTeamPermission(teamId: string, userId: string, requiredRoles: string[]): Promise<boolean> {
+  async checkTeamPermission(
+    teamId: string,
+    userId: string,
+    requiredRoles: string[]
+  ): Promise<boolean> {
     return this.teamRepository.checkUserRole(teamId, userId, requiredRoles);
   }
 
   async getTeamMembersWithUserInfo(teamId: string, userId: string): Promise<TeamMemberWithUser[]> {
     // Check if user has permission to view team members
-    const hasPermission = await this.checkTeamPermission(teamId, userId, ['owner', 'admin', 'member', 'viewer']);
+    const hasPermission = await this.checkTeamPermission(teamId, userId, [
+      'owner',
+      'admin',
+      'member',
+      'viewer',
+    ]);
     if (!hasPermission) {
       throw new Error('You do not have permission to view this team');
     }

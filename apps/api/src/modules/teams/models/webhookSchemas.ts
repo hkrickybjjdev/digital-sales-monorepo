@@ -3,11 +3,7 @@ import { z } from 'zod';
 /**
  * Auth module webhook event types
  */
-export const AuthWebhookEventSchema = z.enum([
-  'user.created',
-  'user.updated', 
-  'user.deleted'
-]);
+export const AuthWebhookEventSchema = z.enum(['user.created', 'user.updated', 'user.deleted']);
 
 export type AuthWebhookEvent = z.infer<typeof AuthWebhookEventSchema>;
 
@@ -20,7 +16,7 @@ export const AuthWebhookUserSchema = z.object({
   name: z.string().optional(),
   createdAt: z.number().optional(),
   updatedAt: z.number().optional(),
-  deletedAt: z.number().optional()
+  deletedAt: z.number().optional(),
 });
 
 export type AuthWebhookUser = z.infer<typeof AuthWebhookUserSchema>;
@@ -30,7 +26,7 @@ export type AuthWebhookUser = z.infer<typeof AuthWebhookUserSchema>;
  */
 export const PreviousUserDataSchema = z.object({
   email: z.string().email().optional(),
-  name: z.string().optional()
+  name: z.string().optional(),
 });
 
 export type PreviousUserData = z.infer<typeof PreviousUserDataSchema>;
@@ -40,14 +36,14 @@ export type PreviousUserData = z.infer<typeof PreviousUserDataSchema>;
  */
 export const BaseAuthWebhookSchema = z.object({
   event: AuthWebhookEventSchema,
-  user: AuthWebhookUserSchema
+  user: AuthWebhookUserSchema,
 });
 
 /**
  * User created webhook schema
  */
 export const UserCreatedWebhookSchema = BaseAuthWebhookSchema.extend({
-  event: z.literal('user.created')
+  event: z.literal('user.created'),
 });
 
 export type UserCreatedWebhook = z.infer<typeof UserCreatedWebhookSchema>;
@@ -57,7 +53,7 @@ export type UserCreatedWebhook = z.infer<typeof UserCreatedWebhookSchema>;
  */
 export const UserUpdatedWebhookSchema = BaseAuthWebhookSchema.extend({
   event: z.literal('user.updated'),
-  previous: PreviousUserDataSchema
+  previous: PreviousUserDataSchema,
 });
 
 export type UserUpdatedWebhook = z.infer<typeof UserUpdatedWebhookSchema>;
@@ -66,7 +62,7 @@ export type UserUpdatedWebhook = z.infer<typeof UserUpdatedWebhookSchema>;
  * User deleted webhook schema
  */
 export const UserDeletedWebhookSchema = BaseAuthWebhookSchema.extend({
-  event: z.literal('user.deleted')
+  event: z.literal('user.deleted'),
 });
 
 export type UserDeletedWebhook = z.infer<typeof UserDeletedWebhookSchema>;
@@ -77,7 +73,7 @@ export type UserDeletedWebhook = z.infer<typeof UserDeletedWebhookSchema>;
 export const AuthWebhookSchema = z.discriminatedUnion('event', [
   UserCreatedWebhookSchema,
   UserUpdatedWebhookSchema,
-  UserDeletedWebhookSchema
+  UserDeletedWebhookSchema,
 ]);
 
-export type AuthWebhook = z.infer<typeof AuthWebhookSchema>; 
+export type AuthWebhook = z.infer<typeof AuthWebhookSchema>;

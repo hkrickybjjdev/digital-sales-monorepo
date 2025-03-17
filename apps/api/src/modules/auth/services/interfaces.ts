@@ -1,14 +1,14 @@
-import { 
-  User, 
-  Session, 
-  AuthResponse, 
-  LoginRequest, 
-  RegisterRequest, 
-  ActivationResponse, 
+import {
+  User,
+  Session,
+  AuthResponse,
+  LoginRequest,
+  RegisterRequest,
+  ActivationResponse,
   ResendActivationRequest,
   ResetResponse,
   ForgotPasswordRequest,
-  ResetPasswordRequest
+  ResetPasswordRequest,
 } from '../models/schemas';
 
 /**
@@ -19,7 +19,10 @@ export interface IAuthService {
   register(data: RegisterRequest): Promise<{ error?: string } & Partial<AuthResponse>>;
   login(data: LoginRequest): Promise<{ error?: string } & Partial<AuthResponse>>;
   getUserById(id: string): Promise<Omit<User, 'passwordHash'> | null>;
-  updateUser(userId: string, data: { name?: string; email?: string }): Promise<Omit<User, 'passwordHash'> | null>;
+  updateUser(
+    userId: string,
+    data: { name?: string; email?: string }
+  ): Promise<Omit<User, 'passwordHash'> | null>;
   deleteUser(userId: string): Promise<boolean>;
   cleanupExpiredSessions(): Promise<void>;
   activateUser(token: string): Promise<ActivationResponse>;
@@ -64,28 +67,28 @@ export interface IWebhookService {
     name: string;
     createdAt: number;
   }): Promise<void>;
-  
+
   /**
    * Trigger a webhook event to the Teams module for user updates
    */
-  triggerUserUpdated(user: {
-    id: string;
-    email: string;
-    name: string;
-    updatedAt: number;
-  }, previous: {
-    email?: string;
-    name?: string;
-  }): Promise<void>;
-  
+  triggerUserUpdated(
+    user: {
+      id: string;
+      email: string;
+      name: string;
+      updatedAt: number;
+    },
+    previous: {
+      email?: string;
+      name?: string;
+    }
+  ): Promise<void>;
+
   /**
    * Trigger a webhook event to the Teams module for user deletion
    */
-  triggerUserDeleted(user: {
-    id: string;
-    deletedAt: number;
-  }): Promise<void>;
-  
+  triggerUserDeleted(user: { id: string; deletedAt: number }): Promise<void>;
+
   /**
    * Trigger a webhook event for user activation
    */
@@ -99,10 +102,7 @@ export interface IWebhookService {
   /**
    * Trigger a webhook event for password reset
    */
-  notifyPasswordReset( user: {
-    id: string,
-    resetAt: number
-  }): Promise<void>;
+  notifyPasswordReset(user: { id: string; resetAt: number }): Promise<void>;
 }
 
 /**
@@ -113,7 +113,7 @@ export interface IEmailService {
    * Send an activation email to the user
    */
   sendActivationEmail(to: string, name: string, activationLink: string): Promise<boolean>;
-  
+
   /**
    * Send a welcome email to the user after successful activation
    */

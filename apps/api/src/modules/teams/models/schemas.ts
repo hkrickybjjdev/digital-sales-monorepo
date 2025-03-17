@@ -5,7 +5,7 @@ export const teamSchema = z.object({
   id: z.string(),
   name: z.string(),
   createdAt: z.number(),
-  updatedAt: z.number()
+  updatedAt: z.number(),
 });
 
 // Team member role enum
@@ -18,28 +18,28 @@ export const teamMemberSchema = z.object({
   userId: z.string(),
   role: TeamRoleSchema,
   createdAt: z.number(),
-  updatedAt: z.number()
+  updatedAt: z.number(),
 });
 
 // Create team request schema
 export const createTeamSchema = z.object({
-  name: z.string().min(2).max(50)
+  name: z.string().min(2).max(50),
 });
 
 // Update team request schema
 export const updateTeamSchema = z.object({
-  name: z.string().min(2).max(50).optional()
+  name: z.string().min(2).max(50).optional(),
 });
 
 // Add team member request schema
 export const addTeamMemberSchema = z.object({
   userId: z.string(),
-  role: TeamRoleSchema
+  role: TeamRoleSchema,
 });
 
 // Update team member request schema
 export const updateTeamMemberSchema = z.object({
-  role: TeamRoleSchema
+  role: TeamRoleSchema,
 });
 
 // Types derived from schemas

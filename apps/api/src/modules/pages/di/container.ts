@@ -1,11 +1,9 @@
-import { PageRepository } from '../repositories/pageRepository';
-import { ContentRepository } from '../repositories/contentRepository';
-import { RegistrationRepository } from '../repositories/registrationRepository';
-import { PageService } from '../services/PageService';
-import { ContentService } from '../services/ContentService';
-import { RegistrationService } from '../services/RegistrationService';
-import { PageCacheService } from '../services/cache';
 import { Env } from '../../../types';
+import { ContentRepository } from '../repositories/contentRepository';
+import { PageRepository } from '../repositories/pageRepository';
+import { RegistrationRepository } from '../repositories/registrationRepository';
+import { PageCacheService } from '../services/cache';
+import { ContentService } from '../services/ContentService';
 import {
   IPageRepository,
   IContentRepository,
@@ -13,8 +11,10 @@ import {
   IPageService,
   IContentService,
   IRegistrationService,
-  IPageCacheService
+  IPageCacheService,
 } from '../services/interfaces';
+import { PageService } from '../services/PageService';
+import { RegistrationService } from '../services/RegistrationService';
 
 /**
  * Interface for the pages module's DI container
@@ -24,7 +24,7 @@ export interface PagesContainer {
   pageRepository: IPageRepository;
   contentRepository: IContentRepository;
   registrationRepository: IRegistrationRepository;
-  
+
   // Services
   pageService: IPageService;
   contentService: IContentService;
@@ -52,51 +52,51 @@ export function getPagesContainer(env: Env): PagesContainer {
   if (containerEnv && env !== containerEnv) {
     resetPagesContainer();
   }
-  
+
   // Store the current environment
   containerEnv = env;
-  
+
   // Create repositories as singletons
   if (!pageRepositoryInstance) {
     pageRepositoryInstance = new PageRepository(env.DB);
   }
-  
+
   if (!contentRepositoryInstance) {
     contentRepositoryInstance = new ContentRepository(env.DB);
   }
-  
+
   if (!registrationRepositoryInstance) {
     registrationRepositoryInstance = new RegistrationRepository(env.DB);
   }
-  
+
   // Create services with their dependencies as singletons
   if (!pageCacheServiceInstance) {
     pageCacheServiceInstance = new PageCacheService(env.PAGES_METADATA);
   }
-  
+
   if (!pageServiceInstance) {
     pageServiceInstance = new PageService(env.DB, env.PAGES_METADATA);
   }
-  
+
   if (!contentServiceInstance) {
     contentServiceInstance = new ContentService(env.DB);
   }
-  
+
   if (!registrationServiceInstance) {
     registrationServiceInstance = new RegistrationService(env.DB);
   }
-  
+
   return {
     // Repositories
     pageRepository: pageRepositoryInstance,
     contentRepository: contentRepositoryInstance,
     registrationRepository: registrationRepositoryInstance,
-    
+
     // Services
     pageService: pageServiceInstance,
     contentService: contentServiceInstance,
     registrationService: registrationServiceInstance,
-    pageCacheService: pageCacheServiceInstance
+    pageCacheService: pageCacheServiceInstance,
   };
 }
 
@@ -107,11 +107,11 @@ export function resetPagesContainer(): void {
   pageRepositoryInstance = null;
   contentRepositoryInstance = null;
   registrationRepositoryInstance = null;
-  
+
   pageServiceInstance = null;
   contentServiceInstance = null;
   registrationServiceInstance = null;
   pageCacheServiceInstance = null;
-  
+
   containerEnv = null;
 }

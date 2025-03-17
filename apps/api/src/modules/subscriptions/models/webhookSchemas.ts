@@ -3,10 +3,7 @@ import { z } from 'zod';
 /**
  * Team module webhook event types
  */
-export const TeamWebhookEventSchema = z.enum([
-  'team.created',
-  'team.deleted'
-]);
+export const TeamWebhookEventSchema = z.enum(['team.created', 'team.deleted']);
 
 export type TeamWebhookEvent = z.infer<typeof TeamWebhookEventSchema>;
 
@@ -17,7 +14,7 @@ export const TeamWebhookDataSchema = z.object({
   id: z.string(),
   name: z.string(),
   userId: z.string(), // Owner ID
-  createdAt: z.number()
+  createdAt: z.number(),
 });
 
 export type TeamWebhookData = z.infer<typeof TeamWebhookDataSchema>;
@@ -27,14 +24,14 @@ export type TeamWebhookData = z.infer<typeof TeamWebhookDataSchema>;
  */
 export const BaseTeamWebhookSchema = z.object({
   event: TeamWebhookEventSchema,
-  team: TeamWebhookDataSchema
+  team: TeamWebhookDataSchema,
 });
 
 /**
  * Team created webhook schema
  */
 export const TeamCreatedWebhookSchema = BaseTeamWebhookSchema.extend({
-  event: z.literal('team.created')
+  event: z.literal('team.created'),
 });
 
 export type TeamCreatedWebhook = z.infer<typeof TeamCreatedWebhookSchema>;
@@ -43,7 +40,7 @@ export type TeamCreatedWebhook = z.infer<typeof TeamCreatedWebhookSchema>;
  * Team deleted webhook schema
  */
 export const TeamDeletedWebhookSchema = BaseTeamWebhookSchema.extend({
-  event: z.literal('team.deleted')
+  event: z.literal('team.deleted'),
 });
 
 export type TeamDeletedWebhook = z.infer<typeof TeamDeletedWebhookSchema>;
@@ -53,7 +50,7 @@ export type TeamDeletedWebhook = z.infer<typeof TeamDeletedWebhookSchema>;
  */
 export const TeamWebhookSchema = z.discriminatedUnion('event', [
   TeamCreatedWebhookSchema,
-  TeamDeletedWebhookSchema
+  TeamDeletedWebhookSchema,
 ]);
 
-export type TeamWebhook = z.infer<typeof TeamWebhookSchema>; 
+export type TeamWebhook = z.infer<typeof TeamWebhookSchema>;

@@ -5,24 +5,28 @@ export const PageTypeSchema = z.enum([
   'countdown',
   'flash-sale',
   'event-registration',
-  'limited-offer'
+  'limited-offer',
 ]);
 
 export type PageType = z.infer<typeof PageTypeSchema>;
 
 // Page Customization Schema
-export const PageCustomizationSchema = z.object({
-  theme: z.string().optional(),
-  colors: z.object({
-    primary: z.string().optional(),
-    secondary: z.string().optional(),
-    background: z.string().optional(),
-    text: z.string().optional(),
-  }).optional(),
-  logo: z.string().optional(),
-  fontFamily: z.string().optional(),
-  css: z.string().optional(),
-}).optional();
+export const PageCustomizationSchema = z
+  .object({
+    theme: z.string().optional(),
+    colors: z
+      .object({
+        primary: z.string().optional(),
+        secondary: z.string().optional(),
+        background: z.string().optional(),
+        text: z.string().optional(),
+      })
+      .optional(),
+    logo: z.string().optional(),
+    fontFamily: z.string().optional(),
+    css: z.string().optional(),
+  })
+  .optional();
 
 // Settings Schemas
 export const CountdownSettingsSchema = z.object({
@@ -84,7 +88,7 @@ export const PageSchema = z.object({
     CountdownSettingsSchema,
     FlashSaleSettingsSchema,
     EventRegistrationSettingsSchema,
-    LimitedOfferSettingsSchema
+    LimitedOfferSettingsSchema,
   ]),
 });
 
@@ -129,7 +133,7 @@ export const CreatePageRequestSchema = z.object({
     CountdownSettingsSchema,
     FlashSaleSettingsSchema,
     EventRegistrationSettingsSchema,
-    LimitedOfferSettingsSchema
+    LimitedOfferSettingsSchema,
   ]),
 });
 
@@ -140,12 +144,14 @@ export const UpdatePageRequestSchema = z.object({
   launchAt: z.number().optional(),
   isActive: z.boolean().optional(),
   customization: PageCustomizationSchema,
-  settings: z.union([
-    CountdownSettingsSchema,
-    FlashSaleSettingsSchema,
-    EventRegistrationSettingsSchema,
-    LimitedOfferSettingsSchema
-  ]).optional(),
+  settings: z
+    .union([
+      CountdownSettingsSchema,
+      FlashSaleSettingsSchema,
+      EventRegistrationSettingsSchema,
+      LimitedOfferSettingsSchema,
+    ])
+    .optional(),
 });
 
 export type UpdatePageRequest = z.infer<typeof UpdatePageRequestSchema>;

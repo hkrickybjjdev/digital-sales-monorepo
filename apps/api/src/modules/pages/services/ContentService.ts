@@ -1,19 +1,21 @@
 import { D1Database } from '@cloudflare/workers-types';
-import { 
-  PageContent, 
-  CreatePageContentRequest
-} from '../models/schemas';
+
+import { PageContent, CreatePageContentRequest } from '../models/schemas';
 import { ContentRepository } from '../repositories/contentRepository';
 import { IContentService, IContentRepository } from '../services/interfaces';
 
 export class ContentService implements IContentService {
   private contentRepository: IContentRepository;
-  
+
   constructor(db: D1Database) {
     this.contentRepository = new ContentRepository(db);
   }
 
-  async createPageContent(pageId: string, userId: string, request: CreatePageContentRequest): Promise<PageContent | null> {
+  async createPageContent(
+    pageId: string,
+    userId: string,
+    request: CreatePageContentRequest
+  ): Promise<PageContent | null> {
     return await this.contentRepository.createPageContent(pageId, userId, request);
   }
 
@@ -25,7 +27,12 @@ export class ContentService implements IContentService {
     return await this.contentRepository.getPageContents(pageId);
   }
 
-  async updatePageContent(id: string, pageId: string, userId: string, updates: Partial<CreatePageContentRequest>): Promise<PageContent | null> {
+  async updatePageContent(
+    id: string,
+    pageId: string,
+    userId: string,
+    updates: Partial<CreatePageContentRequest>
+  ): Promise<PageContent | null> {
     return await this.contentRepository.updatePageContent(id, pageId, userId, updates);
   }
 

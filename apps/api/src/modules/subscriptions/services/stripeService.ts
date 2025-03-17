@@ -1,4 +1,5 @@
 import Stripe from 'stripe';
+
 import { Env } from '../../../types';
 
 export interface IStripeService {
@@ -15,10 +16,7 @@ export interface IStripeService {
   /**
    * Create a billing portal session
    */
-  createPortalSession(options: {
-    customerId: string;
-    returnUrl: string;
-  }): Promise<{ url: string }>;
+  createPortalSession(options: { customerId: string; returnUrl: string }): Promise<{ url: string }>;
 
   /**
    * Retrieve a checkout session
@@ -102,10 +100,6 @@ export class StripeService implements IStripeService {
   }
 
   verifyWebhookSignature(payload: string, signature: string): Stripe.Event {
-    return this.stripe.webhooks.constructEvent(
-      payload,
-      signature,
-      this.endpointSecret
-    );
+    return this.stripe.webhooks.constructEvent(payload, signature, this.endpointSecret);
   }
-} 
+}

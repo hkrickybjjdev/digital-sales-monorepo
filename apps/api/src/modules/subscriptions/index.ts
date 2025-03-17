@@ -1,10 +1,12 @@
 import { Hono } from 'hono';
+
 import { Env } from '../../types';
-import { validateJWT } from '../auth/middleware/authMiddleware';
 import { formatResponse } from '../../utils/api-response';
+import { validateJWT } from '../auth/middleware/authMiddleware';
+
 import * as planHandlers from './controllers/planHandlers';
-import * as subscriptionHandlers from './controllers/subscriptionHandlers';
 import * as stripeHandlers from './controllers/stripeHandlers';
+import * as subscriptionHandlers from './controllers/subscriptionHandlers';
 import { createWebhookRouter } from './webhooks/routes';
 
 // Create the subscriptions module router
@@ -30,7 +32,10 @@ protectedRoutes.post('/teams/:teamId/subscriptions', subscriptionHandlers.create
 // Individual subscription management routes
 protectedRoutes.get('/subscriptions/:subscriptionId', subscriptionHandlers.getSubscriptionById);
 protectedRoutes.put('/subscriptions/:subscriptionId', subscriptionHandlers.updateSubscription);
-protectedRoutes.post('/subscriptions/:subscriptionId/cancel', subscriptionHandlers.cancelSubscription);
+protectedRoutes.post(
+  '/subscriptions/:subscriptionId/cancel',
+  subscriptionHandlers.cancelSubscription
+);
 
 // Stripe Checkout and Portal routes
 protectedRoutes.post('/checkout-session', stripeHandlers.createCheckoutSession);

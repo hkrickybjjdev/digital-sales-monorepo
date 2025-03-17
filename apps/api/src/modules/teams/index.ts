@@ -1,9 +1,11 @@
 import { Hono } from 'hono';
+
 import { Env } from '../../types';
+import { formatResponse } from '../../utils/api-response';
+import { validateJWT } from '../auth/middleware/authMiddleware';
+
 import * as teamHandlers from './controllers/teamHandlers';
 import * as teamMemberHandlers from './controllers/teamMemberHandlers';
-import { validateJWT } from '../auth/middleware/authMiddleware';
-import { formatResponse } from '../../utils/api-response';
 import { createWebhookRouter } from './webhooks/routes';
 
 // Create the teams module router

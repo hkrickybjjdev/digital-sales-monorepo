@@ -1,10 +1,12 @@
 import { Hono } from 'hono';
+
 import { Env } from '../../types';
-import * as authHandlers from './controllers/authHandlers';
+import { formatResponse } from '../../utils/api-response';
+
 import * as activationHandlers from './controllers/activationHandlers';
+import * as authHandlers from './controllers/authHandlers';
 import * as passwordResetHandlers from './controllers/passwordResetHandlers';
 import { validateJWT } from './middleware/authMiddleware';
-import { formatResponse } from '../../utils/api-response';
 
 // Create the auth module router
 const authModule = new Hono<{ Bindings: Env }>();

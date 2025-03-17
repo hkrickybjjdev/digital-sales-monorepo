@@ -13,13 +13,13 @@ export const API_VERSIONS: Record<string, ApiVersion> = {
   v1: {
     version: '1.0.0',
     releaseDate: '2023-03-10',
-    deprecated: false
+    deprecated: false,
   },
   v2: {
     version: '2.0.0',
     releaseDate: '2023-03-15',
-    deprecated: false
-  }
+    deprecated: false,
+  },
 };
 
 // Keep v1 as the latest version for now
@@ -45,4 +45,4 @@ export function isVersionSupported(version: string): boolean {
  */
 export function getAllVersions(): Record<string, ApiVersion> {
   return API_VERSIONS;
-} 
+}

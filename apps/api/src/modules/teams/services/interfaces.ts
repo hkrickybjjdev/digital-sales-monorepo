@@ -1,12 +1,12 @@
-import { 
-  Team, 
-  TeamMember, 
-  CreateTeamRequest, 
-  UpdateTeamRequest, 
-  AddTeamMemberRequest, 
+import {
+  Team,
+  TeamMember,
+  CreateTeamRequest,
+  UpdateTeamRequest,
+  AddTeamMemberRequest,
   UpdateTeamMemberRequest,
   TeamWithMemberCount,
-  TeamMemberWithUser
+  TeamMemberWithUser,
 } from '../models/schemas';
 
 /**
@@ -56,15 +56,19 @@ export interface ITeamMemberService {
   /**
    * Add a member to a team
    */
-  addTeamMember(teamId: string, currentUserId: string, data: AddTeamMemberRequest): Promise<TeamMember>;
+  addTeamMember(
+    teamId: string,
+    currentUserId: string,
+    data: AddTeamMemberRequest
+  ): Promise<TeamMember>;
 
   /**
    * Update a team member
    */
   updateTeamMember(
-    teamId: string, 
-    memberId: string, 
-    currentUserId: string, 
+    teamId: string,
+    memberId: string,
+    currentUserId: string,
     data: UpdateTeamMemberRequest
   ): Promise<TeamMember | null>;
 

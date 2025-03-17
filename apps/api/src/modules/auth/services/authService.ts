@@ -1,9 +1,8 @@
 import * as bcrypt from 'bcryptjs';
 import * as jose from 'jose';
-import { UserRepository } from '../repositories/userRepository';
-import { PasswordResetRepository } from '../repositories/passwordResetRepository';
-import { WebhookService } from './webhookService';
-import { EmailService } from './emailService';
+
+import { Env } from '../../../types';
+import { generateUUID } from '../../../utils/utils';
 import {
   User,
   AuthResponse,
@@ -13,11 +12,14 @@ import {
   ResendActivationRequest,
   ForgotPasswordRequest,
   ResetPasswordRequest,
-  ResetResponse
+  ResetResponse,
 } from '../models/schemas';
-import { Env } from '../../../types';
+import { PasswordResetRepository } from '../repositories/passwordResetRepository';
+import { UserRepository } from '../repositories/userRepository';
+
+import { EmailService } from './emailService';
 import { IAuthService, IWebhookService, IEmailService } from './interfaces';
-import { generateUUID } from '../../../utils/utils';
+import { WebhookService } from './webhookService';
 
 export class AuthService implements IAuthService {
   private jwtSecret: string;
@@ -32,9 +34,8 @@ export class AuthService implements IAuthService {
     private readonly emailService: IEmailService
   ) {
     this.jwtSecret = env.JWT_SECRET;
-    this.baseUrl = env.ENVIRONMENT === 'production'
-      ? 'https://app.tempages.app'
-      : 'http://localhost:8787';
+    this.baseUrl =
+      env.ENVIRONMENT === 'production' ? 'https://app.tempages.app' : 'http://localhost:8787';
   }
 
   /**
@@ -52,7 +53,7 @@ export class AuthService implements IAuthService {
 
     // Generate activation token and set expiration (24 hours from now)
     const activationToken = generateUUID();
-    const activationTokenExpiresAt = Date.now() + (24 * 60 * 60 * 1000);
+    const activationTokenExpiresAt = Date.now() + 24 * 60 * 60 * 1000;
 
     // Create user with activation token
     const user = await this.userRepository.createUser({
@@ -63,7 +64,7 @@ export class AuthService implements IAuthService {
       emailVerified: 0, // Set to 0 (not verified) by default
       failedAttempts: 0,
       activationToken,
-      activationTokenExpiresAt
+      activationTokenExpiresAt,
     });
 
     // Generate activation link
@@ -83,7 +84,7 @@ export class AuthService implements IAuthService {
         id: user.id,
         email: user.email,
         name: user.name,
-        createdAt: Date.now()
+        createdAt: Date.now(),
       });
     } catch (error) {
       console.error('Failed to trigger user created webhook:', error);
@@ -95,8 +96,8 @@ export class AuthService implements IAuthService {
       user: {
         id: user.id,
         email: user.email,
-        name: user.name
-      }
+        name: user.name,
+      },
     };
   }
 
@@ -118,18 +119,27 @@ export class AuthService implements IAuthService {
     // Check if account is activated/verified
     if (!user.emailVerified) {
       // Generate a new activation token if the current one is expired
-      if (!user.activationToken || !user.activationTokenExpiresAt || user.activationTokenExpiresAt < Date.now()) {
+      if (
+        !user.activationToken ||
+        !user.activationTokenExpiresAt ||
+        user.activationTokenExpiresAt < Date.now()
+      ) {
         const activationToken = generateUUID();
-        const activationTokenExpiresAt = Date.now() + (24 * 60 * 60 * 1000);
+        const activationTokenExpiresAt = Date.now() + 24 * 60 * 60 * 1000;
 
-        await this.userRepository.setActivationToken(user.id, activationToken, activationTokenExpiresAt);
+        await this.userRepository.setActivationToken(
+          user.id,
+          activationToken,
+          activationTokenExpiresAt
+        );
 
         const activationLink = `${this.baseUrl}/api/v1/auth/activate/${activationToken}`;
         await this.emailService.sendActivationEmail(user.email, user.name, activationLink);
       }
 
       return {
-        error: 'Account not activated. Please check your email for the activation link or request a new one.'
+        error:
+          'Account not activated. Please check your email for the activation link or request a new one.',
       };
     }
 
@@ -142,7 +152,9 @@ export class AuthService implements IAuthService {
       // Lock account if max attempts exceeded
       if (failedAttempts >= this.MAX_LOGIN_ATTEMPTS) {
         await this.userRepository.lockAccount(user.id);
-        return { error: 'Account has been locked due to too many failed attempts. Please contact support.' };
+        return {
+          error: 'Account has been locked due to too many failed attempts. Please contact support.',
+        };
       }
 
       return { error: 'Invalid email or password' };
@@ -166,7 +178,7 @@ export class AuthService implements IAuthService {
     if (!user) {
       return {
         success: false,
-        message: 'Invalid or expired activation token. Please request a new activation link.'
+        message: 'Invalid or expired activation token. Please request a new activation link.',
       };
     }
 
@@ -196,13 +208,15 @@ export class AuthService implements IAuthService {
           id: user.id,
           email: user.email,
           name: user.name,
-          createdAt: Date.now()
+          createdAt: Date.now(),
         });
       } else {
         // If they have a team, check if they have a subscription
         const teamHasSubscription = await this.verifyTeamHasSubscription(user.id);
         if (!teamHasSubscription) {
-          console.log(`User ${user.id} has a team but no subscription. Re-triggering team events...`);
+          console.log(
+            `User ${user.id} has a team but no subscription. Re-triggering team events...`
+          );
           // Re-trigger the team.created event to ensure subscription is set up
           const teams = await this.getUserTeams(user.id);
           if (teams.length > 0) {
@@ -231,7 +245,7 @@ export class AuthService implements IAuthService {
 
     return {
       success: true,
-      message: 'Account activated successfully. You can now log in.'
+      message: 'Account activated successfully. You can now log in.',
     };
   }
 
@@ -246,14 +260,18 @@ export class AuthService implements IAuthService {
   /**
    * Get user teams by querying the Team module's database
    */
-  private async getUserTeams(userId: string): Promise<{ id: string, name: string }[]> {
+  private async getUserTeams(userId: string): Promise<{ id: string; name: string }[]> {
     try {
-      const result = await this.env.DB.prepare(`
+      const result = await this.env.DB.prepare(
+        `
         SELECT t.id, t.name
         FROM "Team" t
         JOIN "TeamMember" tm ON t.id = tm.teamId
         WHERE tm.userId = ?
-      `).bind(userId).all();
+      `
+      )
+        .bind(userId)
+        .all();
 
       if (!result.results || result.results.length === 0) {
         return [];
@@ -261,7 +279,7 @@ export class AuthService implements IAuthService {
 
       return result.results.map(team => ({
         id: team.id as string,
-        name: team.name as string
+        name: team.name as string,
       }));
     } catch (error) {
       console.error(`Error getting teams for user ${userId}:`, error);
@@ -283,11 +301,15 @@ export class AuthService implements IAuthService {
       // Check for subscriptions for the first team
       const teamId = teams[0].id;
 
-      const result = await this.env.DB.prepare(`
+      const result = await this.env.DB.prepare(
+        `
         SELECT COUNT(*) as count
         FROM "Subscription"
         WHERE teamId = ? AND (status = 'active' OR status = 'trialing')
-      `).bind(teamId).first<{ count: number }>();
+      `
+      )
+        .bind(teamId)
+        .first<{ count: number }>();
 
       return result !== null && result.count > 0;
     } catch (error) {
@@ -299,7 +321,11 @@ export class AuthService implements IAuthService {
   /**
    * Retrigger team creation event to set up subscription
    */
-  private async retriggerTeamCreatedEvent(teamId: string, userId: string, teamName: string): Promise<void> {
+  private async retriggerTeamCreatedEvent(
+    teamId: string,
+    userId: string,
+    teamName: string
+  ): Promise<void> {
     // Call the team webhook service to trigger a team.created event
     // This will cause the subscription service to provision a free plan
     try {
@@ -312,8 +338,8 @@ export class AuthService implements IAuthService {
           id: teamId,
           name: teamName,
           userId: userId, // Owner ID
-          createdAt: Date.now()
-        }
+          createdAt: Date.now(),
+        },
       };
 
       const signature = `sha256=${secret}-${JSON.stringify(payload).slice(0, 10)}`;
@@ -323,14 +349,17 @@ export class AuthService implements IAuthService {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-Webhook-Signature': signature
+          'X-Webhook-Signature': signature,
         },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error(`Error re-triggering team created webhook: ${response.status} ${response.statusText}`, errorText);
+        console.error(
+          `Error re-triggering team created webhook: ${response.status} ${response.statusText}`,
+          errorText
+        );
       }
     } catch (error) {
       console.error('Failed to re-trigger team created webhook:', error);
@@ -348,7 +377,7 @@ export class AuthService implements IAuthService {
       // Return success even if user doesn't exist to prevent email enumeration
       return {
         success: true,
-        message: 'If the email address exists in our system, an activation link has been sent.'
+        message: 'If the email address exists in our system, an activation link has been sent.',
       };
     }
 
@@ -356,16 +385,20 @@ export class AuthService implements IAuthService {
     if (user.emailVerified) {
       return {
         success: false,
-        message: 'This account is already activated. Please login.'
+        message: 'This account is already activated. Please login.',
       };
     }
 
     // Generate new activation token
     const activationToken = generateUUID();
-    const activationTokenExpiresAt = Date.now() + (24 * 60 * 60 * 1000);
+    const activationTokenExpiresAt = Date.now() + 24 * 60 * 60 * 1000;
 
     // Update user with new activation token
-    await this.userRepository.setActivationToken(user.id, activationToken, activationTokenExpiresAt);
+    await this.userRepository.setActivationToken(
+      user.id,
+      activationToken,
+      activationTokenExpiresAt
+    );
 
     // Generate activation link
     const activationLink = `${this.baseUrl}/api/v1/auth/activate/${activationToken}`;
@@ -377,13 +410,13 @@ export class AuthService implements IAuthService {
       console.error('Failed to send activation email:', error);
       return {
         success: false,
-        message: 'Failed to send activation email. Please try again later.'
+        message: 'Failed to send activation email. Please try again later.',
       };
     }
 
     return {
       success: true,
-      message: 'Activation link has been sent to your email address.'
+      message: 'Activation link has been sent to your email address.',
     };
   }
 
@@ -411,7 +444,7 @@ export class AuthService implements IAuthService {
 
     return new jose.SignJWT({
       sub: userId,
-      sid: sessionId
+      sid: sessionId,
     })
       .setProtectedHeader({ alg })
       .setIssuedAt()
@@ -433,10 +466,10 @@ export class AuthService implements IAuthService {
       user: {
         id: user.id,
         email: user.email,
-        name: user.name
+        name: user.name,
       },
       token,
-      expiresAt: session.expiresAt
+      expiresAt: session.expiresAt,
     };
   }
 
@@ -464,7 +497,10 @@ export class AuthService implements IAuthService {
   /**
    * Update a user's profile
    */
-  async updateUser(userId: string, data: { name?: string; email?: string }): Promise<Omit<User, 'passwordHash'> | null> {
+  async updateUser(
+    userId: string,
+    data: { name?: string; email?: string }
+  ): Promise<Omit<User, 'passwordHash'> | null> {
     // Get the current user data for comparison
     const currentUser = await this.userRepository.getUserById(userId);
     if (!currentUser) {
@@ -474,7 +510,7 @@ export class AuthService implements IAuthService {
     // Store previous values for webhook
     const previous = {
       name: currentUser.name,
-      email: currentUser.email
+      email: currentUser.email,
     };
 
     // Update the user
@@ -485,12 +521,15 @@ export class AuthService implements IAuthService {
 
     // Trigger webhook for user update
     try {
-      await this.webhookService.triggerUserUpdated({
-        id: updatedUser.id,
-        email: updatedUser.email,
-        name: updatedUser.name,
-        updatedAt: Date.now()
-      }, previous);
+      await this.webhookService.triggerUserUpdated(
+        {
+          id: updatedUser.id,
+          email: updatedUser.email,
+          name: updatedUser.name,
+          updatedAt: Date.now(),
+        },
+        previous
+      );
     } catch (error) {
       console.error('Failed to trigger user updated webhook:', error);
       // Continue with update even if webhook fails
@@ -521,7 +560,7 @@ export class AuthService implements IAuthService {
     try {
       await this.webhookService.triggerUserDeleted({
         id: userId,
-        deletedAt: Date.now()
+        deletedAt: Date.now(),
       });
     } catch (error) {
       console.error('Failed to trigger user deleted webhook:', error);
@@ -545,7 +584,8 @@ export class AuthService implements IAuthService {
       if (!user) {
         return {
           success: true,
-          message: 'If your email address exists in our database, you will receive a password recovery link at your email address shortly.'
+          message:
+            'If your email address exists in our database, you will receive a password recovery link at your email address shortly.',
         };
       }
 
@@ -566,13 +606,14 @@ export class AuthService implements IAuthService {
 
       return {
         success: true,
-        message: 'If your email address exists in our database, you will receive a password recovery link at your email address shortly.'
+        message:
+          'If your email address exists in our database, you will receive a password recovery link at your email address shortly.',
       };
     } catch (error) {
       console.error('Error in forgotPassword:', error);
       return {
         success: false,
-        message: 'An error occurred while processing your request. Please try again later.'
+        message: 'An error occurred while processing your request. Please try again later.',
       };
     }
   }
@@ -591,7 +632,7 @@ export class AuthService implements IAuthService {
       if (!passwordReset) {
         return {
           success: false,
-          message: 'Invalid or expired password reset token.'
+          message: 'Invalid or expired password reset token.',
         };
       }
 
@@ -600,7 +641,7 @@ export class AuthService implements IAuthService {
       if (passwordReset.expiresAt < now || passwordReset.used === 1) {
         return {
           success: false,
-          message: 'Your password reset link has expired. Please request a new one.'
+          message: 'Your password reset link has expired. Please request a new one.',
         };
       }
 
@@ -609,7 +650,7 @@ export class AuthService implements IAuthService {
       if (!user) {
         return {
           success: false,
-          message: 'User not found.'
+          message: 'User not found.',
         };
       }
 
@@ -621,7 +662,7 @@ export class AuthService implements IAuthService {
       if (!updated) {
         return {
           success: false,
-          message: 'Failed to update password. Please try again.'
+          message: 'Failed to update password. Please try again.',
         };
       }
 
@@ -631,19 +672,19 @@ export class AuthService implements IAuthService {
       // Notify via webhook if needed
       await this.webhookService.notifyPasswordReset({
         id: user.id,
-        resetAt: Date.now()
-      }
-      );
+        resetAt: Date.now(),
+      });
 
       return {
         success: true,
-        message: 'Your password has been successfully reset. You can now login with your new password.'
+        message:
+          'Your password has been successfully reset. You can now login with your new password.',
       };
     } catch (error) {
       console.error('Error in resetPassword:', error);
       return {
         success: false,
-        message: 'An error occurred while processing your request. Please try again later.'
+        message: 'An error occurred while processing your request. Please try again later.',
       };
     }
   }

@@ -1,17 +1,17 @@
 import { Env } from '../../../types';
 import { ITeamRepository, ITeamMemberRepository } from '../repositories/interfaces';
-import { TeamRepository } from '../repositories/teamRepository';
 import { TeamMemberRepository } from '../repositories/teamMemberRepository';
+import { TeamRepository } from '../repositories/teamRepository';
 import { ITeamService, ITeamMemberService } from '../services/interfaces';
-import { TeamService } from '../services/teamService';
 import { TeamMemberService } from '../services/teamMemberService';
+import { TeamService } from '../services/teamService';
 
 // Define the shape of our container
 interface TeamsContainer {
   // Repositories
   teamRepository: ITeamRepository;
   teamMemberRepository: ITeamMemberRepository;
-  
+
   // Services
   teamService: ITeamService;
   teamMemberService: ITeamMemberService;
@@ -33,41 +33,41 @@ export function getTeamsContainer(env: Env): TeamsContainer {
   if (containerEnv && env !== containerEnv) {
     resetTeamsContainer();
   }
-  
+
   // Store current environment
   containerEnv = env;
-  
+
   // Create repository instances if they don't exist
   if (!teamRepositoryInstance) {
     teamRepositoryInstance = new TeamRepository(env.DB);
   }
-  
+
   if (!teamMemberRepositoryInstance) {
     teamMemberRepositoryInstance = new TeamMemberRepository(env.DB);
   }
-  
+
   // Create service instances if they don't exist
   // Pass repositories to services
   if (!teamServiceInstance) {
     teamServiceInstance = new TeamService(
-      teamRepositoryInstance, 
+      teamRepositoryInstance,
       teamMemberRepositoryInstance,
       env
     );
   }
-  
+
   if (!teamMemberServiceInstance) {
     teamMemberServiceInstance = new TeamMemberService(
       teamRepositoryInstance,
       teamMemberRepositoryInstance
     );
   }
-  
+
   return {
     teamRepository: teamRepositoryInstance,
     teamMemberRepository: teamMemberRepositoryInstance,
     teamService: teamServiceInstance,
-    teamMemberService: teamMemberServiceInstance
+    teamMemberService: teamMemberServiceInstance,
   };
 }
 

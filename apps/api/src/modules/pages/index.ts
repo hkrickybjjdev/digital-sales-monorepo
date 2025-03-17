@@ -1,8 +1,10 @@
 import { Hono } from 'hono';
+
 import { Env } from '../../types';
 import { validateJWT } from '../auth/middleware/authMiddleware';
-import * as pageHandlers from './controllers/pageHandlers';
+
 import * as contentHandlers from './controllers/contentHandlers';
+import * as pageHandlers from './controllers/pageHandlers';
 import * as registrationHandlers from './controllers/registrationHandlers';
 
 // Create the pages module router
@@ -34,7 +36,7 @@ protectedRoutes.get('/:pageId/contents/:contentId', contentHandlers.getPageConte
 protectedRoutes.put('/:pageId/contents/:contentId', contentHandlers.updatePageContent);
 protectedRoutes.delete('/:pageId/contents/:contentId', contentHandlers.deletePageContent);
 
-// Registration management 
+// Registration management
 protectedRoutes.get('/:pageId/registrations', registrationHandlers.listRegistrations);
 protectedRoutes.get('/:pageId/registrations/export', registrationHandlers.exportRegistrations);
 

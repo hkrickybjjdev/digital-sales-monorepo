@@ -1,8 +1,9 @@
 import { Context } from 'hono';
-import { addTeamMemberSchema, updateTeamMemberSchema } from '../models/schemas';
+
 import { Env } from '../../../types';
 import { formatResponse, formatError, format500Error } from '../../../utils/api-response';
 import { getTeamsContainer } from '../di/container';
+import { addTeamMemberSchema, updateTeamMemberSchema } from '../models/schemas';
 
 // Add a member to a team
 export const addTeamMember = async (c: Context<{ Bindings: Env }>) => {
@@ -10,23 +11,23 @@ export const addTeamMember = async (c: Context<{ Bindings: Env }>) => {
     const userId = c.get('jwtPayload').sub;
     const teamId = c.req.param('teamId');
     const body = await c.req.json();
-    
+
     // Validate the input
     const parseResult = addTeamMemberSchema.safeParse(body);
     if (!parseResult.success) {
       return formatError(c, 'Invalid input', 'ValidationError', 400);
     }
-    
+
     const data = parseResult.data;
-    
+
     const container = getTeamsContainer(c.env);
-    
+
     try {
       const member = await container.teamMemberService.addTeamMember(teamId, userId, data);
       return formatResponse(c, { member }, 201);
     } catch (serviceError) {
       const errorMessage = (serviceError as Error).message;
-      
+
       if (errorMessage.includes('permission')) {
         return formatError(c, errorMessage, 'Forbidden', 403);
       } else if (errorMessage.includes('maximum')) {
@@ -49,32 +50,39 @@ export const updateTeamMember = async (c: Context<{ Bindings: Env }>) => {
     const teamId = c.req.param('teamId');
     const memberId = c.req.param('memberId');
     const body = await c.req.json();
-    
+
     // Validate the input
     const parseResult = updateTeamMemberSchema.safeParse(body);
     if (!parseResult.success) {
       return formatError(c, 'Invalid input', 'ValidationError', 400);
     }
-    
+
     const data = parseResult.data;
-    
+
     const container = getTeamsContainer(c.env);
-    
+
     try {
-      const member = await container.teamMemberService.updateTeamMember(teamId, memberId, userId, data);
+      const member = await container.teamMemberService.updateTeamMember(
+        teamId,
+        memberId,
+        userId,
+        data
+      );
       if (!member) {
         return formatError(c, 'Team member not found', 'ResourceNotFound', 404);
       }
-      
+
       return formatResponse(c, { member });
     } catch (serviceError) {
       const errorMessage = (serviceError as Error).message;
-      
+
       if (errorMessage.includes('not found')) {
         return formatError(c, 'Team member not found', 'ResourceNotFound', 404);
-      } else if (errorMessage.includes('permission') || 
-                errorMessage.includes('cannot modify') ||
-                errorMessage.includes('last owner')) {
+      } else if (
+        errorMessage.includes('permission') ||
+        errorMessage.includes('cannot modify') ||
+        errorMessage.includes('last owner')
+      ) {
         return formatError(c, errorMessage, 'Forbidden', 403);
       }
       throw serviceError;
@@ -91,24 +99,26 @@ export const removeTeamMember = async (c: Context<{ Bindings: Env }>) => {
     const userId = c.get('jwtPayload').sub;
     const teamId = c.req.param('teamId');
     const memberId = c.req.param('memberId');
-    
+
     const container = getTeamsContainer(c.env);
-    
+
     try {
       const result = await container.teamMemberService.removeTeamMember(teamId, memberId, userId);
       if (!result) {
         return formatError(c, 'Team member not found', 'ResourceNotFound', 404);
       }
-      
+
       return formatResponse(c, { success: true, message: 'Team member removed successfully' });
     } catch (serviceError) {
       const errorMessage = (serviceError as Error).message;
-      
+
       if (errorMessage.includes('not found')) {
         return formatError(c, 'Team member not found', 'ResourceNotFound', 404);
-      } else if (errorMessage.includes('permission') || 
-                errorMessage.includes('cannot remove') ||
-                errorMessage.includes('last owner')) {
+      } else if (
+        errorMessage.includes('permission') ||
+        errorMessage.includes('cannot remove') ||
+        errorMessage.includes('last owner')
+      ) {
         return formatError(c, errorMessage, 'Forbidden', 403);
       }
       throw serviceError;

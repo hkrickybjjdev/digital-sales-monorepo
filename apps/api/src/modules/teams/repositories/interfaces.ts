@@ -47,7 +47,9 @@ export interface ITeamMemberRepository {
   /**
    * Add a member to a team
    */
-  addTeamMember(teamMember: Omit<TeamMember, 'id' | 'createdAt' | 'updatedAt'>): Promise<TeamMember>;
+  addTeamMember(
+    teamMember: Omit<TeamMember, 'id' | 'createdAt' | 'updatedAt'>
+  ): Promise<TeamMember>;
 
   /**
    * Get team members by team ID
@@ -73,12 +75,12 @@ export interface ITeamMemberRepository {
    * Delete a team member
    */
   deleteTeamMember(id: string): Promise<boolean>;
-  
+
   /**
    * Get detailed team members with user information
    */
   getTeamMembersWithUserInfo(teamId: string): Promise<any[]>;
-  
+
   /**
    * Count members in a team
    */

@@ -1,20 +1,16 @@
-import { D1Database } from '@cloudflare/workers-types';
-import { 
-  Page, 
-  CreatePageRequest, 
-  UpdatePageRequest,
-  PageType
-} from '../models/schemas';
+import { D1Database, KVNamespace } from '@cloudflare/workers-types';
+
+import { Page, CreatePageRequest, UpdatePageRequest, PageType } from '../models/schemas';
 import { PageRepository } from '../repositories/pageRepository';
-import { KVNamespace } from '@cloudflare/workers-types';
 import { IPageService, IPageRepository, IPageCacheService } from '../services/interfaces';
+
 import { PageCacheService } from './cache';
 
 export class PageService implements IPageService {
   private pageRepository: IPageRepository;
   private pageCacheService: IPageCacheService;
   private cacheRefreshPromises: Map<string, Promise<Page | null>> = new Map();
-  
+
   constructor(db: D1Database, cacheStore: KVNamespace) {
     this.pageRepository = new PageRepository(db);
     this.pageCacheService = new PageCacheService(cacheStore);
@@ -23,11 +19,11 @@ export class PageService implements IPageService {
   async createPage(userId: string, request: CreatePageRequest): Promise<Page> {
     console.log(`Creating page for user ${userId}`);
     const page = await this.pageRepository.createPage(userId, request);
-    
+
     // Cache the page if it's active
     //await this.pageCacheService.cachePage(page);
     console.log(`Page created and cached with shortId ${page.shortId}`);
-    
+
     return page;
   }
 
@@ -49,7 +45,8 @@ export class PageService implements IPageService {
     if (cachedPage) {
       console.log(`Page found in cache with shortId ${shortId}`);
       // Asynchronously increment view count without waiting for result
-      this.pageCacheService.incrementPageViews(cachedPage.id, shortId)
+      this.pageCacheService
+        .incrementPageViews(cachedPage.id, shortId)
         .catch(error => console.error('Error incrementing page views:', error));
       return cachedPage;
     }
@@ -85,19 +82,20 @@ export class PageService implements IPageService {
     console.log(`fetchAndCachePage called for shortId ${shortId}`);
     // If not in cache, get from database
     const page = await this.pageRepository.getPageByShortId(shortId);
-    
+
     // Store in cache for future requests if found and active
     if (page) {
       console.log(`Page found in database with shortId ${shortId}, caching`);
       await this.pageCacheService.cachePage(page);
-      
+
       // Asynchronously increment view count without waiting for result
-      this.pageCacheService.incrementPageViews(page.id, shortId)
+      this.pageCacheService
+        .incrementPageViews(page.id, shortId)
         .catch(error => console.error('Error incrementing page views:', error));
     } else {
       console.log(`Page not found in database with shortId ${shortId}`);
     }
-    
+
     return page;
   }
 
@@ -109,21 +107,23 @@ export class PageService implements IPageService {
       console.log(`Page with ID ${id} not found or does not belong to user ${userId}`);
       return null;
     }
-    
+
     const updatedPage = await this.pageRepository.updatePage(id, userId, request);
-    
+
     // Invalidate cache if updated successfully
     if (updatedPage && updatedPage.shortId) {
-      console.log(`Page updated successfully, invalidating cache for shortId ${updatedPage.shortId}`);
+      console.log(
+        `Page updated successfully, invalidating cache for shortId ${updatedPage.shortId}`
+      );
       await this.pageCacheService.invalidatePageCache(updatedPage.shortId);
-      
+
       // Re-cache if the page is active
       if (updatedPage.isActive) {
         console.log(`Page is active, re-caching with shortId ${updatedPage.shortId}`);
         await this.pageCacheService.cachePage(updatedPage);
       }
     }
-    
+
     return updatedPage;
   }
 
@@ -135,33 +135,42 @@ export class PageService implements IPageService {
       console.log(`Page with ID ${id} not found or does not belong to user ${userId}`);
       return false;
     }
-    
+
     const deleted = await this.pageRepository.deletePage(id, userId);
-    
+
     // Invalidate cache if deleted successfully
     if (deleted && existingPage.shortId) {
-      console.log(`Page deleted successfully, invalidating cache for shortId ${existingPage.shortId}`);
+      console.log(
+        `Page deleted successfully, invalidating cache for shortId ${existingPage.shortId}`
+      );
       await this.pageCacheService.invalidatePageCache(existingPage.shortId);
     }
-    
+
     return deleted;
   }
 
-  async listUserPages(userId: string, limit = 20, offset = 0, type?: PageType): Promise<{
+  async listUserPages(
+    userId: string,
+    limit = 20,
+    offset = 0,
+    type?: PageType
+  ): Promise<{
     pages: Page[];
     total: number;
     hasMore: boolean;
   }> {
-     console.log(`Listing pages for user ${userId} with limit ${limit}, offset ${offset}, and type ${type}`);
+    console.log(
+      `Listing pages for user ${userId} with limit ${limit}, offset ${offset}, and type ${type}`
+    );
     const [pages, total] = await Promise.all([
       this.pageRepository.listUserPages(userId, limit, offset, type),
-      this.pageRepository.getUserPagesCount(userId, type)
+      this.pageRepository.getUserPagesCount(userId, type),
     ]);
-    
+
     return {
       pages,
       total,
-      hasMore: offset + pages.length < total
+      hasMore: offset + pages.length < total,
     };
   }
 }

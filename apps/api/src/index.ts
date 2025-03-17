@@ -1,24 +1,24 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
-import { secureHeaders } from 'hono/secure-headers';
 import { prettyJSON } from 'hono/pretty-json';
-import { formatResponse, formatError, format500Error } from './utils/api-response';
+import { secureHeaders } from 'hono/secure-headers';
 
-import { authModule } from './modules/auth';
-import { pagesModule } from './modules/pages';
-import { productsModule } from './modules/products';
-import { paymentsModule } from './modules/payments';
-import { storageModule } from './modules/storage';
-import { analyticsModule } from './modules/analytics';
-import { teamsModule } from './modules/teams'; // Import the teams module
-import { subscriptionsModule } from './modules/subscriptions'; // Import the subscriptions module
-import { Env } from './types';
-import { getAllVersions, getLatestVersion, LATEST_VERSION } from './utils/versioning';
 import { versionMiddleware } from './middleware/versionMiddleware';
+import { analyticsModule } from './modules/analytics';
+import { authModule } from './modules/auth';
+import { authModuleV2 } from './modules/auth/v2';
+import { pagesModule } from './modules/pages';
+import { paymentsModule } from './modules/payments';
+import { productsModule } from './modules/products';
+import { storageModule } from './modules/storage';
+import { subscriptionsModule } from './modules/subscriptions'; // Import the subscriptions module
+import { teamsModule } from './modules/teams'; // Import the teams module
+import { Env } from './types';
+import { formatResponse, formatError, format500Error } from './utils/api-response';
+import { getAllVersions, getLatestVersion, LATEST_VERSION } from './utils/versioning';
 
 // Import v2 modules
-import { authModuleV2 } from './modules/auth/v2';
 
 // Create the main app
 const app = new Hono<{ Bindings: Env }>();
@@ -27,31 +27,38 @@ const app = new Hono<{ Bindings: Env }>();
 app.use('*', logger());
 app.use('*', secureHeaders());
 app.use('*', prettyJSON());
-app.use('*', cors({
-  origin: ['https://tempopages.com', 'https://console.tempopages.com', /\.tempopages\.com$/] as string[],
-  allowMethods: ['POST', 'GET', 'PUT', 'DELETE', 'OPTIONS'],
-  maxAge: 86400,
-  credentials: true,
-}));
+app.use(
+  '*',
+  cors({
+    origin: [
+      'https://tempopages.com',
+      'https://console.tempopages.com',
+      /\.tempopages\.com$/,
+    ] as string[],
+    allowMethods: ['POST', 'GET', 'PUT', 'DELETE', 'OPTIONS'],
+    maxAge: 86400,
+    credentials: true,
+  })
+);
 
 // Health check endpoint
-app.get('/', (c) => {
-  return formatResponse(c, { 
+app.get('/', c => {
+  return formatResponse(c, {
     status: 'ok',
     version: '0.1.0',
     api_versions: getAllVersions(),
     current_version: getLatestVersion(),
-    environment: c.env?.ENVIRONMENT || 'development'
+    environment: c.env?.ENVIRONMENT || 'development',
   });
 });
 
 // API versioning documentation
-app.get('/api', (c) => {
+app.get('/api', c => {
   return formatResponse(c, {
     message: 'TempPages API',
     versions: getAllVersions(),
     latest_version: getLatestVersion(),
-    documentation: 'https://docs.tempopages.com/api'
+    documentation: 'https://docs.tempopages.com/api',
   });
 });
 
@@ -100,22 +107,22 @@ app.route(`/api/latest`, v1);
 // Error handling
 app.onError((err, c) => {
   console.error(`${err}`);
-  
+
   // Handle known errors
   if (err.message.includes('Unauthorized')) {
     return formatError(c, 'Unauthorized access', 'Unauthorized', 401);
   }
-  
+
   if (err.message.includes('Not found')) {
     return formatError(c, 'Resource not found', 'NotFound', 404);
   }
-  
+
   // Default error response using format500Error
   return format500Error(err);
 });
 
 // Not found handler
-app.notFound((c) => {
+app.notFound(c => {
   return formatError(c, 'Not found', 'NotFound', 404);
 });
 

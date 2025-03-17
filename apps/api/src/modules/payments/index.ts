@@ -1,13 +1,14 @@
 import { Hono } from 'hono';
+
 import { Env } from '../../types';
-import { validateJWT } from '../auth/middleware/authMiddleware';
 import { formatResponse, formatError, format500Error } from '../../utils/api-response';
+import { validateJWT } from '../auth/middleware/authMiddleware';
 
 // Create the payments module router
 const paymentsModule = new Hono<{ Bindings: Env }>();
 
 // Public webhook endpoint for Stripe
-paymentsModule.post('/webhook', async (c) => {
+paymentsModule.post('/webhook', async c => {
   try {
     // Handle Stripe webhooks (payment confirmations, etc.)
     // Will verify signature using STRIPE_WEBHOOK_SECRET
@@ -19,13 +20,13 @@ paymentsModule.post('/webhook', async (c) => {
 });
 
 // Public checkout endpoint
-paymentsModule.post('/create-checkout', async (c) => {
+paymentsModule.post('/create-checkout', async c => {
   try {
     // Create a checkout session
     // No authentication required as this is called from the customer-facing page
-    return formatResponse(c, { 
+    return formatResponse(c, {
       checkoutUrl: 'https://checkout.stripe.com/example-session-id',
-      sessionId: 'example-session-id'
+      sessionId: 'example-session-id',
     });
   } catch (error) {
     console.error('Checkout creation error:', error);
@@ -37,11 +38,11 @@ paymentsModule.post('/create-checkout', async (c) => {
 paymentsModule.use('/*', validateJWT);
 
 // Orders/payments for the authenticated user
-paymentsModule.get('/orders', async (c) => {
+paymentsModule.get('/orders', async c => {
   try {
     // List orders for the authenticated user
-    return formatResponse(c, { 
-      message: 'Orders would be listed here' 
+    return formatResponse(c, {
+      message: 'Orders would be listed here',
     });
   } catch (error) {
     console.error('Order listing error:', error);
@@ -49,12 +50,12 @@ paymentsModule.get('/orders', async (c) => {
   }
 });
 
-paymentsModule.get('/orders/:id', async (c) => {
+paymentsModule.get('/orders/:id', async c => {
   try {
     // Get order details
     const id = c.req.param('id');
-    return formatResponse(c, { 
-      message: `Order ${id} details would be returned here` 
+    return formatResponse(c, {
+      message: `Order ${id} details would be returned here`,
     });
   } catch (error) {
     console.error('Order details error:', error);
@@ -63,11 +64,11 @@ paymentsModule.get('/orders/:id', async (c) => {
 });
 
 // Handle refunds
-paymentsModule.post('/refund', async (c) => {
+paymentsModule.post('/refund', async c => {
   try {
     // Process refund request
-    return formatResponse(c, { 
-      message: 'Refund processed successfully' 
+    return formatResponse(c, {
+      message: 'Refund processed successfully',
     });
   } catch (error) {
     console.error('Refund processing error:', error);
@@ -76,11 +77,11 @@ paymentsModule.post('/refund', async (c) => {
 });
 
 // Connect account management for sellers
-paymentsModule.get('/account', async (c) => {
+paymentsModule.get('/account', async c => {
   try {
     // Get Stripe Connect account details
-    return formatResponse(c, { 
-      message: 'Stripe Connect account details would be returned here' 
+    return formatResponse(c, {
+      message: 'Stripe Connect account details would be returned here',
     });
   } catch (error) {
     console.error('Account details error:', error);
@@ -88,11 +89,11 @@ paymentsModule.get('/account', async (c) => {
   }
 });
 
-paymentsModule.post('/account', async (c) => {
+paymentsModule.post('/account', async c => {
   try {
     // Create or update Stripe Connect account
-    return formatResponse(c, { 
-      message: 'Stripe Connect account created/updated' 
+    return formatResponse(c, {
+      message: 'Stripe Connect account created/updated',
     });
   } catch (error) {
     console.error('Account update error:', error);
@@ -100,11 +101,11 @@ paymentsModule.post('/account', async (c) => {
   }
 });
 
-paymentsModule.get('/balance', async (c) => {
+paymentsModule.get('/balance', async c => {
   try {
     // Get balance information
-    return formatResponse(c, { 
-      message: 'Balance information would be returned here' 
+    return formatResponse(c, {
+      message: 'Balance information would be returned here',
     });
   } catch (error) {
     console.error('Balance retrieval error:', error);
@@ -112,11 +113,11 @@ paymentsModule.get('/balance', async (c) => {
   }
 });
 
-paymentsModule.get('/payouts', async (c) => {
+paymentsModule.get('/payouts', async c => {
   try {
     // Get payout history
-    return formatResponse(c, { 
-      message: 'Payout history would be returned here' 
+    return formatResponse(c, {
+      message: 'Payout history would be returned here',
     });
   } catch (error) {
     console.error('Payout history error:', error);

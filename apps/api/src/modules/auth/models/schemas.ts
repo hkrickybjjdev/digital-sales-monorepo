@@ -12,7 +12,7 @@ export const userSchema = z.object({
   emailVerified: z.number().default(0),
   failedAttempts: z.number().default(0),
   activationToken: z.string().nullable(),
-  activationTokenExpiresAt: z.number().nullable()
+  activationTokenExpiresAt: z.number().nullable(),
 });
 
 // Login request schema
@@ -76,14 +76,14 @@ export interface Session {
 // Activation response schema
 export const activationResponseSchema = z.object({
   success: z.boolean(),
-  message: z.string()
+  message: z.string(),
 });
 
 export type ActivationResponse = z.infer<typeof activationResponseSchema>;
 
 // Resend activation schema
 export const resendActivationSchema = z.object({
-  email: z.string().email()
+  email: z.string().email(),
 });
 
 export type ResendActivationRequest = z.infer<typeof resendActivationSchema>;

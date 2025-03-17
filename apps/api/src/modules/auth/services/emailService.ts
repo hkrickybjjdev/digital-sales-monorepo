@@ -1,58 +1,59 @@
 import { Env } from '../../../types';
+
 import { IEmailService } from './interfaces';
 
 export class EmailService implements IEmailService {
   private env: Env;
   private fromEmail: string;
   private appName: string;
-  
+
   constructor(env: Env) {
     this.env = env;
     this.fromEmail = env.EMAIL_FROM;
     this.appName = env.APP_NAME;
   }
-  
+
   async sendEmail(to: string, subject: string, htmlContent: string): Promise<boolean> {
     try {
       const response = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.env.RESEND_API_KEY}`
+          Authorization: `Bearer ${this.env.RESEND_API_KEY}`,
         },
         body: JSON.stringify({
           from: this.fromEmail,
           to: to,
           subject: subject,
-          html: htmlContent
-        })
+          html: htmlContent,
+        }),
       });
-      
+
       return response.status === 200;
     } catch (error) {
       console.error(`Failed to send email (${subject}):`, error);
       return false;
     }
   }
-  
+
   async sendWelcomeEmail(to: string, name: string): Promise<boolean> {
     const subject = `Welcome to ${this.appName}!`;
     const htmlContent = this.getWelcomeEmailTemplate(name);
     return await this.sendEmail(to, subject, htmlContent);
   }
-  
+
   async sendActivationEmail(to: string, name: string, activationUrl: string): Promise<boolean> {
     const subject = `Activate your ${this.appName} account`;
     const htmlContent = this.getActivationEmailTemplate(name, activationUrl);
     return await this.sendEmail(to, subject, htmlContent);
   }
-  
+
   async sendPasswordResetEmail(to: string, name: string, resetUrl: string): Promise<boolean> {
     const subject = `Reset your ${this.appName} password`;
     const htmlContent = this.getPasswordResetEmailTemplate(name, resetUrl);
     return await this.sendEmail(to, subject, htmlContent);
   }
-  
+
   private getWelcomeEmailTemplate(name: string): string {
     return `
       <div>
@@ -65,7 +66,7 @@ export class EmailService implements IEmailService {
       </div>
     `;
   }
-  
+
   private getActivationEmailTemplate(name: string, activationUrl: string): string {
     return `
       <div>
@@ -79,7 +80,7 @@ export class EmailService implements IEmailService {
       </div>
     `;
   }
-  
+
   private getPasswordResetEmailTemplate(name: string, resetUrl: string): string {
     return `
       <div>

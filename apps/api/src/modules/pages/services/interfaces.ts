@@ -1,13 +1,13 @@
-import { 
-  Page, 
-  CreatePageRequest, 
-  UpdatePageRequest, 
+import {
+  Page,
+  CreatePageRequest,
+  UpdatePageRequest,
   PageType,
   PageContent,
   CreatePageContentRequest,
   Registration,
   CreateRegistrationRequest,
-  PageStats
+  PageStats,
 } from '../models/schemas';
 
 /**
@@ -19,7 +19,12 @@ export interface IPageService {
   getPageByShortId(shortId: string): Promise<Page | null>;
   updatePage(id: string, userId: string, request: UpdatePageRequest): Promise<Page | null>;
   deletePage(id: string, userId: string): Promise<boolean>;
-  listUserPages(userId: string, limit?: number, offset?: number, type?: PageType): Promise<{
+  listUserPages(
+    userId: string,
+    limit?: number,
+    offset?: number,
+    type?: PageType
+  ): Promise<{
     pages: Page[];
     total: number;
     hasMore: boolean;
@@ -30,10 +35,19 @@ export interface IPageService {
  * Interface for ContentService
  */
 export interface IContentService {
-  createPageContent(pageId: string, userId: string, request: CreatePageContentRequest): Promise<PageContent | null>;
+  createPageContent(
+    pageId: string,
+    userId: string,
+    request: CreatePageContentRequest
+  ): Promise<PageContent | null>;
   getPageContentById(id: string): Promise<PageContent | null>;
   getPageContents(pageId: string): Promise<PageContent[]>;
-  updatePageContent(id: string, pageId: string, userId: string, updates: Partial<CreatePageContentRequest>): Promise<PageContent | null>;
+  updatePageContent(
+    id: string,
+    pageId: string,
+    userId: string,
+    updates: Partial<CreatePageContentRequest>
+  ): Promise<PageContent | null>;
   deletePageContent(id: string, pageId: string, userId: string): Promise<boolean>;
 }
 
@@ -41,8 +55,16 @@ export interface IContentService {
  * Interface for RegistrationService
  */
 export interface IRegistrationService {
-  createRegistration(shortId: string, request: CreateRegistrationRequest): Promise<{ registration: Registration | null; error?: string }>;
-  getRegistrations(pageId: string, userId: string, limit?: number, offset?: number): Promise<{
+  createRegistration(
+    shortId: string,
+    request: CreateRegistrationRequest
+  ): Promise<{ registration: Registration | null; error?: string }>;
+  getRegistrations(
+    pageId: string,
+    userId: string,
+    limit?: number,
+    offset?: number
+  ): Promise<{
     registrations: Registration[];
     total: number;
     hasMore: boolean;
@@ -79,10 +101,19 @@ export interface IPageRepository {
  * Interface for ContentRepository
  */
 export interface IContentRepository {
-  createPageContent(pageId: string, userId: string, request: CreatePageContentRequest): Promise<PageContent | null>;
+  createPageContent(
+    pageId: string,
+    userId: string,
+    request: CreatePageContentRequest
+  ): Promise<PageContent | null>;
   getPageContentById(id: string): Promise<PageContent | null>;
   getPageContents(pageId: string): Promise<PageContent[]>;
-  updatePageContent(id: string, pageId: string, userId: string, updates: Partial<CreatePageContentRequest>): Promise<PageContent | null>;
+  updatePageContent(
+    id: string,
+    pageId: string,
+    userId: string,
+    updates: Partial<CreatePageContentRequest>
+  ): Promise<PageContent | null>;
   deletePageContent(id: string, pageId: string, userId: string): Promise<boolean>;
 }
 
@@ -91,6 +122,11 @@ export interface IContentRepository {
  */
 export interface IRegistrationRepository {
   createRegistration(pageId: string, request: CreateRegistrationRequest): Promise<Registration>;
-  getRegistrations(pageId: string, userId: string, limit?: number, offset?: number): Promise<Registration[]>;
+  getRegistrations(
+    pageId: string,
+    userId: string,
+    limit?: number,
+    offset?: number
+  ): Promise<Registration[]>;
   getRegistrationCount(pageId: string): Promise<number>;
 }

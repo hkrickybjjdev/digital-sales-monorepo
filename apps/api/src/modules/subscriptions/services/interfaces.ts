@@ -1,13 +1,14 @@
-import { 
-  Plan, 
+import Stripe from 'stripe';
+
+import {
+  Plan,
   PlanWithPrices,
-  Price, 
+  Price,
   Subscription,
   SubscriptionWithPlan,
   CreateSubscriptionRequest,
-  UpdateSubscriptionRequest
+  UpdateSubscriptionRequest,
 } from '../models/schemas';
-import Stripe from 'stripe';
 
 /**
  * Interface for PlanService
@@ -17,7 +18,7 @@ export interface IPlanService {
    * Get all visible plans
    */
   getPlans(): Promise<PlanWithPrices[]>;
-  
+
   /**
    * Get a plan by ID
    */
@@ -32,22 +33,26 @@ export interface ISubscriptionService {
    * Create a new subscription
    */
   createSubscription(userId: string, request: CreateSubscriptionRequest): Promise<Subscription>;
-  
+
   /**
    * Get a subscription by ID
    */
   getSubscriptionById(id: string, userId: string): Promise<SubscriptionWithPlan | null>;
-  
+
   /**
    * Get all subscriptions for a team
    */
   getTeamSubscriptions(teamId: string, userId: string): Promise<SubscriptionWithPlan[]>;
-  
+
   /**
    * Update a subscription
    */
-  updateSubscription(id: string, userId: string, request: UpdateSubscriptionRequest): Promise<Subscription | null>;
-  
+  updateSubscription(
+    id: string,
+    userId: string,
+    request: UpdateSubscriptionRequest
+  ): Promise<Subscription | null>;
+
   /**
    * Cancel a subscription
    */
@@ -62,12 +67,12 @@ export interface IPlanRepository {
    * Get all plans
    */
   getPlans(visibleOnly: boolean): Promise<Plan[]>;
-  
+
   /**
    * Get a plan by ID
    */
   getPlanById(id: string): Promise<Plan | null>;
-  
+
   /**
    * Get prices for a plan
    */
@@ -82,22 +87,22 @@ export interface ISubscriptionRepository {
    * Create a new subscription
    */
   createSubscription(subscription: Subscription): Promise<Subscription>;
-  
+
   /**
    * Get a subscription by ID
    */
   getSubscriptionById(id: string): Promise<Subscription | null>;
-  
+
   /**
    * Get all subscriptions for a team
    */
   getTeamSubscriptions(teamId: string): Promise<Subscription[]>;
-  
+
   /**
    * Update a subscription
    */
   updateSubscription(id: string, data: Partial<Subscription>): Promise<Subscription | null>;
-  
+
   /**
    * Check if user has access to subscription (via team membership)
    */
@@ -115,12 +120,10 @@ export interface ISubscriptionRepository {
 }
 
 export interface IPriceRepository {
-
   /**
    * Get Prices By Plan Id
    */
   getPricesByPlanId(planId: string): Promise<Price[]>;
-
 
   /**
    * Get Price By Id
@@ -142,10 +145,7 @@ export interface IStripeService {
   /**
    * Create a billing portal session
    */
-  createPortalSession(options: {
-    customerId: string;
-    returnUrl: string;
-  }): Promise<{ url: string }>;
+  createPortalSession(options: { customerId: string; returnUrl: string }): Promise<{ url: string }>;
 
   /**
    * Retrieve a checkout session

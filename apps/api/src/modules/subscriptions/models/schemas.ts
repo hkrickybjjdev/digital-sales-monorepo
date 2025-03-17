@@ -6,7 +6,7 @@ export const planSchema = z.object({
   name: z.string(),
   description: z.string(),
   isVisible: z.number().transform(Boolean),
-  features: z.string().transform(str => JSON.parse(str))
+  features: z.string().transform(str => JSON.parse(str)),
 });
 
 export type Plan = z.infer<typeof planSchema>;
@@ -21,14 +21,14 @@ export const priceSchema = z.object({
   createdAt: z.number(),
   updatedAt: z.number(),
   billingScheme: z.string(),
-  type: z.string()
+  type: z.string(),
 });
 
 export type Price = z.infer<typeof priceSchema>;
 
 // PlanWithPrices schema
 export const planWithPricesSchema = planSchema.extend({
-  prices: z.array(priceSchema).optional()
+  prices: z.array(priceSchema).optional(),
 });
 
 export type PlanWithPrices = z.infer<typeof planWithPricesSchema>;
@@ -45,14 +45,14 @@ export const subscriptionSchema = z.object({
   subscriptionId: z.string().nullable(),
   createdAt: z.number(),
   updatedAt: z.number(),
-  cancelAt: z.number().nullable()
+  cancelAt: z.number().nullable(),
 });
 
 export type Subscription = z.infer<typeof subscriptionSchema>;
 
 // SubscriptionWithPlan schema
 export const subscriptionWithPlanSchema = subscriptionSchema.extend({
-  plan: planSchema.optional()
+  plan: planSchema.optional(),
 });
 
 export type SubscriptionWithPlan = z.infer<typeof subscriptionWithPlanSchema>;
@@ -62,14 +62,14 @@ export const createSubscriptionSchema = z.object({
   teamId: z.string(),
   planId: z.string(),
   interval: z.enum(['month', 'year']),
-  paymentMethod: z.string().optional()
+  paymentMethod: z.string().optional(),
 });
 
 export type CreateSubscriptionRequest = z.infer<typeof createSubscriptionSchema>;
 
 export const updateSubscriptionSchema = z.object({
   planId: z.string().optional(),
-  status: z.enum(['active', 'canceled', 'past_due', 'trialing']).optional()
+  status: z.enum(['active', 'canceled', 'past_due', 'trialing']).optional(),
 });
 
 export type UpdateSubscriptionRequest = z.infer<typeof updateSubscriptionSchema>;

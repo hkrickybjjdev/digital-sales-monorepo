@@ -1,10 +1,7 @@
-import { 
-  TeamMember,
-  AddTeamMemberRequest, 
-  UpdateTeamMemberRequest
-} from '../models/schemas';
-import { ITeamMemberService } from './interfaces';
+import { TeamMember, AddTeamMemberRequest, UpdateTeamMemberRequest } from '../models/schemas';
 import { ITeamRepository, ITeamMemberRepository } from '../repositories/interfaces';
+
+import { ITeamMemberService } from './interfaces';
 
 export class TeamMemberService implements ITeamMemberService {
   private teamRepository: ITeamRepository;
@@ -12,7 +9,7 @@ export class TeamMemberService implements ITeamMemberService {
   private maxMembersPerTeam: number;
 
   constructor(
-    teamRepository: ITeamRepository, 
+    teamRepository: ITeamRepository,
     teamMemberRepository: ITeamMemberRepository,
     maxMembersPerTeam: number = 10
   ) {
@@ -21,9 +18,16 @@ export class TeamMemberService implements ITeamMemberService {
     this.maxMembersPerTeam = maxMembersPerTeam;
   }
 
-  async addTeamMember(teamId: string, currentUserId: string, data: AddTeamMemberRequest): Promise<TeamMember> {
+  async addTeamMember(
+    teamId: string,
+    currentUserId: string,
+    data: AddTeamMemberRequest
+  ): Promise<TeamMember> {
     // Check if the current user has permission to add members
-    const hasPermission = await this.teamRepository.checkUserRole(teamId, currentUserId, ['owner', 'admin']);
+    const hasPermission = await this.teamRepository.checkUserRole(teamId, currentUserId, [
+      'owner',
+      'admin',
+    ]);
     if (!hasPermission) {
       throw new Error('You do not have permission to add members to this team');
     }
@@ -31,11 +35,16 @@ export class TeamMemberService implements ITeamMemberService {
     // Check if team has reached its member limit
     const memberCount = await this.teamMemberRepository.countTeamMembers(teamId);
     if (memberCount >= this.maxMembersPerTeam) {
-      throw new Error(`Teams can have a maximum of ${this.maxMembersPerTeam} members with your current plan`);
+      throw new Error(
+        `Teams can have a maximum of ${this.maxMembersPerTeam} members with your current plan`
+      );
     }
 
     // Check if the user is already a member of the team
-    const existingMember = await this.teamMemberRepository.getTeamMemberByTeamAndUserId(teamId, data.userId);
+    const existingMember = await this.teamMemberRepository.getTeamMemberByTeamAndUserId(
+      teamId,
+      data.userId
+    );
     if (existingMember) {
       throw new Error('User is already a member of this team');
     }
@@ -52,14 +61,14 @@ export class TeamMemberService implements ITeamMemberService {
     return this.teamMemberRepository.addTeamMember({
       teamId,
       userId: data.userId,
-      role: data.role
+      role: data.role,
     });
   }
 
   async updateTeamMember(
-    teamId: string, 
-    memberId: string, 
-    currentUserId: string, 
+    teamId: string,
+    memberId: string,
+    currentUserId: string,
     data: UpdateTeamMemberRequest
   ): Promise<TeamMember | null> {
     // Get the member to update
@@ -87,9 +96,10 @@ export class TeamMemberService implements ITeamMemberService {
       // Owners can update anyone except changing another owner's role
       if (member.role === 'owner' && data.role !== 'owner' && member.userId !== currentUserId) {
         // Check if this would remove the last owner
-        const owners = (await this.teamMemberRepository.getTeamMembersByTeamId(teamId))
-          .filter(m => m.role === 'owner');
-        
+        const owners = (await this.teamMemberRepository.getTeamMembersByTeamId(teamId)).filter(
+          m => m.role === 'owner'
+        );
+
         if (owners.length <= 1) {
           throw new Error('Cannot change the role of the last owner');
         }
@@ -106,11 +116,15 @@ export class TeamMemberService implements ITeamMemberService {
 
     // Update the member
     return this.teamMemberRepository.updateTeamMember(memberId, {
-      role: data.role
+      role: data.role,
     });
   }
 
-  async removeTeamMember(teamId: string, memberId: string, currentUserId: string): Promise<boolean> {
+  async removeTeamMember(
+    teamId: string,
+    memberId: string,
+    currentUserId: string
+  ): Promise<boolean> {
     // Get the member to remove
     const member = await this.teamMemberRepository.getTeamMemberById(memberId);
     if (!member) {
@@ -136,9 +150,10 @@ export class TeamMemberService implements ITeamMemberService {
       // User is removing themselves
       // If they're the last owner, don't allow it
       if (member.role === 'owner') {
-        const owners = (await this.teamMemberRepository.getTeamMembersByTeamId(teamId))
-          .filter(m => m.role === 'owner');
-        
+        const owners = (await this.teamMemberRepository.getTeamMembersByTeamId(teamId)).filter(
+          m => m.role === 'owner'
+        );
+
         if (owners.length <= 1) {
           throw new Error('Cannot remove the last owner from the team');
         }
@@ -147,9 +162,10 @@ export class TeamMemberService implements ITeamMemberService {
       // Owner is removing someone else
       // No additional checks needed, owners can remove anyone except the last owner
       if (member.role === 'owner') {
-        const owners = (await this.teamMemberRepository.getTeamMembersByTeamId(teamId))
-          .filter(m => m.role === 'owner');
-        
+        const owners = (await this.teamMemberRepository.getTeamMembersByTeamId(teamId)).filter(
+          m => m.role === 'owner'
+        );
+
         if (owners.length <= 1) {
           throw new Error('Cannot remove the last owner from the team');
         }
