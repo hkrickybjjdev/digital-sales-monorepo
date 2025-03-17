@@ -55,7 +55,7 @@ export class PageCacheService implements IPageCacheService {
   }
 
   // Page stats - views, conversions
-  async incrementPageViews(id: string, shortId: string): Promise<void> {
+  async incrementPageViews(id: string): Promise<void> {
     const key = this.pageStatsKey(id);
 
     // Optimistically update stats
@@ -72,7 +72,7 @@ export class PageCacheService implements IPageCacheService {
     }
   }
 
-  async incrementConversions(id: string, shortId: string): Promise<void> {
+  async incrementConversions(id: string): Promise<void> {
     const key = this.pageStatsKey(id);
 
     try {

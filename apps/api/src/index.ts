@@ -16,7 +16,7 @@ import { subscriptionsModule } from './modules/subscriptions'; // Import the sub
 import { teamsModule } from './modules/teams'; // Import the teams module
 import { Env } from './types';
 import { formatResponse, formatError, format500Error } from './utils/api-response';
-import { getAllVersions, getLatestVersion, LATEST_VERSION } from './utils/versioning';
+import { getAllVersions, getLatestVersion } from './utils/versioning';
 
 // Import v2 modules
 

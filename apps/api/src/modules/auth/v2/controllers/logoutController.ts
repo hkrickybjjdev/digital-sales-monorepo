@@ -20,8 +20,8 @@ export async function logoutHandler(c: Context<{ Bindings: Env }>) {
       return formatError(c, 'User not found', 'ResourceNotFound', 404);
     }
     // Get the authorization token
-    const authHeader = c.req.header('Authorization');
-    const token = authHeader ? authHeader.split(' ')[1] : null;
+    //const authHeader = c.req.header('Authorization');
+    //const token = authHeader ? authHeader.split(' ')[1] : null;
 
     // This is just a sample - in a real implementation, you would:
     // 1. Invalidate the JWT token in a token blacklist

@@ -30,7 +30,7 @@ export async function registerHandler(c: Context<{ Bindings: Env }>) {
     const userId = 'user_' + Math.random().toString(36).substring(2, 10);
 
     // Generate verification token
-    const verificationToken = 'verify_' + Math.random().toString(36).substring(2, 15);
+    //const verificationToken = 'verify_' + Math.random().toString(36).substring(2, 15);
     // In a real implementation, you would:
     // 1. Store the user in the database
     // 2. Store the verification token

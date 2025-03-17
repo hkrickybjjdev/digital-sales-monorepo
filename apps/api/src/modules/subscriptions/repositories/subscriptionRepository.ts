@@ -1,6 +1,5 @@
 import { D1Database } from '@cloudflare/workers-types';
 
-import { generateUUID } from '../../../utils/utils';
 import { Subscription } from '../models/schemas';
 import { ISubscriptionRepository } from '../services/interfaces';
 

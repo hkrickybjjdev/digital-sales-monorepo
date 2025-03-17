@@ -12,7 +12,7 @@ import { formatResponse, formatError, format500Error } from '../../../../utils/a
  */
 export async function loginHandler(c: Context<{ Bindings: Env }>) {
   try {
-    const { email, password, deviceId } = await c.req.json();
+    const { email, password, deviceId:_ } = await c.req.json();
 
     // Validate input
     if (!email || !password) {

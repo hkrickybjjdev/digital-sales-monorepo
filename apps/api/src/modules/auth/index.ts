@@ -1,7 +1,6 @@
 import { Hono } from 'hono';
 
 import { Env } from '../../types';
-import { formatResponse } from '../../utils/api-response';
 
 import * as activationHandlers from './controllers/activationHandlers';
 import * as authHandlers from './controllers/authHandlers';

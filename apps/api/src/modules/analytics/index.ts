@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 
 import { Env } from '../../types';
-import { formatResponse, formatError, format500Error } from '../../utils/api-response';
+import { formatResponse, format500Error } from '../../utils/api-response';
 import { validateJWT } from '../auth/middleware/authMiddleware';
 
 // Create the analytics module router

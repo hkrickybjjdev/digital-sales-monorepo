@@ -9,7 +9,7 @@ import { formatResponse, formatError, format500Error } from '../../../../utils/a
  */
 export async function mfaVerifyHandler(c: Context<{ Bindings: Env }>) {
   try {
-    const { tempToken, code, method, deviceId } = await c.req.json();
+    const { tempToken, code, method:_, deviceId } = await c.req.json();
 
     // Validate input
     if (!tempToken || !code) {

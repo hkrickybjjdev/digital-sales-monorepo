@@ -1,6 +1,6 @@
 import { D1Database } from '@cloudflare/workers-types';
 
-import { Registration, CreateRegistrationRequest, Page } from '../models/schemas';
+import { Registration, CreateRegistrationRequest } from '../models/schemas';
 import { PageRepository } from '../repositories/pageRepository';
 import { RegistrationRepository } from '../repositories/registrationRepository';
 import {

@@ -17,9 +17,7 @@ import {
 import { PasswordResetRepository } from '../repositories/passwordResetRepository';
 import { UserRepository } from '../repositories/userRepository';
 
-import { EmailService } from './emailService';
 import { IAuthService, IWebhookService, IEmailService } from './interfaces';
-import { WebhookService } from './webhookService';
 
 export class AuthService implements IAuthService {
   private jwtSecret: string;
@@ -536,7 +534,7 @@ export class AuthService implements IAuthService {
     }
 
     // Return the updated user without the password hash
-    const { passwordHash, ...userWithoutPassword } = updatedUser;
+    const { passwordHash: _, ...userWithoutPassword } = updatedUser;
     return userWithoutPassword;
   }
 

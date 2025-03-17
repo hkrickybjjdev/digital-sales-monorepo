@@ -1,4 +1,4 @@
-import { Plan, PlanWithPrices } from '../models/schemas';
+import { PlanWithPrices } from '../models/schemas';
 
 import { IPlanRepository, IPlanService } from './interfaces';
 

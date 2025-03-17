@@ -1,7 +1,6 @@
 import { generateUUID } from '../../../utils/utils';
 import {
   CreateSubscriptionRequest,
-  PlanWithPrices,
   Subscription,
   SubscriptionWithPlan,
   UpdateSubscriptionRequest,
