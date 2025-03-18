@@ -58,7 +58,6 @@ erDiagram
     PRICE {
         string id PK
         string planId FK
-        string productId FK
         string currency
         string interval
         timestamp createdAt
@@ -87,6 +86,71 @@ erDiagram
         timestamp expiresAt
         timestamp createdAt
     }
+    
+    PAGE {
+        string id PK
+        string teamId FK
+        string slug
+        string status
+        timestamp createdAt
+        timestamp updatedAt
+    }
+    
+    EXPIRATION_SETTING {
+        string id PK
+        string expirationType
+        timestamp expiresAtDatetime
+        integer durationSeconds
+        string expirationAction
+        string redirectUrl
+        timestamp createdAt
+        timestamp updatedAt
+    }
+    
+    PAGE_VERSION {
+        string id PK
+        string pageId FK
+        integer versionNumber
+        boolean isPublished
+        timestamp createdAt
+        timestamp publishedAt
+        timestamp publishFrom
+        string expirationId FK
+    }
+    
+    PAGE_VERSION_TRANSLATION {
+        string id PK
+        string versionId FK
+        string languageCode
+        string socialShareTitle
+        string socialShareDescription
+        string metaDescription
+        string metaKeywords
+        timestamp createdAt
+        timestamp updatedAt
+    }
+    
+    CONTENT_BLOCK {
+        string id PK
+        string versionId FK
+        string blockType
+        integer order
+        string content
+        string settings
+        timestamp createdAt
+        timestamp updatedAt
+        string displayState
+    }
+    
+    CONTENT_BLOCK_TRANSLATION {
+        string id PK
+        string contentBlockId FK
+        string languageCode
+        string content
+        string settings
+        timestamp createdAt
+        timestamp updatedAt
+    }
         
     USER ||--o{ PRODUCT : creates    
     USER ||--o{ TEAM_MEMBER : belongs to
@@ -95,6 +159,12 @@ erDiagram
     PLAN ||--o{ SUBSCRIPTION : provides
     USER ||--o{ SESSION : has
     USER ||--o{ PASSWORD_RESET : requests
+    TEAM ||--o{ PAGE : owns
+    PAGE ||--o{ PAGE_VERSION : has
+    PAGE_VERSION ||--o{ PAGE_VERSION_TRANSLATION : translates
+    PAGE_VERSION ||--o{ CONTENT_BLOCK : contains
+    CONTENT_BLOCK ||--o{ CONTENT_BLOCK_TRANSLATION : translates
+    PAGE_VERSION }o--o| EXPIRATION_SETTING : expires with
 ```
 
 ## Core Entities
@@ -168,13 +238,12 @@ Represents a pricing plan.
 
 ### Price
 
-Represents different pricing tiers, billing intervals, and currencies for a plan or product.
+Represents different pricing tiers, billing intervals, and currencies for a plan.
 
 | Field | Type | Description |
 |-------|------|-------------|
 | id | UUID | Primary identifier |
 | planId | UUID (FK) | Reference to plan (if applicable) |
-| productId | UUID (FK) | Reference to product (if applicable) |
 | currency | String | ISO currency code (e.g., USD) |
 | interval | String | Billing interval (e.g., month, year) |
 | createdAt | Timestamp | Creation date |
@@ -210,6 +279,95 @@ Represents a user session for authentication.
 | userId | TEXT (FK) | Reference to user |
 | expiresAt | INTEGER | Session expiration timestamp |
 | createdAt | INTEGER | Session creation timestamp |
+
+### Page
+
+Represents a content page created by a team.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| id | UUID | Primary identifier |
+| teamId | UUID (FK) | Reference to the owning team |
+| slug | String | Unique URL slug for the page |
+| status | Enum | Page status ('draft', 'published', 'expired', 'archived') |
+| createdAt | Timestamp | Creation date |
+| updatedAt | Timestamp | Last update date |
+
+### ExpirationSetting
+
+Represents expiration settings for a page version.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| id | UUID | Primary identifier |
+| expirationType | Enum | Type of expiration ('datetime', 'duration') |
+| expiresAtDatetime | Timestamp | Specific date/time when content expires (for 'datetime' type) |
+| durationSeconds | Integer | Duration in seconds before expiration (for 'duration' type) |
+| expirationAction | Enum | Action to take on expiration ('unpublish', 'redirect') |
+| redirectUrl | String | URL to redirect to after expiration (for 'redirect' action) |
+| createdAt | Timestamp | Creation date |
+| updatedAt | Timestamp | Last update date |
+
+### PageVersion
+
+Represents a version of a page, allowing for version control of content.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| id | UUID | Primary identifier |
+| pageId | UUID (FK) | Reference to the parent page |
+| versionNumber | Integer | Sequential version number |
+| isPublished | Boolean | Whether this version is currently published |
+| createdAt | Timestamp | Creation date |
+| publishedAt | Timestamp | When the version was published |
+| publishFrom | Timestamp | Scheduled publishing date |
+| expirationId | UUID (FK) | Reference to expiration settings |
+
+### PageVersionTranslation
+
+Represents translations of a page version's metadata.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| id | UUID | Primary identifier |
+| versionId | UUID (FK) | Reference to the page version |
+| languageCode | String | ISO language code |
+| socialShareTitle | String | Title for social media sharing |
+| socialShareDescription | String | Description for social media sharing |
+| metaDescription | String | Page meta description for SEO |
+| metaKeywords | String | Page meta keywords for SEO |
+| createdAt | Timestamp | Creation date |
+| updatedAt | Timestamp | Last update date |
+
+### ContentBlock
+
+Represents a content block within a page version.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| id | UUID | Primary identifier |
+| versionId | UUID (FK) | Reference to the page version |
+| blockType | String | Type of content block |
+| order | Integer | Order position within the page |
+| content | String | Default content (usually in default language) |
+| settings | JSON | Block-specific settings |
+| createdAt | Timestamp | Creation date |
+| updatedAt | Timestamp | Last update date |
+| displayState | Enum | Display state ('live', 'expired') |
+
+### ContentBlockTranslation
+
+Represents translations of a content block.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| id | UUID | Primary identifier |
+| contentBlockId | UUID (FK) | Reference to the content block |
+| languageCode | String | ISO language code |
+| content | String | Translated content |
+| settings | JSON | Translated block-specific settings |
+| createdAt | Timestamp | Creation date |
+| updatedAt | Timestamp | Last update date |
 
 ## Storage Solutions
 
