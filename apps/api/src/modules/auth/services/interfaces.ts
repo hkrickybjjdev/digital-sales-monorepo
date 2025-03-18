@@ -44,7 +44,10 @@ export interface IUserRepository {
   unlockAccount(userId: string): Promise<void>;
   incrementFailedAttempts(userId: string): Promise<number>;
   resetFailedAttempts(userId: string): Promise<void>;
-  updateUser(userId: string, data: { name?: string; email?: string; timezone?: string }): Promise<User | null>;
+  updateUser(
+    userId: string,
+    data: { name?: string; email?: string; timezone?: string }
+  ): Promise<User | null>;
   deleteUser(userId: string): Promise<boolean>;
   createSession(userId: string, expiresInSeconds?: number): Promise<Session>;
   getSessionById(id: string): Promise<Session | null>;

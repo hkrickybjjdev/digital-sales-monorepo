@@ -6,6 +6,14 @@ DELETE FROM "Session";
 DELETE FROM "PasswordReset";
 --DELETE FROM "Price";
 
+-- Clear Pages module tables (in order of dependencies)
+DELETE FROM "ContentBlockTranslation";
+DELETE FROM "ContentBlock";
+DELETE FROM "PageVersionTranslation";
+DELETE FROM "PageVersion";
+DELETE FROM "Page";
+DELETE FROM "ExpirationSetting";
+
 -- Then clear the primary tables
 DELETE FROM "Subscription";
 DELETE FROM "Team";

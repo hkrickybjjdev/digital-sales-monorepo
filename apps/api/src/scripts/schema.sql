@@ -65,17 +65,12 @@ CREATE TABLE IF NOT EXISTS "Plan" (
 CREATE TABLE IF NOT EXISTS "Price" (
   id TEXT PRIMARY KEY,
   planId TEXT REFERENCES "Plan"(id) ON DELETE CASCADE,
-  productId TEXT REFERENCES "Product"(id) ON DELETE CASCADE,
   currency TEXT NOT NULL,
   interval TEXT NOT NULL,
   createdAt INTEGER NOT NULL,
   updatedAt INTEGER NOT NULL,
   billingScheme TEXT NOT NULL,
-  type TEXT NOT NULL,
-  CHECK (
-    (planId IS NOT NULL AND productId IS NULL) OR
-    (planId IS NULL AND productId IS NOT NULL)
-  )
+  type TEXT NOT NULL
 );
 
 -- Subscription table
@@ -120,22 +115,7 @@ CREATE INDEX IF NOT EXISTS idx_password_reset_userId ON "PasswordReset"(userId);
 CREATE INDEX IF NOT EXISTS idx_password_reset_token ON "PasswordReset"(token);
 CREATE INDEX IF NOT EXISTS idx_password_reset_expiresAt ON "PasswordReset"(expiresAt);
 
-CREATE INDEX IF NOT EXISTS idx_page_userId ON "Page"(userId);
-CREATE INDEX IF NOT EXISTS idx_page_shortId ON "Page"(shortId);
-CREATE INDEX IF NOT EXISTS idx_page_expiresAt ON "Page"(expiresAt);
-
-CREATE INDEX IF NOT EXISTS idx_page_content_pageId ON "PageContent"(pageId);
-CREATE INDEX IF NOT EXISTS idx_page_content_productId ON "PageContent"(productId);
-
-CREATE INDEX IF NOT EXISTS idx_order_pageId ON "Order"(pageId);
-CREATE INDEX IF NOT EXISTS idx_order_customerId ON "Order"(customerId);
-CREATE INDEX IF NOT EXISTS idx_order_productId ON "Order"(productId);
-
-CREATE INDEX IF NOT EXISTS idx_registration_pageId ON "Registration"(pageId);
-CREATE INDEX IF NOT EXISTS idx_registration_email ON "Registration"(email);
-
-CREATE INDEX IF NOT EXISTS idx_product_userId ON "Product"(userId);
-CREATE INDEX IF NOT EXISTS idx_file_productId ON "File"(productId);
+-- The following indexes refer to tables that will be created later
 
 CREATE INDEX IF NOT EXISTS idx_subscription_teamId ON "Subscription"(teamId);
 CREATE INDEX IF NOT EXISTS idx_subscription_planId ON "Subscription"(planId);
@@ -150,7 +130,102 @@ CREATE INDEX IF NOT EXISTS idx_audit_user ON "AuditLog"(userId);
 CREATE INDEX IF NOT EXISTS idx_audit_resource ON "AuditLog"(resourceType, resourceId);
 CREATE INDEX IF NOT EXISTS idx_audit_timestamp ON "AuditLog"(timestamp);
 CREATE INDEX IF NOT EXISTS idx_audit_event_type ON "AuditLog"(eventType);
-CREATE INDEX IF NOT EXISTS idx_audit_outcome ON "AuditLog"(outcome); 
+CREATE INDEX IF NOT EXISTS idx_audit_outcome ON "AuditLog"(outcome);
+
+-- Create Page table
+CREATE TABLE IF NOT EXISTS "Page" (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    userId INTEGER NOT NULL, -- Foreign Key to the User table
+    slug TEXT UNIQUE,
+    status TEXT DEFAULT 'draft', -- 'draft', 'published', 'expired', 'archived'
+    createdAt INTEGER, -- Unix timestamp (seconds since epoch)
+    updatedAt INTEGER, -- Unix timestamp (seconds since epoch)
+    FOREIGN KEY (userId) REFERENCES "User"(id)
+);
+
+-- Create ExpirationSetting table
+CREATE TABLE IF NOT EXISTS "ExpirationSetting" (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    expirationType TEXT NOT NULL, -- e.g., 'datetime', 'duration'
+    expiresAtDatetime INTEGER, -- Unix timestamp (seconds since epoch)
+    durationSeconds INTEGER,
+    expirationAction TEXT NOT NULL, -- e.g., 'unpublish', 'redirect'
+    redirectUrl TEXT,
+    createdAt INTEGER, -- Unix timestamp (seconds since epoch)
+    updatedAt INTEGER -- Unix timestamp (seconds since epoch)
+);
+
+-- Create PageVersion table
+CREATE TABLE IF NOT EXISTS "PageVersion" (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    pageId INTEGER NOT NULL, -- Foreign Key to the Page table
+    versionNumber INTEGER NOT NULL,
+    isPublished BOOLEAN DEFAULT FALSE,
+    createdAt INTEGER, -- Unix timestamp (seconds since epoch)
+    publishedAt INTEGER, -- Unix timestamp (seconds since epoch)
+    publishFrom INTEGER, -- Unix timestamp (seconds since epoch)
+    expirationId INTEGER, -- Foreign Key to the ExpirationSetting table
+    FOREIGN KEY (pageId) REFERENCES "Page"(id) ON DELETE CASCADE,
+    FOREIGN KEY (expirationId) REFERENCES "ExpirationSetting"(id)
+);
+
+-- Create PageVersionTranslation table
+CREATE TABLE IF NOT EXISTS "PageVersionTranslation" (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    versionId INTEGER NOT NULL, -- Foreign Key to the PageVersion table
+    languageCode VARCHAR(10) NOT NULL,
+    socialShareTitle TEXT,
+    socialShareDescription TEXT,
+    metaDescription TEXT,
+    metaKeywords TEXT,
+    createdAt INTEGER, -- Unix timestamp (seconds since epoch)
+    updatedAt INTEGER, -- Unix timestamp (seconds since epoch)
+    FOREIGN KEY (versionId) REFERENCES "PageVersion"(id) ON DELETE CASCADE,
+    UNIQUE (versionId, languageCode)
+);
+
+-- Create ContentBlock table
+CREATE TABLE IF NOT EXISTS "ContentBlock" (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    versionId INTEGER NOT NULL, -- Foreign Key to the PageVersion table
+    blockType TEXT NOT NULL,
+    "order" INTEGER NOT NULL,
+    content TEXT,
+    settings TEXT, -- Store JSON data as TEXT
+    createdAt INTEGER, -- Unix timestamp (seconds since epoch)
+    updatedAt INTEGER, -- Unix timestamp (seconds since epoch)
+    displayState TEXT DEFAULT 'live', -- 'live' or 'expired'
+    FOREIGN KEY (versionId) REFERENCES "PageVersion"(id) ON DELETE CASCADE
+);
+
+-- Create ContentBlockTranslation table
+CREATE TABLE IF NOT EXISTS "ContentBlockTranslation" (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    contentBlockId INTEGER NOT NULL, -- Foreign Key to the ContentBlock table
+    languageCode VARCHAR(10) NOT NULL,
+    content TEXT,
+    settings TEXT, -- Store JSON data as TEXT
+    createdAt INTEGER, -- Unix timestamp (seconds since epoch)
+    updatedAt INTEGER, -- Unix timestamp (seconds since epoch)
+    FOREIGN KEY (contentBlockId) REFERENCES "ContentBlock"(id) ON DELETE CASCADE,
+    UNIQUE (contentBlockId, languageCode)
+);
+
+-- Create indexes for Pages module tables
+CREATE INDEX IF NOT EXISTS idx_page_slug ON "Page"(slug);
+CREATE INDEX IF NOT EXISTS idx_page_user ON "Page"(userId);
+CREATE INDEX IF NOT EXISTS idx_page_status ON "Page"(status);
+CREATE INDEX IF NOT EXISTS idx_pageversion_page ON "PageVersion"(pageId);
+CREATE INDEX IF NOT EXISTS idx_pageversion_published ON "PageVersion"(isPublished);
+CREATE INDEX IF NOT EXISTS idx_pageversion_expiration ON "PageVersion"(expirationId);
+CREATE INDEX IF NOT EXISTS idx_pageversion_version ON "PageVersion"(pageId, versionNumber);
+CREATE INDEX IF NOT EXISTS idx_pageversiontrans_version ON "PageVersionTranslation"(versionId);
+CREATE INDEX IF NOT EXISTS idx_pageversiontrans_language ON "PageVersionTranslation"(versionId, languageCode);
+CREATE INDEX IF NOT EXISTS idx_contentblock_version ON "ContentBlock"(versionId);
+CREATE INDEX IF NOT EXISTS idx_contentblock_order ON "ContentBlock"(versionId, "order");
+CREATE INDEX IF NOT EXISTS idx_contentblock_displaystate ON "ContentBlock"(displayState);
+CREATE INDEX IF NOT EXISTS idx_contentblocktrans_block ON "ContentBlockTranslation"(contentBlockId);
+CREATE INDEX IF NOT EXISTS idx_contentblocktrans_language ON "ContentBlockTranslation"(contentBlockId, languageCode);
 
 -- Insert default plans
 INSERT OR IGNORE INTO "Plan" (id, name, description, isVisible, features) VALUES 

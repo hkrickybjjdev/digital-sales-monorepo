@@ -146,7 +146,7 @@ export class UserRepository implements IUserRepository {
       `,
       params: [userId],
     });
-    
+
     await this.auditHelpers.logFailure(
       'user_failed_attempt_incremented',
       'User',

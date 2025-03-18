@@ -13,7 +13,7 @@ export const userSchema = z.object({
   failedAttempts: z.number().default(0),
   activationToken: z.string().nullable(),
   activationTokenExpiresAt: z.number().nullable(),
-  timezone: z.string().nullable()
+  timezone: z.string().nullable(),
 });
 
 // Login request schema

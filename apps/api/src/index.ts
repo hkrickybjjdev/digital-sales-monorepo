@@ -8,6 +8,7 @@ import { versionMiddleware } from './middleware/versionMiddleware';
 import { analyticsModule } from './modules/analytics';
 import { authModule } from './modules/auth';
 import { authModuleV2 } from './modules/auth/v2';
+import { pagesModule } from './modules/pages'; // Import the pages module
 import { paymentsModule } from './modules/payments';
 import { storageModule } from './modules/storage';
 import { subscriptionsModule } from './modules/subscriptions'; // Import the subscriptions module
@@ -74,6 +75,7 @@ v1.route('/payments', paymentsModule);
 v1.route('/storage', storageModule);
 v1.route('/analytics', analyticsModule);
 v1.route('/subscriptions', subscriptionsModule); // Mount the subscriptions module
+v1.route('/pages', pagesModule); // Mount the pages module
 
 // v2 API routes
 const v2 = new Hono<{ Bindings: Env }>();
@@ -88,6 +90,7 @@ v2.route('/payments', paymentsModule);
 v2.route('/storage', storageModule);
 v2.route('/analytics', analyticsModule);
 v2.route('/subscriptions', subscriptionsModule); // Mount the subscriptions module in v2 as well
+v2.route('/pages', pagesModule); // Mount the pages module in v2 as well
 
 // Mount v1 API to /api/v1
 app.route('/api/v1', v1);
