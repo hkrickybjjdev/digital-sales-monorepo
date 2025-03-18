@@ -1,8 +1,7 @@
-import { Env } from '../../../types';
 import { DatabaseFactory } from '../../../database/databaseFactory';
-import { DatabaseService } from '../../../database/databaseService';
+import { DatabaseService, RequestContext } from '../../../database/databaseService';
+import { Env } from '../../../types';
 import { generateUUID } from '../../../utils/utils';
-
 import { TeamMember, TeamMemberWithUser } from '../models/schemas';
 
 import { ITeamMemberRepository } from './interfaces';
@@ -15,27 +14,33 @@ export class TeamMemberRepository implements ITeamMemberRepository {
   }
 
   async addTeamMember(
-    teamMember: Omit<TeamMember, 'id' | 'createdAt' | 'updatedAt'>
+    teamMember: Omit<TeamMember, 'id' | 'createdAt' | 'updatedAt'>,
+    context?: RequestContext
   ): Promise<TeamMember> {
     const id = generateUUID();
     const now = Date.now();
 
-    await this.dbService.executeWithAudit({
-      sql: `
+    await this.dbService.executeWithAudit(
+      {
+        sql: `
         INSERT INTO "TeamMember" (id, teamId, userId, role, createdAt, updatedAt)
         VALUES (?, ?, ?, ?, ?, ?)
       `,
-      params: [id, teamMember.teamId, teamMember.userId, teamMember.role, now, now]
-    }, {
-      action: 'CREATE',
-      userId: teamMember.userId,
-      resourceType: 'TeamMember',
-      resourceId: id,
-      details: JSON.stringify({
-        teamId: teamMember.teamId, 
-        role: teamMember.role
-      })
-    });
+        params: [id, teamMember.teamId, teamMember.userId, teamMember.role, now, now],
+      },
+      {
+        eventType: 'team_member_created',
+        userId: teamMember.userId,
+        resourceType: 'TeamMember',
+        resourceId: id,
+        details: JSON.stringify({
+          teamId: teamMember.teamId,
+          role: teamMember.role,
+        }),
+        outcome: 'success',
+      },
+      context
+    );
 
     return {
       id,
@@ -50,20 +55,20 @@ export class TeamMemberRepository implements ITeamMemberRepository {
   async getTeamMembersByTeamId(teamId: string): Promise<TeamMember[]> {
     const results = await this.dbService.queryMany<TeamMember>({
       sql: `SELECT * FROM "TeamMember" WHERE teamId = ? ORDER BY role ASC`,
-      params: [teamId]
+      params: [teamId],
     });
 
     return results.map(member => ({
       ...member,
       createdAt: Number(member.createdAt),
-      updatedAt: Number(member.updatedAt)
+      updatedAt: Number(member.updatedAt),
     }));
   }
 
   async getTeamMemberById(id: string): Promise<TeamMember | null> {
     const result = await this.dbService.queryOne<TeamMember>({
       sql: `SELECT * FROM "TeamMember" WHERE id = ?`,
-      params: [id]
+      params: [id],
     });
 
     if (!result) return null;
@@ -71,14 +76,14 @@ export class TeamMemberRepository implements ITeamMemberRepository {
     return {
       ...result,
       createdAt: Number(result.createdAt),
-      updatedAt: Number(result.updatedAt)
+      updatedAt: Number(result.updatedAt),
     };
   }
 
   async getTeamMemberByTeamAndUserId(teamId: string, userId: string): Promise<TeamMember | null> {
     const result = await this.dbService.queryOne<TeamMember>({
       sql: `SELECT * FROM "TeamMember" WHERE teamId = ? AND userId = ?`,
-      params: [teamId, userId]
+      params: [teamId, userId],
     });
 
     if (!result) return null;
@@ -86,11 +91,15 @@ export class TeamMemberRepository implements ITeamMemberRepository {
     return {
       ...result,
       createdAt: Number(result.createdAt),
-      updatedAt: Number(result.updatedAt)
+      updatedAt: Number(result.updatedAt),
     };
   }
 
-  async updateTeamMember(id: string, teamMember: Partial<TeamMember>): Promise<TeamMember | null> {
+  async updateTeamMember(
+    id: string,
+    teamMember: Partial<TeamMember>,
+    context?: RequestContext
+  ): Promise<TeamMember | null> {
     const existingMember = await this.getTeamMemberById(id);
     if (!existingMember) {
       return null;
@@ -113,41 +122,51 @@ export class TeamMemberRepository implements ITeamMemberRepository {
     values.push(now);
     values.push(id);
 
-    await this.dbService.executeWithAudit({
-      sql: `
+    await this.dbService.executeWithAudit(
+      {
+        sql: `
         UPDATE "TeamMember" 
         SET ${updates.join(', ')} 
         WHERE id = ?
       `,
-      params: values
-    }, {
-      action: 'UPDATE',
-      userId: existingMember.userId,
-      resourceType: 'TeamMember',
-      resourceId: id,
-      details: JSON.stringify({ 
-        teamId: existingMember.teamId,
-        ...teamMember 
-      })
-    });
+        params: values,
+      },
+      {
+        eventType: 'team_member_updated',
+        userId: existingMember.userId,
+        resourceType: 'TeamMember',
+        resourceId: id,
+        details: JSON.stringify({
+          teamId: existingMember.teamId,
+          ...teamMember,
+        }),
+        outcome: 'success',
+      },
+      context
+    );
 
     return this.getTeamMemberById(id);
   }
 
-  async deleteTeamMember(id: string): Promise<boolean> {
+  async deleteTeamMember(id: string, context?: RequestContext): Promise<boolean> {
     const member = await this.getTeamMemberById(id);
     if (!member) return false;
 
-    await this.dbService.executeWithAudit({
-      sql: `DELETE FROM "TeamMember" WHERE id = ?`,
-      params: [id]
-    }, {
-      action: 'DELETE',
-      userId: member.userId,
-      resourceType: 'TeamMember',
-      resourceId: id,
-      details: JSON.stringify({ teamId: member.teamId })
-    });
+    await this.dbService.executeWithAudit(
+      {
+        sql: `DELETE FROM "TeamMember" WHERE id = ?`,
+        params: [id],
+      },
+      {
+        eventType: 'team_member_deleted',
+        userId: member.userId,
+        resourceType: 'TeamMember',
+        resourceId: id,
+        details: JSON.stringify({ teamId: member.teamId }),
+        outcome: 'success',
+      },
+      context
+    );
 
     return true;
   }
@@ -171,20 +190,20 @@ export class TeamMemberRepository implements ITeamMemberRepository {
             ELSE 5 
           END
       `,
-      params: [teamId]
+      params: [teamId],
     });
 
     return results.map(member => ({
       ...member,
       createdAt: Number(member.createdAt),
-      updatedAt: Number(member.updatedAt)
+      updatedAt: Number(member.updatedAt),
     }));
   }
 
   async countTeamMembers(teamId: string): Promise<number> {
     const result = await this.dbService.queryOne<{ count: number }>({
       sql: `SELECT COUNT(*) as count FROM "TeamMember" WHERE teamId = ?`,
-      params: [teamId]
+      params: [teamId],
     });
 
     return result ? Number(result.count) : 0;

@@ -1,7 +1,6 @@
-import { Env } from '../../../types';
 import { DatabaseFactory } from '../../../database/databaseFactory';
-import { DatabaseService } from '../../../database/databaseService';
-
+import { DatabaseService, RequestContext } from '../../../database/databaseService';
+import { Env } from '../../../types';
 import { Subscription } from '../models/schemas';
 import { ISubscriptionRepository } from '../services/interfaces';
 
@@ -12,37 +11,45 @@ export class SubscriptionRepository implements ISubscriptionRepository {
     this.dbService = DatabaseFactory.getInstance(env);
   }
 
-  async createSubscription(subscription: Subscription): Promise<Subscription> {
-    await this.dbService.executeWithAudit({
-      sql: `
+  async createSubscription(
+    subscription: Subscription,
+    context?: RequestContext
+  ): Promise<Subscription> {
+    await this.dbService.executeWithAudit(
+      {
+        sql: `
         INSERT INTO "Subscription" (
           id, teamId, planId, startDate, endDate, status, 
           paymentGateway, subscriptionId, createdAt, updatedAt, cancelAt
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `,
-      params: [
-        subscription.id,
-        subscription.teamId,
-        subscription.planId,
-        subscription.startDate,
-        subscription.endDate,
-        subscription.status,
-        subscription.paymentGateway,
-        subscription.subscriptionId,
-        subscription.createdAt,
-        subscription.updatedAt,
-        subscription.cancelAt
-      ]
-    }, {
-      action: 'CREATE',
-      resourceType: 'Subscription',
-      resourceId: subscription.id,
-      details: JSON.stringify({
-        teamId: subscription.teamId,
-        planId: subscription.planId,
-        status: subscription.status
-      })
-    });
+        params: [
+          subscription.id,
+          subscription.teamId,
+          subscription.planId,
+          subscription.startDate,
+          subscription.endDate,
+          subscription.status,
+          subscription.paymentGateway,
+          subscription.subscriptionId,
+          subscription.createdAt,
+          subscription.updatedAt,
+          subscription.cancelAt,
+        ],
+      },
+      {
+        eventType: 'subscription_created',
+        resourceType: 'Subscription',
+        resourceId: subscription.id,
+        details: JSON.stringify({
+          teamId: subscription.teamId,
+          planId: subscription.planId,
+          status: subscription.status,
+        }),
+        outcome: 'success',
+      },
+      context
+    );
 
     return subscription;
   }
@@ -50,7 +57,7 @@ export class SubscriptionRepository implements ISubscriptionRepository {
   async getSubscriptionById(id: string): Promise<Subscription | null> {
     const result = await this.dbService.queryOne<any>({
       sql: `SELECT * FROM "Subscription" WHERE id = ?`,
-      params: [id]
+      params: [id],
     });
 
     if (!result) return null;
@@ -65,13 +72,17 @@ export class SubscriptionRepository implements ISubscriptionRepository {
         WHERE teamId = ? 
         ORDER BY createdAt DESC
       `,
-      params: [teamId]
+      params: [teamId],
     });
 
     return results.map(this.parseSubscriptionResult);
   }
 
-  async updateSubscription(id: string, data: Partial<Subscription>): Promise<Subscription | null> {
+  async updateSubscription(
+    id: string,
+    data: Partial<Subscription>,
+    context?: RequestContext
+  ): Promise<Subscription | null> {
     const existingSubscription = await this.getSubscriptionById(id);
     if (!existingSubscription) {
       return null;
@@ -104,19 +115,24 @@ export class SubscriptionRepository implements ISubscriptionRepository {
     values.push(now);
     values.push(id);
 
-    await this.dbService.executeWithAudit({
-      sql: `
+    await this.dbService.executeWithAudit(
+      {
+        sql: `
         UPDATE "Subscription" 
         SET ${updateFields.join(', ')}
         WHERE id = ?
       `,
-      params: values
-    }, {
-      action: 'UPDATE',
-      resourceType: 'Subscription',
-      resourceId: id,
-      details: JSON.stringify(data)
-    });
+        params: values,
+      },
+      {
+        eventType: 'subscription_updated',
+        resourceType: 'Subscription',
+        resourceId: id,
+        details: JSON.stringify(data),
+        outcome: 'success',
+      },
+      context
+    );
 
     return this.getSubscriptionById(id);
   }
@@ -128,7 +144,7 @@ export class SubscriptionRepository implements ISubscriptionRepository {
         JOIN "TeamMember" tm ON s.teamId = tm.teamId
         WHERE s.id = ? AND tm.userId = ?
       `,
-      params: [subscriptionId, userId]
+      params: [subscriptionId, userId],
     });
 
     return result !== null;
@@ -140,7 +156,7 @@ export class SubscriptionRepository implements ISubscriptionRepository {
         SELECT 1 FROM "TeamMember"
         WHERE teamId = ? AND userId = ?
       `,
-      params: [teamId, userId]
+      params: [teamId, userId],
     });
 
     return result !== null;
@@ -153,7 +169,7 @@ export class SubscriptionRepository implements ISubscriptionRepository {
         WHERE subscriptionId = ? 
         ORDER BY createdAt DESC
       `,
-      params: [stripeSubscriptionId]
+      params: [stripeSubscriptionId],
     });
 
     return results.map(this.parseSubscriptionResult);

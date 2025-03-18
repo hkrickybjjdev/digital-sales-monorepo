@@ -1,4 +1,5 @@
 import { Env } from '../types';
+
 import { DatabaseService } from './databaseService';
 
 /**
@@ -25,4 +26,4 @@ export class DatabaseFactory {
   static resetInstance(): void {
     DatabaseFactory.instance = null;
   }
-} 
+}

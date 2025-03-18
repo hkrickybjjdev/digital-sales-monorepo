@@ -1,7 +1,6 @@
-import { Env } from '../../../types';
 import { DatabaseFactory } from '../../../database/databaseFactory';
 import { DatabaseService } from '../../../database/databaseService';
-
+import { Env } from '../../../types';
 import { Price } from '../models/schemas';
 import { IPriceRepository } from '../services/interfaces';
 
@@ -19,7 +18,7 @@ export class PriceRepository implements IPriceRepository {
   async getPriceById(id: string): Promise<Price | null> {
     const result = await this.dbService.queryOne<any>({
       sql: `SELECT * FROM "Price" WHERE id = ?`,
-      params: [id]
+      params: [id],
     });
 
     if (!result) return null;
@@ -40,7 +39,7 @@ export class PriceRepository implements IPriceRepository {
   async getPricesForPlan(planId: string): Promise<Price[]> {
     const results = await this.dbService.queryMany<any>({
       sql: `SELECT * FROM "Price" WHERE planId = ? ORDER BY interval`,
-      params: [planId]
+      params: [planId],
     });
 
     return results.map(row => ({
@@ -59,7 +58,7 @@ export class PriceRepository implements IPriceRepository {
   async getPricesByInterval(interval: string): Promise<Price[]> {
     const results = await this.dbService.queryMany<any>({
       sql: `SELECT * FROM "Price" WHERE interval = ?`,
-      params: [interval]
+      params: [interval],
     });
 
     return results.map(row => ({

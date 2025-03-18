@@ -70,19 +70,19 @@ export class DatabaseService {
    * Execute a query with audit logging
    */
   async executeWithAudit(
-    query: QueryParams, 
-    auditInfo: { 
-      eventType: string; 
-      userId?: string; 
-      resourceType?: string; 
-      resourceId?: string; 
-      details?: string; 
+    query: QueryParams,
+    auditInfo: {
+      eventType: string;
+      userId?: string;
+      resourceType?: string;
+      resourceId?: string;
+      details?: string;
       outcome: string;
-    }, 
+    },
     context?: RequestContext
   ): Promise<D1Result> {
     const result = await this.execute(query);
-    
+
     // Log the action to the audit log table
     await this.logAudit({
       ...auditInfo,
@@ -93,7 +93,7 @@ export class DatabaseService {
       createdAt: Date.now(),
       updatedAt: Date.now(),
     });
-    
+
     return result;
   }
 
@@ -124,21 +124,21 @@ export class DatabaseService {
    * Log an action to the audit log
    */
   private async logAudit(auditLog: AuditLog): Promise<void> {
-    const { 
-      userId, 
-      eventType, 
-      resourceType, 
-      resourceId, 
-      details, 
+    const {
+      userId,
+      eventType,
+      resourceType,
+      resourceId,
+      details,
       ipAddress,
       userAgent,
       sessionId,
-      timestamp, 
-      createdAt, 
-      updatedAt, 
-      outcome 
+      timestamp,
+      createdAt,
+      updatedAt,
+      outcome,
     } = auditLog;
-    
+
     await this.execute({
       sql: `
         INSERT INTO AuditLog (
@@ -149,10 +149,10 @@ export class DatabaseService {
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `,
       params: [
-        userId || null, 
-        eventType, 
-        resourceType || null, 
-        resourceId || null, 
+        userId || null,
+        eventType,
+        resourceType || null,
+        resourceId || null,
         details || null,
         ipAddress || null,
         userAgent || null,
@@ -160,8 +160,8 @@ export class DatabaseService {
         timestamp,
         createdAt,
         updatedAt,
-        outcome
-      ]
+        outcome,
+      ],
     });
   }
 
@@ -174,4 +174,4 @@ export class DatabaseService {
     }
     return stmt.bind(...params);
   }
-} 
+}

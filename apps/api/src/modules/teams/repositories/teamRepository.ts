@@ -1,8 +1,7 @@
-import { Env } from '../../../types';
 import { DatabaseFactory } from '../../../database/databaseFactory';
-import { DatabaseService } from '../../../database/databaseService';
+import { DatabaseService, RequestContext } from '../../../database/databaseService';
+import { Env } from '../../../types';
 import { generateUUID } from '../../../utils/utils';
-
 import { Team, TeamWithMemberCount } from '../models/schemas';
 
 import { ITeamRepository } from './interfaces';
@@ -14,22 +13,30 @@ export class TeamRepository implements ITeamRepository {
     this.dbService = DatabaseFactory.getInstance(env);
   }
 
-  async createTeam(team: Omit<Team, 'id' | 'createdAt' | 'updatedAt'>): Promise<Team> {
+  async createTeam(
+    team: Omit<Team, 'id' | 'createdAt' | 'updatedAt'>,
+    context?: RequestContext
+  ): Promise<Team> {
     const id = generateUUID();
     const now = Date.now();
 
-    await this.dbService.executeWithAudit({
-      sql: `
+    await this.dbService.executeWithAudit(
+      {
+        sql: `
         INSERT INTO "Team" (id, name, createdAt, updatedAt)
         VALUES (?, ?, ?, ?)
       `,
-      params: [id, team.name, now, now]
-    }, {
-      action: 'CREATE',
-      resourceType: 'Team',
-      resourceId: id,
-      details: JSON.stringify({ name: team.name })
-    });
+        params: [id, team.name, now, now],
+      },
+      {
+        eventType: 'team_created',
+        resourceType: 'Team',
+        resourceId: id,
+        details: JSON.stringify({ name: team.name }),
+        outcome: 'success',
+      },
+      context
+    );
 
     return {
       id,
@@ -42,7 +49,7 @@ export class TeamRepository implements ITeamRepository {
   async getTeamById(id: string): Promise<Team | null> {
     const result = await this.dbService.queryOne<Team>({
       sql: `SELECT * FROM "Team" WHERE id = ?`,
-      params: [id]
+      params: [id],
     });
 
     return result || null;
@@ -62,7 +69,7 @@ export class TeamRepository implements ITeamRepository {
         WHERE tm.userId = ?
         GROUP BY t.id
       `,
-      params: [userId]
+      params: [userId],
     });
 
     return results.map(team => ({
@@ -73,7 +80,11 @@ export class TeamRepository implements ITeamRepository {
     }));
   }
 
-  async updateTeam(id: string, team: Partial<Team>): Promise<Team | null> {
+  async updateTeam(
+    id: string,
+    team: Partial<Team>,
+    context?: RequestContext
+  ): Promise<Team | null> {
     const existingTeam = await this.getTeamById(id);
     if (!existingTeam) {
       return null;
@@ -96,32 +107,42 @@ export class TeamRepository implements ITeamRepository {
     values.push(now);
     values.push(id);
 
-    await this.dbService.executeWithAudit({
-      sql: `
+    await this.dbService.executeWithAudit(
+      {
+        sql: `
         UPDATE "Team" 
         SET ${updates.join(', ')}
         WHERE id = ?
       `,
-      params: values
-    }, {
-      action: 'UPDATE',
-      resourceType: 'Team',
-      resourceId: id,
-      details: JSON.stringify(team)
-    });
+        params: values,
+      },
+      {
+        eventType: 'team_updated',
+        resourceType: 'Team',
+        resourceId: id,
+        details: JSON.stringify(team),
+        outcome: 'success',
+      },
+      context
+    );
 
     return this.getTeamById(id);
   }
 
-  async deleteTeam(id: string): Promise<boolean> {
-    await this.dbService.executeWithAudit({
-      sql: `DELETE FROM "Team" WHERE id = ?`,
-      params: [id]
-    }, {
-      action: 'DELETE',
-      resourceType: 'Team',
-      resourceId: id
-    });
+  async deleteTeam(id: string, context?: RequestContext): Promise<boolean> {
+    await this.dbService.executeWithAudit(
+      {
+        sql: `DELETE FROM "Team" WHERE id = ?`,
+        params: [id],
+      },
+      {
+        eventType: 'team_deleted',
+        resourceType: 'Team',
+        resourceId: id,
+        outcome: 'success',
+      },
+      context
+    );
 
     return true;
   }
@@ -132,7 +153,7 @@ export class TeamRepository implements ITeamRepository {
         SELECT role FROM "TeamMember" 
         WHERE teamId = ? AND userId = ?
       `,
-      params: [teamId, userId]
+      params: [teamId, userId],
     });
 
     if (!result) return false;
@@ -148,7 +169,7 @@ export class TeamRepository implements ITeamRepository {
         JOIN "TeamMember" tm ON t.id = tm.teamId
         WHERE tm.userId = ?
       `,
-      params: [userId]
+      params: [userId],
     });
 
     return result ? Number(result.count) : 0;

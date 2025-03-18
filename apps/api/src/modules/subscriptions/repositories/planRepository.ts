@@ -1,7 +1,6 @@
-import { Env } from '../../../types';
 import { DatabaseFactory } from '../../../database/databaseFactory';
 import { DatabaseService } from '../../../database/databaseService';
-
+import { Env } from '../../../types';
 import { Plan, Price } from '../models/schemas';
 import { IPlanRepository } from '../services/interfaces';
 
@@ -19,7 +18,7 @@ export class PlanRepository implements IPlanRepository {
   async getPlanById(id: string): Promise<Plan | null> {
     const result = await this.dbService.queryOne<any>({
       sql: `SELECT * FROM "Plan" WHERE id = ?`,
-      params: [id]
+      params: [id],
     });
 
     if (!result) return null;
@@ -34,12 +33,12 @@ export class PlanRepository implements IPlanRepository {
   }
 
   async getAllPlans(visibleOnly = true): Promise<Plan[]> {
-    const sql = visibleOnly 
+    const sql = visibleOnly
       ? `SELECT * FROM "Plan" WHERE isVisible = 1 ORDER BY id`
       : `SELECT * FROM "Plan" ORDER BY id`;
 
     const results = await this.dbService.queryMany<any>({
-      sql
+      sql,
     });
 
     return results.map(row => ({
@@ -53,7 +52,7 @@ export class PlanRepository implements IPlanRepository {
 
   async getFreePlan(): Promise<Plan | null> {
     const result = await this.dbService.queryOne<any>({
-      sql: `SELECT * FROM "Plan" WHERE id = 'plan_free'`
+      sql: `SELECT * FROM "Plan" WHERE id = 'plan_free'`,
     });
 
     if (!result) return null;
@@ -70,7 +69,7 @@ export class PlanRepository implements IPlanRepository {
   async getPricesForPlan(planId: string): Promise<Price[]> {
     const results = await this.dbService.queryMany<any>({
       sql: `SELECT * FROM "Price" WHERE planId = ? ORDER BY interval`,
-      params: [planId]
+      params: [planId],
     });
 
     return results.map(row => this.parsePriceResult(row));
