@@ -16,9 +16,9 @@
     "test:coverage": "jest --coverage",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
-    "db:init": "npx wrangler d1 execute DB --local --file=./src/database/schema.sql",
-    "db:clear": "npx wrangler d1 execute DB --local --file=./src/database/clear_tables.sql",
-    "db:drop": "npx wrangler d1 execute DB --local --file=./src/database/drop_tables.sql"
+    "db:init": "npx wrangler d1 execute DB --local --file=./src/scripts/schema.sql",
+    "db:clear": "npx wrangler d1 execute DB --local --file=./src/scripts/clear_tables.sql",
+    "db:drop": "npx wrangler d1 execute DB --local --file=./src/scripts/drop_tables.sql"
   },
   "dependencies": {
     "@hono/zod-validator": "^0.1.11",
