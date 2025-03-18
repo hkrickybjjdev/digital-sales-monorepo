@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 
 import { Env } from '../../../types';
-import { formatResponse } from '../../../utils/api-response';
+import { formatResponse } from '../../../utils/apiResponse';
 
 import { loginHandler } from './controllers/loginController';
 import { logoutHandler } from './controllers/logoutController';

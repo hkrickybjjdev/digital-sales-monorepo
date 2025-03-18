@@ -2,7 +2,7 @@ import { Context, Next } from 'hono';
 import { verify } from 'hono/jwt';
 
 import { Env } from '../../../types';
-import { formatError } from '../../../utils/api-response';
+import { formatError } from '../../../utils/apiResponse';
 import { getAuthContainer } from '../di/container';
 
 /*

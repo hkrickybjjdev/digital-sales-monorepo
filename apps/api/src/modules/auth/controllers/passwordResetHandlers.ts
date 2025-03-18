@@ -1,7 +1,7 @@
 import { Context } from 'hono';
 
 import { Env } from '../../../types';
-import { formatError, formatResponse } from '../../../utils/api-response';
+import { formatError, formatResponse } from '../../../utils/apiResponse';
 import { getAuthContainer } from '../di/container';
 import { forgotPasswordSchema, resetPasswordSchema } from '../models/schemas';
 

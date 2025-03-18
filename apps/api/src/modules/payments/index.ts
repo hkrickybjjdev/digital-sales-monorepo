@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 
 import { Env } from '../../types';
-import { formatResponse, format500Error } from '../../utils/api-response';
+import { formatResponse, format500Error } from '../../utils/apiResponse';
 import { validateJWT } from '../auth/middleware/authMiddleware';
 
 // Create the payments module router

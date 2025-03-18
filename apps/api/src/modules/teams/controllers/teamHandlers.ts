@@ -1,7 +1,7 @@
 import { Context } from 'hono';
 
 import { Env } from '../../../types';
-import { formatResponse, formatError, format500Error } from '../../../utils/api-response';
+import { formatResponse, formatError, format500Error } from '../../../utils/apiResponse';
 import { getTeamsContainer } from '../di/container';
 import { createTeamSchema, updateTeamSchema } from '../models/schemas';
 

@@ -1,7 +1,7 @@
 import { Context } from 'hono';
 
 import { Env } from '../../../../types';
-import { formatResponse, formatError, format500Error } from '../../../../utils/api-response';
+import { formatResponse, formatError, format500Error } from '../../../../utils/apiResponse';
 
 /**
  * V2 Get current user handler with enhanced features:

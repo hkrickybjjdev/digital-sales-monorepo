@@ -1,7 +1,7 @@
 import { Context } from 'hono';
 
 import { Env } from '../../../types';
-import { formatResponse, formatError } from '../../../utils/api-response';
+import { formatResponse, formatError } from '../../../utils/apiResponse';
 import { getTeamsContainer } from '../di/container';
 import {
   UserCreatedWebhookSchema,

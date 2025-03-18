@@ -1,7 +1,7 @@
 import { Context, Next } from 'hono';
 
 import { Env } from '../types';
-import { formatError } from '../utils/api-response';
+import { formatError } from '../utils/apiResponse';
 import { API_VERSIONS, LATEST_VERSION } from '../utils/versioning';
 
 /**

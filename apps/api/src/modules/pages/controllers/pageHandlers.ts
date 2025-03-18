@@ -6,7 +6,7 @@ import {
   formatError,
   formatPaginatedResponse,
   format500Error,
-} from '../../../utils/api-response';
+} from '../../../utils/apiResponse';
 import { getPagesContainer } from '../di/container';
 import { CreatePageRequestSchema, UpdatePageRequestSchema, Page } from '../models/schemas';
 import { getRequestContext } from '../../../utils/requestContext';
