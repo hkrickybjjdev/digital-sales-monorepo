@@ -134,7 +134,7 @@ CREATE INDEX IF NOT EXISTS idx_audit_outcome ON "AuditLog"(outcome);
 
 -- Create Page table
 CREATE TABLE IF NOT EXISTS "Page" (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id TEXT PRIMARY KEY,
     teamId INTEGER NOT NULL, -- Foreign Key to the User table
     slug TEXT UNIQUE,
     status TEXT DEFAULT 'draft', -- 'draft', 'published', 'expired', 'archived'
@@ -145,7 +145,7 @@ CREATE TABLE IF NOT EXISTS "Page" (
 
 -- Create ExpirationSetting table
 CREATE TABLE IF NOT EXISTS "ExpirationSetting" (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id TEXT PRIMARY KEY,
     expirationType TEXT NOT NULL, -- e.g., 'datetime', 'duration'
     expiresAtDatetime INTEGER, -- Unix timestamp (seconds since epoch)
     durationSeconds INTEGER,
@@ -157,22 +157,22 @@ CREATE TABLE IF NOT EXISTS "ExpirationSetting" (
 
 -- Create PageVersion table
 CREATE TABLE IF NOT EXISTS "PageVersion" (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    pageId INTEGER NOT NULL, -- Foreign Key to the Page table
+    id TEXT PRIMARY KEY,
+    pageId TEXT NOT NULL, -- Foreign Key to the Page table
     versionNumber INTEGER NOT NULL,
     isPublished BOOLEAN DEFAULT FALSE,
     createdAt INTEGER, -- Unix timestamp (seconds since epoch)
     publishedAt INTEGER, -- Unix timestamp (seconds since epoch)
     publishFrom INTEGER, -- Unix timestamp (seconds since epoch)
-    expirationId INTEGER, -- Foreign Key to the ExpirationSetting table
+    expirationId TEXT, -- Foreign Key to the ExpirationSetting table
     FOREIGN KEY (pageId) REFERENCES "Page"(id) ON DELETE CASCADE,
     FOREIGN KEY (expirationId) REFERENCES "ExpirationSetting"(id)
 );
 
 -- Create PageVersionTranslation table
 CREATE TABLE IF NOT EXISTS "PageVersionTranslation" (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    versionId INTEGER NOT NULL, -- Foreign Key to the PageVersion table
+    id TEXT PRIMARY KEY,
+    versionId TEXT NOT NULL, -- Foreign Key to the PageVersion table
     languageCode VARCHAR(10) NOT NULL,
     socialShareTitle TEXT,
     socialShareDescription TEXT,
@@ -186,8 +186,8 @@ CREATE TABLE IF NOT EXISTS "PageVersionTranslation" (
 
 -- Create ContentBlock table
 CREATE TABLE IF NOT EXISTS "ContentBlock" (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    versionId INTEGER NOT NULL, -- Foreign Key to the PageVersion table
+    id TEXT PRIMARY KEY,
+    versionId TEXT NOT NULL, -- Foreign Key to the PageVersion table
     blockType TEXT NOT NULL,
     "order" INTEGER NOT NULL,
     content TEXT,
@@ -200,8 +200,8 @@ CREATE TABLE IF NOT EXISTS "ContentBlock" (
 
 -- Create ContentBlockTranslation table
 CREATE TABLE IF NOT EXISTS "ContentBlockTranslation" (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    contentBlockId INTEGER NOT NULL, -- Foreign Key to the ContentBlock table
+    id TEXT PRIMARY KEY,
+    contentBlockId TEXT NOT NULL, -- Foreign Key to the ContentBlock table
     languageCode VARCHAR(10) NOT NULL,
     content TEXT,
     settings TEXT, -- Store JSON data as TEXT

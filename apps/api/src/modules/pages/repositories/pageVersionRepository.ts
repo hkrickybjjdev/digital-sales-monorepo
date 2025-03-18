@@ -1,6 +1,7 @@
 import { DatabaseFactory } from '../../../database/databaseFactory';
 import { DatabaseService, RequestContext } from '../../../database/databaseService';
 import { Env } from '../../../types';
+import { generateUUID } from '../../../utils/utils';
 import { PageVersion } from '../models/schemas';
 
 import { IPageVersionRepository } from './interfaces';
@@ -17,11 +18,13 @@ export class PageVersionRepository implements IPageVersionRepository {
     context?: RequestContext
   ): Promise<PageVersion> {
     const now = Math.floor(Date.now() / 1000); // Unix timestamp in seconds
+    const id = generateUUID();
 
-    const result = await this.dbService.executeWithAudit(
+    await this.dbService.executeWithAudit(
       {
         sql: `
           INSERT INTO PageVersion (
+            id,
             pageId, 
             versionNumber, 
             isPublished, 
@@ -30,10 +33,10 @@ export class PageVersionRepository implements IPageVersionRepository {
             publishFrom, 
             expirationId
           )
-          VALUES (?, ?, ?, ?, ?, ?, ?)
-          RETURNING id
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         `,
         params: [
+          id,
           pageVersion.pageId,
           pageVersion.versionNumber,
           pageVersion.isPublished,
@@ -56,9 +59,6 @@ export class PageVersionRepository implements IPageVersionRepository {
       context
     );
 
-    // Safe type assertion as we know this query returns an object with an id
-    const id = (result as any).id;
-
     return {
       id,
       pageId: pageVersion.pageId,
@@ -71,7 +71,7 @@ export class PageVersionRepository implements IPageVersionRepository {
     };
   }
 
-  async getPageVersionById(id: number): Promise<PageVersion | null> {
+  async getPageVersionById(id: string): Promise<PageVersion | null> {
     const result = await this.dbService.queryOne<PageVersion>({
       sql: `SELECT * FROM PageVersion WHERE id = ?`,
       params: [id],
@@ -80,7 +80,7 @@ export class PageVersionRepository implements IPageVersionRepository {
     return result || null;
   }
 
-  async getLatestPageVersion(pageId: number): Promise<PageVersion | null> {
+  async getLatestPageVersion(pageId: string): Promise<PageVersion | null> {
     const result = await this.dbService.queryOne<PageVersion>({
       sql: `
         SELECT * FROM PageVersion 
@@ -94,7 +94,7 @@ export class PageVersionRepository implements IPageVersionRepository {
     return result || null;
   }
 
-  async getPublishedPageVersion(pageId: number): Promise<PageVersion | null> {
+  async getPublishedPageVersion(pageId: string): Promise<PageVersion | null> {
     const result = await this.dbService.queryOne<PageVersion>({
       sql: `
         SELECT * FROM PageVersion 
@@ -120,7 +120,7 @@ export class PageVersionRepository implements IPageVersionRepository {
   }
 
   async updatePageVersion(
-    id: number,
+    id: string,
     pageVersion: Partial<PageVersion>,
     context?: RequestContext
   ): Promise<PageVersion | null> {
@@ -170,7 +170,7 @@ export class PageVersionRepository implements IPageVersionRepository {
       {
         eventType: 'page_version_updated',
         resourceType: 'PageVersion',
-        resourceId: id.toString(),
+        resourceId: id,
         details: JSON.stringify(pageVersion),
         outcome: 'success',
       },
@@ -181,8 +181,8 @@ export class PageVersionRepository implements IPageVersionRepository {
   }
 
   async unpublishAllVersionsExcept(
-    pageId: number,
-    versionId: number,
+    pageId: string,
+    versionId: string,
     context?: RequestContext
   ): Promise<boolean> {
     await this.dbService.executeWithAudit(
@@ -206,7 +206,7 @@ export class PageVersionRepository implements IPageVersionRepository {
     return true;
   }
 
-  async deletePageVersionsByPageId(pageId: number, context?: RequestContext): Promise<boolean> {
+  async deletePageVersionsByPageId(pageId: string, context?: RequestContext): Promise<boolean> {
     await this.dbService.executeWithAudit(
       {
         sql: `DELETE FROM PageVersion WHERE pageId = ?`,

@@ -1,6 +1,7 @@
 import { DatabaseFactory } from '../../../database/databaseFactory';
 import { DatabaseService, RequestContext } from '../../../database/databaseService';
 import { Env } from '../../../types';
+import { generateUUID } from '../../../utils/utils';
 import { ContentBlock } from '../models/schemas';
 
 import { IContentBlockRepository } from './interfaces';
@@ -17,11 +18,13 @@ export class ContentBlockRepository implements IContentBlockRepository {
     context?: RequestContext
   ): Promise<ContentBlock> {
     const now = Math.floor(Date.now() / 1000); // Unix timestamp in seconds
+    const id = generateUUID();
 
-    const result = await this.dbService.executeWithAudit(
+    await this.dbService.executeWithAudit(
       {
         sql: `
           INSERT INTO ContentBlock (
+            id,
             versionId, 
             blockType, 
             order, 
@@ -31,10 +34,10 @@ export class ContentBlockRepository implements IContentBlockRepository {
             updatedAt,
             displayState
           )
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-          RETURNING id
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         `,
         params: [
+          id,
           contentBlock.versionId,
           contentBlock.blockType,
           contentBlock.order,
@@ -58,9 +61,6 @@ export class ContentBlockRepository implements IContentBlockRepository {
       context
     );
 
-    // Safe type assertion as we know this query returns an object with an id
-    const id = (result as any).id;
-
     return {
       id,
       versionId: contentBlock.versionId,
@@ -74,7 +74,7 @@ export class ContentBlockRepository implements IContentBlockRepository {
     };
   }
 
-  async getContentBlockById(id: number): Promise<ContentBlock | null> {
+  async getContentBlockById(id: string): Promise<ContentBlock | null> {
     const result = await this.dbService.queryOne<ContentBlock>({
       sql: `SELECT * FROM ContentBlock WHERE id = ?`,
       params: [id],
@@ -84,7 +84,7 @@ export class ContentBlockRepository implements IContentBlockRepository {
   }
 
   async getContentBlocksByVersionId(
-    versionId: number,
+    versionId: string,
     onlyLive: boolean = false
   ): Promise<ContentBlock[]> {
     let sql = `
@@ -109,7 +109,7 @@ export class ContentBlockRepository implements IContentBlockRepository {
   }
 
   async updateContentBlock(
-    id: number,
+    id: string,
     contentBlock: Partial<ContentBlock>,
     context?: RequestContext
   ): Promise<ContentBlock | null> {
@@ -162,7 +162,7 @@ export class ContentBlockRepository implements IContentBlockRepository {
       {
         eventType: 'content_block_updated',
         resourceType: 'ContentBlock',
-        resourceId: id.toString(),
+        resourceId: id,
         details: JSON.stringify(contentBlock),
         outcome: 'success',
       },
@@ -172,7 +172,7 @@ export class ContentBlockRepository implements IContentBlockRepository {
     return this.getContentBlockById(id);
   }
 
-  async deleteContentBlock(id: number, context?: RequestContext): Promise<boolean> {
+  async deleteContentBlock(id: string, context?: RequestContext): Promise<boolean> {
     await this.dbService.executeWithAudit(
       {
         sql: `DELETE FROM ContentBlock WHERE id = ?`,
@@ -181,7 +181,7 @@ export class ContentBlockRepository implements IContentBlockRepository {
       {
         eventType: 'content_block_deleted',
         resourceType: 'ContentBlock',
-        resourceId: id.toString(),
+        resourceId: id,
         outcome: 'success',
       },
       context
@@ -191,7 +191,7 @@ export class ContentBlockRepository implements IContentBlockRepository {
   }
 
   async deleteContentBlocksByVersionId(
-    versionId: number,
+    versionId: string,
     context?: RequestContext
   ): Promise<boolean> {
     await this.dbService.executeWithAudit(

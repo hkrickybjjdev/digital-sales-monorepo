@@ -1,6 +1,7 @@
 import { DatabaseFactory } from '../../../database/databaseFactory';
 import { DatabaseService, RequestContext } from '../../../database/databaseService';
 import { Env } from '../../../types';
+import { generateUUID } from '../../../utils/utils';
 import { ContentBlockTranslation } from '../models/schemas';
 
 import { IContentBlockTranslationRepository } from './interfaces';
@@ -17,11 +18,13 @@ export class ContentBlockTranslationRepository implements IContentBlockTranslati
     context?: RequestContext
   ): Promise<ContentBlockTranslation> {
     const now = Math.floor(Date.now() / 1000); // Unix timestamp in seconds
+    const id = generateUUID();
 
-    const result = await this.dbService.executeWithAudit(
+    await this.dbService.executeWithAudit(
       {
         sql: `
           INSERT INTO ContentBlockTranslation (
+            id,
             contentBlockId, 
             languageCode, 
             content, 
@@ -29,10 +32,10 @@ export class ContentBlockTranslationRepository implements IContentBlockTranslati
             createdAt, 
             updatedAt
           )
-          VALUES (?, ?, ?, ?, ?, ?)
-          RETURNING id
+          VALUES (?, ?, ?, ?, ?, ?, ?)
         `,
         params: [
+          id,
           translation.contentBlockId,
           translation.languageCode,
           translation.content,
@@ -53,9 +56,6 @@ export class ContentBlockTranslationRepository implements IContentBlockTranslati
       context
     );
 
-    // Safe type assertion as we know this query returns an object with an id
-    const id = (result as any).id;
-
     return {
       id,
       contentBlockId: translation.contentBlockId,
@@ -67,7 +67,7 @@ export class ContentBlockTranslationRepository implements IContentBlockTranslati
     };
   }
 
-  async getContentBlockTranslationById(id: number): Promise<ContentBlockTranslation | null> {
+  async getContentBlockTranslationById(id: string): Promise<ContentBlockTranslation | null> {
     const result = await this.dbService.queryOne<ContentBlockTranslation>({
       sql: `SELECT * FROM ContentBlockTranslation WHERE id = ?`,
       params: [id],
@@ -77,8 +77,8 @@ export class ContentBlockTranslationRepository implements IContentBlockTranslati
   }
 
   async getContentBlockTranslationsByContentBlockIds(
-    contentBlockIds: number[]
-  ): Promise<Record<number, Record<string, ContentBlockTranslation>>> {
+    contentBlockIds: string[]
+  ): Promise<Record<string, Record<string, ContentBlockTranslation>>> {
     if (contentBlockIds.length === 0) {
       return {};
     }
@@ -94,7 +94,7 @@ export class ContentBlockTranslationRepository implements IContentBlockTranslati
     });
 
     const translationsByBlockIdAndLanguage: Record<
-      number,
+      string,
       Record<string, ContentBlockTranslation>
     > = {};
 
@@ -111,7 +111,7 @@ export class ContentBlockTranslationRepository implements IContentBlockTranslati
   }
 
   async getContentBlockTranslation(
-    contentBlockId: number,
+    contentBlockId: string,
     languageCode: string
   ): Promise<ContentBlockTranslation | null> {
     const result = await this.dbService.queryOne<ContentBlockTranslation>({
@@ -126,7 +126,7 @@ export class ContentBlockTranslationRepository implements IContentBlockTranslati
   }
 
   async updateContentBlockTranslation(
-    id: number,
+    id: string,
     translation: Partial<ContentBlockTranslation>,
     context?: RequestContext
   ): Promise<ContentBlockTranslation | null> {
@@ -169,7 +169,7 @@ export class ContentBlockTranslationRepository implements IContentBlockTranslati
       {
         eventType: 'content_block_translation_updated',
         resourceType: 'ContentBlockTranslation',
-        resourceId: id.toString(),
+        resourceId: id,
         details: JSON.stringify(translation),
         outcome: 'success',
       },
@@ -180,7 +180,7 @@ export class ContentBlockTranslationRepository implements IContentBlockTranslati
   }
 
   async deleteContentBlockTranslationsByContentBlockId(
-    contentBlockId: number,
+    contentBlockId: string,
     context?: RequestContext
   ): Promise<boolean> {
     await this.dbService.executeWithAudit(

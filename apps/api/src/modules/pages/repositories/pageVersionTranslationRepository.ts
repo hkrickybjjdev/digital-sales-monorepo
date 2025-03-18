@@ -1,6 +1,7 @@
 import { DatabaseFactory } from '../../../database/databaseFactory';
 import { DatabaseService, RequestContext } from '../../../database/databaseService';
 import { Env } from '../../../types';
+import { generateUUID } from '../../../utils/utils';
 import { PageVersionTranslation } from '../models/schemas';
 
 import { IPageVersionTranslationRepository } from './interfaces';
@@ -17,11 +18,13 @@ export class PageVersionTranslationRepository implements IPageVersionTranslation
     context?: RequestContext
   ): Promise<PageVersionTranslation> {
     const now = Math.floor(Date.now() / 1000); // Unix timestamp in seconds
+    const id = generateUUID();
 
-    const result = await this.dbService.executeWithAudit(
+    await this.dbService.executeWithAudit(
       {
         sql: `
           INSERT INTO PageVersionTranslation (
+            id,
             versionId, 
             languageCode, 
             socialShareTitle, 
@@ -31,10 +34,10 @@ export class PageVersionTranslationRepository implements IPageVersionTranslation
             createdAt, 
             updatedAt
           )
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-          RETURNING id
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         `,
         params: [
+          id,
           translation.versionId,
           translation.languageCode,
           translation.socialShareTitle,
@@ -57,9 +60,6 @@ export class PageVersionTranslationRepository implements IPageVersionTranslation
       context
     );
 
-    // Safe type assertion as we know this query returns an object with an id
-    const id = (result as any).id;
-
     return {
       id,
       versionId: translation.versionId,
@@ -73,7 +73,7 @@ export class PageVersionTranslationRepository implements IPageVersionTranslation
     };
   }
 
-  async getPageVersionTranslationById(id: number): Promise<PageVersionTranslation | null> {
+  async getPageVersionTranslationById(id: string): Promise<PageVersionTranslation | null> {
     const result = await this.dbService.queryOne<PageVersionTranslation>({
       sql: `SELECT * FROM PageVersionTranslation WHERE id = ?`,
       params: [id],
@@ -83,7 +83,7 @@ export class PageVersionTranslationRepository implements IPageVersionTranslation
   }
 
   async getPageVersionTranslationsByVersionId(
-    versionId: number
+    versionId: string
   ): Promise<Record<string, PageVersionTranslation>> {
     const results = await this.dbService.queryMany<PageVersionTranslation>({
       sql: `SELECT * FROM PageVersionTranslation WHERE versionId = ?`,
@@ -100,7 +100,7 @@ export class PageVersionTranslationRepository implements IPageVersionTranslation
   }
 
   async getPageVersionTranslation(
-    versionId: number,
+    versionId: string,
     languageCode: string
   ): Promise<PageVersionTranslation | null> {
     const result = await this.dbService.queryOne<PageVersionTranslation>({
@@ -115,7 +115,7 @@ export class PageVersionTranslationRepository implements IPageVersionTranslation
   }
 
   async updatePageVersionTranslation(
-    id: number,
+    id: string,
     translation: Partial<PageVersionTranslation>,
     context?: RequestContext
   ): Promise<PageVersionTranslation | null> {
@@ -168,7 +168,7 @@ export class PageVersionTranslationRepository implements IPageVersionTranslation
       {
         eventType: 'page_version_translation_updated',
         resourceType: 'PageVersionTranslation',
-        resourceId: id.toString(),
+        resourceId: id,
         details: JSON.stringify(translation),
         outcome: 'success',
       },
@@ -179,7 +179,7 @@ export class PageVersionTranslationRepository implements IPageVersionTranslation
   }
 
   async deletePageVersionTranslationsByVersionId(
-    versionId: number,
+    versionId: string,
     context?: RequestContext
   ): Promise<boolean> {
     await this.dbService.executeWithAudit(

@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 // Page schema for validation
 export const pageSchema = z.object({
-  id: z.number(),
+  id: z.string(),
   teamId: z.number(),
   slug: z.string().nullable(),
   status: z.enum(['draft', 'published', 'expired', 'archived']).default('draft'),
@@ -12,20 +12,20 @@ export const pageSchema = z.object({
 
 // Page Version schema for validation
 export const pageVersionSchema = z.object({
-  id: z.number(),
-  pageId: z.number(),
+  id: z.string(),
+  pageId: z.string(),
   versionNumber: z.number(),
   isPublished: z.boolean().default(false),
   createdAt: z.number(),
   publishedAt: z.number().nullable(),
   publishFrom: z.number().nullable(),
-  expirationId: z.number().nullable(),
+  expirationId: z.string().nullable(),
 });
 
 // Page Version Translation schema for validation
 export const pageVersionTranslationSchema = z.object({
-  id: z.number(),
-  versionId: z.number(),
+  id: z.string(),
+  versionId: z.string(),
   languageCode: z.string().min(2).max(10),
   socialShareTitle: z.string().nullable(),
   socialShareDescription: z.string().nullable(),
@@ -37,8 +37,8 @@ export const pageVersionTranslationSchema = z.object({
 
 // Content Block schema for validation
 export const contentBlockSchema = z.object({
-  id: z.number(),
-  versionId: z.number(),
+  id: z.string(),
+  versionId: z.string(),
   blockType: z.string(),
   order: z.number(),
   content: z.string().nullable(),
@@ -50,8 +50,8 @@ export const contentBlockSchema = z.object({
 
 // Content Block Translation schema for validation
 export const contentBlockTranslationSchema = z.object({
-  id: z.number(),
-  contentBlockId: z.number(),
+  id: z.string(),
+  contentBlockId: z.string(),
   languageCode: z.string().min(2).max(10),
   content: z.string().nullable(),
   settings: z.string().nullable(), // JSON stored as string
@@ -61,7 +61,7 @@ export const contentBlockTranslationSchema = z.object({
 
 // Expiration Setting schema for validation
 export const expirationSettingSchema = z.object({
-  id: z.number(),
+  id: z.string(),
   expirationType: z.enum(['datetime', 'duration']),
   expiresAtDatetime: z.number().nullable(),
   durationSeconds: z.number().nullable(),
@@ -75,7 +75,7 @@ export const expirationSettingSchema = z.object({
 export const createPageSchema = z.object({
   teamId: z.string(),
   slug: z.string().optional(),
-  expirationId: z.number().optional(),
+  expirationId: z.string().optional(),
   publishFrom: z.number().optional(),
   initialContentStructure: z.array(
     z.object({
@@ -104,19 +104,19 @@ export const createPageSchema = z.object({
 
 // Update page draft request schema
 export const savePageDraftSchema = z.object({
-  pageId: z.number(),
-  versionId: z.number().optional(),
+  pageId: z.string(),
+  versionId: z.string().optional(),
   titleTranslations: z.record(z.string(), z.string()).optional(),
   settings: z.string().optional(), // JSON stored as string
   metaDescriptionTranslations: z.record(z.string(), z.string()).optional(),
   metaKeywordsTranslations: z.record(z.string(), z.string()).optional(),
   socialShareTitleTranslations: z.record(z.string(), z.string()).optional(),
   socialShareDescriptionTranslations: z.record(z.string(), z.string()).optional(),
-  expirationId: z.number().optional(),
+  expirationId: z.string().optional(),
   publishFrom: z.number().optional(),
   contentBlocksData: z.array(
     z.object({
-      id: z.number().optional(), // Will be undefined for new blocks
+      id: z.string().optional(), // Will be undefined for new blocks
       blockType: z.string(),
       order: z.number(),
       content: z.string().optional(),
@@ -126,7 +126,7 @@ export const savePageDraftSchema = z.object({
         .record(
           z.string(),
           z.object({
-            id: z.number().optional(), // Will be undefined for new translations
+            id: z.string().optional(), // Will be undefined for new translations
             content: z.string().optional(),
             settings: z.string().optional(),
           })
@@ -138,8 +138,8 @@ export const savePageDraftSchema = z.object({
 
 // Publish page request schema
 export const publishPageSchema = z.object({
-  pageId: z.number(),
-  versionId: z.number(),
+  pageId: z.string(),
+  versionId: z.string(),
 });
 
 // Types derived from schemas

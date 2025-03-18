@@ -1,6 +1,7 @@
 import { DatabaseFactory } from '../../../database/databaseFactory';
 import { DatabaseService, RequestContext } from '../../../database/databaseService';
 import { Env } from '../../../types';
+import { generateUUID } from '../../../utils/utils';
 import { Page } from '../models/schemas';
 
 import { IPageRepository } from './interfaces';
@@ -17,31 +18,28 @@ export class PageRepository implements IPageRepository {
     context?: RequestContext
   ): Promise<Page> {
     const now = Math.floor(Date.now() / 1000); // Unix timestamp in seconds
+    const id = generateUUID();
 
-    const result = await this.dbService.executeWithAudit(
+    await this.dbService.executeWithAudit(
       {
         sql: `
-          INSERT INTO Page (userId, slug, status, createdAt, updatedAt)
-          VALUES (?, ?, ?, ?, ?)
-          RETURNING id
+          INSERT INTO Page (id, teamId, slug, status, createdAt, updatedAt)
+          VALUES (?, ?, ?, ?, ?, ?)
         `,
-        params: [page.userId, page.slug, page.status, now, now],
+        params: [id, page.teamId, page.slug, page.status, now, now],
       },
       {
         eventType: 'page_created',
         resourceType: 'Page',
-        details: JSON.stringify({ userId: page.userId, slug: page.slug }),
+        details: JSON.stringify({ teamId: page.teamId, slug: page.slug }),
         outcome: 'success',
       },
       context
     );
 
-    // Safe type assertion as we know this query returns an object with an id
-    const id = (result as any).id;
-
     return {
       id,
-      userId: page.userId,
+      teamId: page.teamId,
       slug: page.slug,
       status: page.status || 'draft',
       createdAt: now,
@@ -49,7 +47,7 @@ export class PageRepository implements IPageRepository {
     };
   }
 
-  async getPageById(id: number): Promise<Page | null> {
+  async getPageById(id: string): Promise<Page | null> {
     const result = await this.dbService.queryOne<Page>({
       sql: `SELECT * FROM Page WHERE id = ?`,
       params: [id],
@@ -68,7 +66,7 @@ export class PageRepository implements IPageRepository {
   }
 
   async updatePage(
-    id: number,
+    id: string,
     page: Partial<Page>,
     context?: RequestContext
   ): Promise<Page | null> {
@@ -111,7 +109,7 @@ export class PageRepository implements IPageRepository {
       {
         eventType: 'page_updated',
         resourceType: 'Page',
-        resourceId: id.toString(), // Convert to string for the audit log
+        resourceId: id,
         details: JSON.stringify(page),
         outcome: 'success',
       },
@@ -121,7 +119,7 @@ export class PageRepository implements IPageRepository {
     return this.getPageById(id);
   }
 
-  async deletePage(id: number, context?: RequestContext): Promise<boolean> {
+  async deletePage(id: string, context?: RequestContext): Promise<boolean> {
     await this.dbService.executeWithAudit(
       {
         sql: `DELETE FROM Page WHERE id = ?`,
@@ -130,7 +128,7 @@ export class PageRepository implements IPageRepository {
       {
         eventType: 'page_deleted',
         resourceType: 'Page',
-        resourceId: id.toString(), // Convert to string for the audit log
+        resourceId: id,
         outcome: 'success',
       },
       context

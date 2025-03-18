@@ -1,6 +1,7 @@
 import { DatabaseFactory } from '../../../database/databaseFactory';
 import { DatabaseService, RequestContext } from '../../../database/databaseService';
 import { Env } from '../../../types';
+import { generateUUID } from '../../../utils/utils';
 import { ExpirationSetting } from '../models/schemas';
 
 import { IExpirationSettingRepository } from './interfaces';
@@ -17,11 +18,13 @@ export class ExpirationSettingRepository implements IExpirationSettingRepository
     context?: RequestContext
   ): Promise<ExpirationSetting> {
     const now = Math.floor(Date.now() / 1000); // Unix timestamp in seconds
+    const id = generateUUID();
 
-    const result = await this.dbService.executeWithAudit(
+    await this.dbService.executeWithAudit(
       {
         sql: `
           INSERT INTO ExpirationSetting (
+            id,
             expirationType, 
             expiresAtDatetime, 
             durationSeconds, 
@@ -30,10 +33,10 @@ export class ExpirationSettingRepository implements IExpirationSettingRepository
             createdAt, 
             updatedAt
           )
-          VALUES (?, ?, ?, ?, ?, ?, ?)
-          RETURNING id
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         `,
         params: [
+          id,
           setting.expirationType,
           setting.expiresAtDatetime,
           setting.durationSeconds,
@@ -55,9 +58,6 @@ export class ExpirationSettingRepository implements IExpirationSettingRepository
       context
     );
 
-    // Safe type assertion as we know this query returns an object with an id
-    const id = (result as any).id;
-
     return {
       id,
       expirationType: setting.expirationType,
@@ -70,7 +70,7 @@ export class ExpirationSettingRepository implements IExpirationSettingRepository
     };
   }
 
-  async getExpirationSettingById(id: number): Promise<ExpirationSetting | null> {
+  async getExpirationSettingById(id: string): Promise<ExpirationSetting | null> {
     const result = await this.dbService.queryOne<ExpirationSetting>({
       sql: `SELECT * FROM ExpirationSetting WHERE id = ?`,
       params: [id],
@@ -80,7 +80,7 @@ export class ExpirationSettingRepository implements IExpirationSettingRepository
   }
 
   async updateExpirationSetting(
-    id: number,
+    id: string,
     setting: Partial<ExpirationSetting>,
     context?: RequestContext
   ): Promise<ExpirationSetting | null> {
@@ -138,7 +138,7 @@ export class ExpirationSettingRepository implements IExpirationSettingRepository
       {
         eventType: 'expiration_setting_updated',
         resourceType: 'ExpirationSetting',
-        resourceId: id.toString(),
+        resourceId: id,
         details: JSON.stringify(setting),
         outcome: 'success',
       },
@@ -148,7 +148,7 @@ export class ExpirationSettingRepository implements IExpirationSettingRepository
     return this.getExpirationSettingById(id);
   }
 
-  async deleteExpirationSetting(id: number, context?: RequestContext): Promise<boolean> {
+  async deleteExpirationSetting(id: string, context?: RequestContext): Promise<boolean> {
     await this.dbService.executeWithAudit(
       {
         sql: `DELETE FROM ExpirationSetting WHERE id = ?`,
@@ -157,7 +157,7 @@ export class ExpirationSettingRepository implements IExpirationSettingRepository
       {
         eventType: 'expiration_setting_deleted',
         resourceType: 'ExpirationSetting',
-        resourceId: id.toString(),
+        resourceId: id,
         outcome: 'success',
       },
       context

@@ -13,10 +13,10 @@ export interface IPageRepository {
     page: Omit<Page, 'id' | 'createdAt' | 'updatedAt'>,
     context?: RequestContext
   ): Promise<Page>;
-  getPageById(id: number): Promise<Page | null>;
+  getPageById(id: string): Promise<Page | null>;
   getPageBySlug(slug: string): Promise<Page | null>;
-  updatePage(id: number, page: Partial<Page>, context?: RequestContext): Promise<Page | null>;
-  deletePage(id: number, context?: RequestContext): Promise<boolean>;
+  updatePage(id: string, page: Partial<Page>, context?: RequestContext): Promise<Page | null>;
+  deletePage(id: string, context?: RequestContext): Promise<boolean>;
 }
 
 export interface IPageVersionRepository {
@@ -24,21 +24,21 @@ export interface IPageVersionRepository {
     pageVersion: Omit<PageVersion, 'id' | 'createdAt'>,
     context?: RequestContext
   ): Promise<PageVersion>;
-  getPageVersionById(id: number): Promise<PageVersion | null>;
-  getLatestPageVersion(pageId: number): Promise<PageVersion | null>;
-  getPublishedPageVersion(pageId: number): Promise<PageVersion | null>;
+  getPageVersionById(id: string): Promise<PageVersion | null>;
+  getLatestPageVersion(pageId: string): Promise<PageVersion | null>;
+  getPublishedPageVersion(pageId: string): Promise<PageVersion | null>;
   getPublishedVersionsWithExpirations(): Promise<PageVersion[]>;
   updatePageVersion(
-    id: number,
+    id: string,
     pageVersion: Partial<PageVersion>,
     context?: RequestContext
   ): Promise<PageVersion | null>;
   unpublishAllVersionsExcept(
-    pageId: number,
-    versionId: number,
+    pageId: string,
+    versionId: string,
     context?: RequestContext
   ): Promise<boolean>;
-  deletePageVersionsByPageId(pageId: number, context?: RequestContext): Promise<boolean>;
+  deletePageVersionsByPageId(pageId: string, context?: RequestContext): Promise<boolean>;
 }
 
 export interface IPageVersionTranslationRepository {
@@ -46,21 +46,21 @@ export interface IPageVersionTranslationRepository {
     translation: Omit<PageVersionTranslation, 'id' | 'createdAt' | 'updatedAt'>,
     context?: RequestContext
   ): Promise<PageVersionTranslation>;
-  getPageVersionTranslationById(id: number): Promise<PageVersionTranslation | null>;
+  getPageVersionTranslationById(id: string): Promise<PageVersionTranslation | null>;
   getPageVersionTranslationsByVersionId(
-    versionId: number
+    versionId: string
   ): Promise<Record<string, PageVersionTranslation>>;
   getPageVersionTranslation(
-    versionId: number,
+    versionId: string,
     languageCode: string
   ): Promise<PageVersionTranslation | null>;
   updatePageVersionTranslation(
-    id: number,
+    id: string,
     translation: Partial<PageVersionTranslation>,
     context?: RequestContext
   ): Promise<PageVersionTranslation | null>;
   deletePageVersionTranslationsByVersionId(
-    versionId: number,
+    versionId: string,
     context?: RequestContext
   ): Promise<boolean>;
 }
@@ -70,15 +70,15 @@ export interface IContentBlockRepository {
     contentBlock: Omit<ContentBlock, 'id' | 'createdAt' | 'updatedAt'>,
     context?: RequestContext
   ): Promise<ContentBlock>;
-  getContentBlockById(id: number): Promise<ContentBlock | null>;
-  getContentBlocksByVersionId(versionId: number, onlyLive?: boolean): Promise<ContentBlock[]>;
+  getContentBlockById(id: string): Promise<ContentBlock | null>;
+  getContentBlocksByVersionId(versionId: string, onlyLive?: boolean): Promise<ContentBlock[]>;
   updateContentBlock(
-    id: number,
+    id: string,
     contentBlock: Partial<ContentBlock>,
     context?: RequestContext
   ): Promise<ContentBlock | null>;
-  deleteContentBlock(id: number, context?: RequestContext): Promise<boolean>;
-  deleteContentBlocksByVersionId(versionId: number, context?: RequestContext): Promise<boolean>;
+  deleteContentBlock(id: string, context?: RequestContext): Promise<boolean>;
+  deleteContentBlocksByVersionId(versionId: string, context?: RequestContext): Promise<boolean>;
 }
 
 export interface IContentBlockTranslationRepository {
@@ -86,21 +86,21 @@ export interface IContentBlockTranslationRepository {
     translation: Omit<ContentBlockTranslation, 'id' | 'createdAt' | 'updatedAt'>,
     context?: RequestContext
   ): Promise<ContentBlockTranslation>;
-  getContentBlockTranslationById(id: number): Promise<ContentBlockTranslation | null>;
+  getContentBlockTranslationById(id: string): Promise<ContentBlockTranslation | null>;
   getContentBlockTranslationsByContentBlockIds(
-    contentBlockIds: number[]
-  ): Promise<Record<number, Record<string, ContentBlockTranslation>>>;
+    contentBlockIds: string[]
+  ): Promise<Record<string, Record<string, ContentBlockTranslation>>>;
   getContentBlockTranslation(
-    contentBlockId: number,
+    contentBlockId: string,
     languageCode: string
   ): Promise<ContentBlockTranslation | null>;
   updateContentBlockTranslation(
-    id: number,
+    id: string,
     translation: Partial<ContentBlockTranslation>,
     context?: RequestContext
   ): Promise<ContentBlockTranslation | null>;
   deleteContentBlockTranslationsByContentBlockId(
-    contentBlockId: number,
+    contentBlockId: string,
     context?: RequestContext
   ): Promise<boolean>;
 }
@@ -110,11 +110,11 @@ export interface IExpirationSettingRepository {
     setting: Omit<ExpirationSetting, 'id' | 'createdAt' | 'updatedAt'>,
     context?: RequestContext
   ): Promise<ExpirationSetting>;
-  getExpirationSettingById(id: number): Promise<ExpirationSetting | null>;
+  getExpirationSettingById(id: string): Promise<ExpirationSetting | null>;
   updateExpirationSetting(
-    id: number,
+    id: string,
     setting: Partial<ExpirationSetting>,
     context?: RequestContext
   ): Promise<ExpirationSetting | null>;
-  deleteExpirationSetting(id: number, context?: RequestContext): Promise<boolean>;
+  deleteExpirationSetting(id: string, context?: RequestContext): Promise<boolean>;
 }
