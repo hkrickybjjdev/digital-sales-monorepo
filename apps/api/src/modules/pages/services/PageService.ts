@@ -1,8 +1,10 @@
-import { D1Database, KVNamespace } from '@cloudflare/workers-types';
+import { KVNamespace } from '@cloudflare/workers-types';
 
 import { Page, CreatePageRequest, UpdatePageRequest, PageType } from '../models/schemas';
 import { PageRepository } from '../repositories/pageRepository';
 import { IPageService, IPageRepository, IPageCacheService } from '../services/interfaces';
+import { RequestContext } from '../../../database/databaseService';
+import { Env } from '../../../types';
 
 import { PageCacheService } from './cache';
 
@@ -11,14 +13,14 @@ export class PageService implements IPageService {
   private pageCacheService: IPageCacheService;
   private cacheRefreshPromises: Map<string, Promise<Page | null>> = new Map();
 
-  constructor(db: D1Database, cacheStore: KVNamespace) {
-    this.pageRepository = new PageRepository(db);
+  constructor(env: Env, cacheStore: KVNamespace) {
+    this.pageRepository = new PageRepository(env);
     this.pageCacheService = new PageCacheService(cacheStore);
   }
 
-  async createPage(userId: string, request: CreatePageRequest): Promise<Page> {
+  async createPage(userId: string, request: CreatePageRequest, context?: RequestContext): Promise<Page> {
     console.log(`Creating page for user ${userId}`);
-    const page = await this.pageRepository.createPage(userId, request);
+    const page = await this.pageRepository.createPage(userId, request, context);
 
     // Cache the page if it's active
     //await this.pageCacheService.cachePage(page);
@@ -99,7 +101,7 @@ export class PageService implements IPageService {
     return page;
   }
 
-  async updatePage(id: string, userId: string, request: UpdatePageRequest): Promise<Page | null> {
+  async updatePage(id: string, userId: string, request: UpdatePageRequest, context?: RequestContext): Promise<Page | null> {
     console.log(`Updating page with ID ${id} for user ${userId}`);
     // Get page first to find its shortId (for cache invalidation)
     const existingPage = await this.pageRepository.getPageById(id);
@@ -108,7 +110,7 @@ export class PageService implements IPageService {
       return null;
     }
 
-    const updatedPage = await this.pageRepository.updatePage(id, userId, request);
+    const updatedPage = await this.pageRepository.updatePage(id, userId, request, context);
 
     // Invalidate cache if updated successfully
     if (updatedPage && updatedPage.shortId) {
@@ -127,7 +129,7 @@ export class PageService implements IPageService {
     return updatedPage;
   }
 
-  async deletePage(id: string, userId: string): Promise<boolean> {
+  async deletePage(id: string, userId: string, context?: RequestContext): Promise<boolean> {
     console.log(`Deleting page with ID ${id} for user ${userId}`);
     // Get page first to find its shortId (for cache invalidation)
     const existingPage = await this.pageRepository.getPageById(id);
@@ -136,7 +138,7 @@ export class PageService implements IPageService {
       return false;
     }
 
-    const deleted = await this.pageRepository.deletePage(id, userId);
+    const deleted = await this.pageRepository.deletePage(id, userId, context);
 
     // Invalidate cache if deleted successfully
     if (deleted && existingPage.shortId) {
@@ -147,6 +149,31 @@ export class PageService implements IPageService {
     }
 
     return deleted;
+  }
+
+  async togglePageActive(id: string, userId: string, context?: RequestContext): Promise<Page | null> {
+    console.log(`Toggling active status for page with ID ${id} for user ${userId}`);
+    // Get page first to find its shortId (for cache updates)
+    const existingPage = await this.pageRepository.getPageById(id);
+    if (!existingPage || existingPage.userId !== userId) {
+      console.log(`Page with ID ${id} not found or does not belong to user ${userId}`);
+      return null;
+    }
+
+    const updatedPage = await this.pageRepository.togglePageActive(id, userId, context);
+
+    // Update cache based on new active status
+    if (updatedPage && updatedPage.shortId) {
+      if (updatedPage.isActive) {
+        console.log(`Page activated, caching with shortId ${updatedPage.shortId}`);
+        await this.pageCacheService.cachePage(updatedPage);
+      } else {
+        console.log(`Page deactivated, invalidating cache for shortId ${updatedPage.shortId}`);
+        await this.pageCacheService.invalidatePageCache(updatedPage.shortId);
+      }
+    }
+
+    return updatedPage;
   }
 
   async listUserPages(

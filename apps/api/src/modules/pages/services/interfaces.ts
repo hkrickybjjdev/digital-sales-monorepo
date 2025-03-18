@@ -9,16 +9,18 @@ import {
   CreateRegistrationRequest,
   PageStats,
 } from '../models/schemas';
+import { RequestContext } from '../../../database/databaseService';
 
 /**
  * Interface for PageService
  */
 export interface IPageService {
-  createPage(userId: string, request: CreatePageRequest): Promise<Page>;
+  createPage(userId: string, request: CreatePageRequest, context?: RequestContext): Promise<Page>;
   getPageById(id: string): Promise<Page | null>;
   getPageByShortId(shortId: string): Promise<Page | null>;
-  updatePage(id: string, userId: string, request: UpdatePageRequest): Promise<Page | null>;
-  deletePage(id: string, userId: string): Promise<boolean>;
+  updatePage(id: string, userId: string, request: UpdatePageRequest, context?: RequestContext): Promise<Page | null>;
+  deletePage(id: string, userId: string, context?: RequestContext): Promise<boolean>;
+  togglePageActive(id: string, userId: string, context?: RequestContext): Promise<Page | null>;
   listUserPages(
     userId: string,
     limit?: number,
@@ -88,13 +90,14 @@ export interface IPageCacheService {
  * Interface for PageRepository
  */
 export interface IPageRepository {
-  createPage(userId: string, request: CreatePageRequest): Promise<Page>;
+  createPage(userId: string, request: CreatePageRequest, context?: RequestContext): Promise<Page>;
   getPageById(id: string): Promise<Page | null>;
   getPageByShortId(shortId: string): Promise<Page | null>;
-  updatePage(id: string, userId: string, request: UpdatePageRequest): Promise<Page | null>;
-  deletePage(id: string, userId: string): Promise<boolean>;
+  updatePage(id: string, userId: string, request: UpdatePageRequest, context?: RequestContext): Promise<Page | null>;
+  deletePage(id: string, userId: string, context?: RequestContext): Promise<boolean>;
   listUserPages(userId: string, limit?: number, offset?: number, type?: PageType): Promise<Page[]>;
   getUserPagesCount(userId: string, type?: PageType): Promise<number>;
+  togglePageActive(id: string, userId: string, context?: RequestContext): Promise<Page | null>;
 }
 
 /**

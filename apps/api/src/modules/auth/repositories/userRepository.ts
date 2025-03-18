@@ -1,6 +1,6 @@
 import { Env } from '../../../types';
 import { DatabaseFactory } from '../../../database/databaseFactory';
-import { DatabaseService } from '../../../database/databaseService';
+import { DatabaseService, RequestContext } from '../../../database/databaseService';
 import { generateUUID } from '../../../utils/utils';
 import { User, Session } from '../models/schemas';
 import { IUserRepository } from '../services/interfaces';
@@ -33,7 +33,7 @@ export class UserRepository implements IUserRepository {
     });
   }
 
-  async createUser(user: Omit<User, 'id' | 'createdAt' | 'updatedAt'>): Promise<User> {
+  async createUser(user: Omit<User, 'id' | 'createdAt' | 'updatedAt'>, context?: RequestContext): Promise<User> {
     const now = Date.now();
     const id = generateUUID();
 
@@ -56,11 +56,13 @@ export class UserRepository implements IUserRepository {
         user.activationTokenExpiresAt || null
       ]
     }, {
-      action: 'CREATE',
+      eventType: 'user_created',
+      userId: context?.userId,
       resourceType: 'User',
       resourceId: id,
-      details: JSON.stringify({ email: user.email.toLowerCase(), name: user.name })
-    });
+      details: JSON.stringify({ email: user.email.toLowerCase(), name: user.name }),
+      outcome: 'success'
+    }, context);
 
     return {
       id,
@@ -77,7 +79,7 @@ export class UserRepository implements IUserRepository {
     };
   }
 
-  async lockAccount(userId: string): Promise<void> {
+  async lockAccount(userId: string, context?: RequestContext): Promise<void> {
     const now = Date.now();
     
     await this.dbService.executeWithAudit({
@@ -88,14 +90,15 @@ export class UserRepository implements IUserRepository {
       `,
       params: [now, userId]
     }, {
-      action: 'LOCK',
+      eventType: 'user_account_locked',
       userId,
       resourceType: 'User',
-      resourceId: userId
-    });
+      resourceId: userId,
+      outcome: 'success'
+    }, context);
   }
 
-  async unlockAccount(userId: string): Promise<void> {
+  async unlockAccount(userId: string, context?: RequestContext): Promise<void> {
     await this.dbService.executeWithAudit({
       sql: `
         UPDATE User 
@@ -104,14 +107,15 @@ export class UserRepository implements IUserRepository {
       `,
       params: [userId]
     }, {
-      action: 'UNLOCK',
+      eventType: 'user_account_unlocked',
       userId,
       resourceType: 'User',
-      resourceId: userId
-    });
+      resourceId: userId,
+      outcome: 'success'
+    }, context);
   }
 
-  async incrementFailedAttempts(userId: string): Promise<number> {
+  async incrementFailedAttempts(userId: string, context?: RequestContext): Promise<number> {
     const result = await this.dbService.queryOne<{ failedAttempts: number }>({
       sql: `
         UPDATE User 
@@ -124,23 +128,33 @@ export class UserRepository implements IUserRepository {
 
     await this.dbService.execute({
       sql: `
-        INSERT INTO AuditLog (action, userId, resourceType, resourceId, details, timestamp)
-        VALUES (?, ?, ?, ?, ?, ?)
+        INSERT INTO AuditLog (
+          userId, eventType, resourceType, resourceId, details, 
+          timestamp, createdAt, updatedAt, outcome,
+          ipAddress, userAgent, sessionId
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `,
       params: [
-        'INCREMENT_FAILED_ATTEMPTS', 
         userId, 
+        'user_failed_attempt_incremented', 
         'User', 
         userId, 
         JSON.stringify({ failedAttempts: result?.failedAttempts }),
-        Date.now()
+        Date.now(),
+        Date.now(),
+        Date.now(),
+        'success',
+        context?.ipAddress || null,
+        context?.userAgent || null,
+        context?.sessionId || null
       ]
     });
 
     return result ? Number(result.failedAttempts) : 0;
   }
 
-  async resetFailedAttempts(userId: string): Promise<void> {
+  async resetFailedAttempts(userId: string, context?: RequestContext): Promise<void> {
     await this.dbService.executeWithAudit({
       sql: `
         UPDATE User 
@@ -149,14 +163,15 @@ export class UserRepository implements IUserRepository {
       `,
       params: [userId]
     }, {
-      action: 'RESET_FAILED_ATTEMPTS',
+      eventType: 'user_failed_attempts_reset',
       userId,
       resourceType: 'User',
-      resourceId: userId
-    });
+      resourceId: userId,
+      outcome: 'success'
+    }, context);
   }
 
-  async activateUser(userId: string): Promise<void> {
+  async activateUser(userId: string, context?: RequestContext): Promise<void> {
     const now = Date.now();
     
     await this.dbService.executeWithAudit({
@@ -170,14 +185,15 @@ export class UserRepository implements IUserRepository {
       `,
       params: [now, userId]
     }, {
-      action: 'ACTIVATE',
+      eventType: 'user_activated',
       userId,
       resourceType: 'User',
-      resourceId: userId
-    });
+      resourceId: userId,
+      outcome: 'success'
+    }, context);
   }
 
-  async setActivationToken(userId: string, token: string, expiresAt: number): Promise<void> {
+  async setActivationToken(userId: string, token: string, expiresAt: number, context?: RequestContext): Promise<void> {
     const now = Date.now();
     
     await this.dbService.executeWithAudit({
@@ -190,16 +206,18 @@ export class UserRepository implements IUserRepository {
       `,
       params: [token, expiresAt, now, userId]
     }, {
-      action: 'SET_ACTIVATION_TOKEN',
+      eventType: 'user_activation_token_set',
       userId,
       resourceType: 'User',
-      resourceId: userId
-    });
+      resourceId: userId,
+      outcome: 'success'
+    }, context);
   }
 
   async createSession(
     userId: string,
-    expiresInSeconds: number = 60 * 60 * 24 * 7
+    expiresInSeconds: number = 60 * 60 * 24 * 7,
+    context?: RequestContext
   ): Promise<Session> {
     const now = Date.now();
     const id = generateUUID();
@@ -212,11 +230,12 @@ export class UserRepository implements IUserRepository {
       `,
       params: [id, userId, expiresAt, now]
     }, {
-      action: 'CREATE',
+      eventType: 'session_created',
       userId,
       resourceType: 'Session',
-      resourceId: id
-    });
+      resourceId: id,
+      outcome: 'success'
+    }, context);
 
     return {
       id,
@@ -233,7 +252,7 @@ export class UserRepository implements IUserRepository {
     });
   }
 
-  async deleteSession(id: string): Promise<void> {
+  async deleteSession(id: string, context?: RequestContext): Promise<void> {
     const session = await this.getSessionById(id);
     if (!session) return;
 
@@ -241,11 +260,12 @@ export class UserRepository implements IUserRepository {
       sql: 'DELETE FROM Session WHERE id = ?',
       params: [id]
     }, {
-      action: 'DELETE',
+      eventType: 'session_deleted',
       userId: session.userId,
       resourceType: 'Session',
-      resourceId: id
-    });
+      resourceId: id,
+      outcome: 'success'
+    }, context);
   }
 
   async deleteExpiredSessions(): Promise<void> {
@@ -257,7 +277,7 @@ export class UserRepository implements IUserRepository {
     });
   }
 
-  async updateUser(userId: string, data: { name?: string; email?: string }): Promise<User | null> {
+  async updateUser(userId: string, data: { name?: string; email?: string }, context?: RequestContext): Promise<User | null> {
     const user = await this.getUserById(userId);
     if (!user) return null;
 
@@ -291,18 +311,19 @@ export class UserRepository implements IUserRepository {
       `,
       params
     }, {
-      action: 'UPDATE',
+      eventType: 'user_updated',
       userId,
       resourceType: 'User',
       resourceId: userId,
-      details: JSON.stringify(data)
-    });
+      details: JSON.stringify(data),
+      outcome: 'success'
+    }, context);
 
     // Get the updated user
     return this.getUserById(userId);
   }
 
-  async updateUserPassword(userId: string, passwordHash: string): Promise<boolean> {
+  async updateUserPassword(userId: string, passwordHash: string, context?: RequestContext): Promise<boolean> {
     const now = Date.now();
     
     await this.dbService.executeWithAudit({
@@ -313,25 +334,27 @@ export class UserRepository implements IUserRepository {
       `,
       params: [passwordHash, now, userId]
     }, {
-      action: 'UPDATE_PASSWORD',
+      eventType: 'user_password_updated',
       userId,
       resourceType: 'User',
-      resourceId: userId
-    });
+      resourceId: userId,
+      outcome: 'success'
+    }, context);
 
     return true;
   }
 
-  async deleteUser(userId: string): Promise<boolean> {
+  async deleteUser(userId: string, context?: RequestContext): Promise<boolean> {
     await this.dbService.executeWithAudit({
       sql: 'DELETE FROM User WHERE id = ?',
       params: [userId]
     }, {
-      action: 'DELETE',
+      eventType: 'user_deleted',
       userId,
       resourceType: 'User',
-      resourceId: userId
-    });
+      resourceId: userId,
+      outcome: 'success'
+    }, context);
 
     return true;
   }

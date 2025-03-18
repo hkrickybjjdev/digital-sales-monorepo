@@ -6,12 +6,25 @@ interface QueryParams {
 }
 
 interface AuditLog {
-  action: string;
   userId?: string;
-  resourceType: string;
+  eventType: string;
+  resourceType?: string;
   resourceId?: string;
   details?: string;
+  ipAddress?: string;
+  userAgent?: string;
+  sessionId?: string;
   timestamp: number;
+  createdAt: number;
+  updatedAt: number;
+  outcome: string;
+}
+
+export interface RequestContext {
+  userId?: string;
+  ipAddress?: string;
+  userAgent?: string;
+  sessionId?: string;
 }
 
 export class DatabaseService {
@@ -56,13 +69,29 @@ export class DatabaseService {
   /**
    * Execute a query with audit logging
    */
-  async executeWithAudit(query: QueryParams, auditInfo: Omit<AuditLog, 'timestamp'>): Promise<D1Result> {
+  async executeWithAudit(
+    query: QueryParams, 
+    auditInfo: { 
+      eventType: string; 
+      userId?: string; 
+      resourceType?: string; 
+      resourceId?: string; 
+      details?: string; 
+      outcome: string;
+    }, 
+    context?: RequestContext
+  ): Promise<D1Result> {
     const result = await this.execute(query);
     
     // Log the action to the audit log table
     await this.logAudit({
       ...auditInfo,
-      timestamp: Date.now()
+      ipAddress: context?.ipAddress,
+      userAgent: context?.userAgent,
+      sessionId: context?.sessionId,
+      timestamp: Date.now(),
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
     });
     
     return result;
@@ -95,14 +124,44 @@ export class DatabaseService {
    * Log an action to the audit log
    */
   private async logAudit(auditLog: AuditLog): Promise<void> {
-    const { action, userId, resourceType, resourceId, details, timestamp } = auditLog;
+    const { 
+      userId, 
+      eventType, 
+      resourceType, 
+      resourceId, 
+      details, 
+      ipAddress,
+      userAgent,
+      sessionId,
+      timestamp, 
+      createdAt, 
+      updatedAt, 
+      outcome 
+    } = auditLog;
     
     await this.execute({
       sql: `
-        INSERT INTO AuditLog (action, userId, resourceType, resourceId, details, timestamp)
-        VALUES (?, ?, ?, ?, ?, ?)
+        INSERT INTO AuditLog (
+          userId, eventType, resourceType, resourceId, 
+          details, ipAddress, userAgent, sessionId,
+          timestamp, createdAt, updatedAt, outcome
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `,
-      params: [action, userId || null, resourceType, resourceId || null, details || null, timestamp]
+      params: [
+        userId || null, 
+        eventType, 
+        resourceType || null, 
+        resourceId || null, 
+        details || null,
+        ipAddress || null,
+        userAgent || null,
+        sessionId || null,
+        timestamp,
+        createdAt,
+        updatedAt,
+        outcome
+      ]
     });
   }
 

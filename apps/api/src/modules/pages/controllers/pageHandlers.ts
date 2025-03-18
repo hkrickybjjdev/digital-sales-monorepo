@@ -9,6 +9,7 @@ import {
 } from '../../../utils/api-response';
 import { getPagesContainer } from '../di/container';
 import { CreatePageRequestSchema, UpdatePageRequestSchema, Page } from '../models/schemas';
+import { getRequestContext } from '../../../utils/requestContext';
 
 // Helper function to serialize Page to JSON-safe object
 function serializePage(page: Page) {
@@ -59,6 +60,7 @@ export const createPage = async (c: Context<{ Bindings: Env }>) => {
   try {
     const userId = c.get('jwtPayload').sub;
     const body = await c.req.json();
+    const requestContext = getRequestContext(c);
 
     // Validate request with Zod
     const result = CreatePageRequestSchema.safeParse(body);
@@ -67,7 +69,7 @@ export const createPage = async (c: Context<{ Bindings: Env }>) => {
     }
 
     const container = getPagesContainer(c.env);
-    const page = await container.pageService.createPage(userId, result.data);
+    const page = await container.pageService.createPage(userId, result.data, requestContext);
 
     return formatResponse(c, serializePage(page), 201);
   } catch (error) {
@@ -105,6 +107,7 @@ export const updatePage = async (c: Context<{ Bindings: Env }>) => {
     const userId = c.get('jwtPayload').sub;
     const id = c.req.param('id');
     const body = await c.req.json();
+    const requestContext = getRequestContext(c);
 
     // Validate request with Zod
     const result = UpdatePageRequestSchema.safeParse(body);
@@ -113,7 +116,7 @@ export const updatePage = async (c: Context<{ Bindings: Env }>) => {
     }
 
     const container = getPagesContainer(c.env);
-    const updatedPage = await container.pageService.updatePage(id, userId, result.data);
+    const updatedPage = await container.pageService.updatePage(id, userId, result.data, requestContext);
 
     if (!updatedPage) {
       return formatError(c, 'Page not found', 'ResourceNotFound', 404);
@@ -130,9 +133,10 @@ export const deletePage = async (c: Context<{ Bindings: Env }>) => {
   try {
     const userId = c.get('jwtPayload').sub;
     const id = c.req.param('id');
+    const requestContext = getRequestContext(c);
 
     const container = getPagesContainer(c.env);
-    const deleted = await container.pageService.deletePage(id, userId);
+    const deleted = await container.pageService.deletePage(id, userId, requestContext);
 
     if (!deleted) {
       return formatError(c, 'Page not found', 'ResourceNotFound', 404);
@@ -141,6 +145,26 @@ export const deletePage = async (c: Context<{ Bindings: Env }>) => {
     return formatResponse(c, { success: true });
   } catch (error) {
     console.error('Error deleting page:', error);
+    return format500Error(error as Error);
+  }
+};
+
+export const togglePageActive = async (c: Context<{ Bindings: Env }>) => {
+  try {
+    const userId = c.get('jwtPayload').sub;
+    const id = c.req.param('id');
+    const requestContext = getRequestContext(c);
+
+    const container = getPagesContainer(c.env);
+    const updatedPage = await container.pageService.togglePageActive(id, userId, requestContext);
+
+    if (!updatedPage) {
+      return formatError(c, 'Page not found', 'ResourceNotFound', 404);
+    }
+
+    return formatResponse(c, serializePage(updatedPage));
+  } catch (error) {
+    console.error('Error toggling page active state:', error);
     return format500Error(error as Error);
   }
 };

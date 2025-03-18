@@ -1,20 +1,23 @@
 import { Env } from '../../../types';
 import { DatabaseFactory } from '../../../database/databaseFactory';
-import { DatabaseService } from '../../../database/databaseService';
+import { DatabaseService, RequestContext } from '../../../database/databaseService';
 import { generateUUID, generateShortID } from '../../../utils/utils';
 import { Page, CreatePageRequest, UpdatePageRequest, PageType } from '../models/schemas';
 import { IPageRepository } from '../services/interfaces';
+import { AuditHelpers } from '../../../utils/auditHelpers';
 
 const SHORT_ID_LENGTH = 8;
 
 export class PageRepository implements IPageRepository {
   private dbService: DatabaseService;
+  private auditHelpers: AuditHelpers;
 
   constructor(env: Env) {
     this.dbService = DatabaseFactory.getInstance(env);
+    this.auditHelpers = new AuditHelpers(this.dbService);
   }
 
-  async createPage(userId: string, request: CreatePageRequest): Promise<Page> {
+  async createPage(userId: string, request: CreatePageRequest, context?: RequestContext): Promise<Page> {
     const id = generateUUID();
     const shortId = generateShortID(SHORT_ID_LENGTH);
     const now = Date.now();
@@ -52,15 +55,32 @@ export class PageRepository implements IPageRepository {
         JSON.stringify(page.settings)
       ]
     }, {
-      action: 'CREATE',
-      userId,
+      eventType: 'page_created',
+      userId: context?.userId || userId,
       resourceType: 'Page',
       resourceId: page.id,
       details: JSON.stringify({
         type: page.type,
         shortId: page.shortId
-      })
-    });
+      }),
+      outcome: 'success'
+    }, context);
+
+    // Log additional details using AuditHelpers
+    await this.auditHelpers.logDataChange(
+      'created',
+      'Page',
+      page.id,
+      context?.userId || userId,
+      undefined,
+      { 
+        id: page.id,
+        shortId: page.shortId,
+        type: page.type,
+        isActive: page.isActive
+      },
+      context
+    );
 
     return page;
   }
@@ -87,10 +107,23 @@ export class PageRepository implements IPageRepository {
     return this.parsePageResult(result);
   }
 
-  async updatePage(id: string, userId: string, request: UpdatePageRequest): Promise<Page | null> {
+  async updatePage(id: string, userId: string, request: UpdatePageRequest, context?: RequestContext): Promise<Page | null> {
     // Check if the page exists and belongs to the user
     const existingPage = await this.getPageById(id);
     if (!existingPage || existingPage.userId !== userId) {
+      // Log access denied with AuditHelpers
+      await this.auditHelpers.logAccessControl(
+        false,
+        'Page',
+        id,
+        context?.userId || userId,
+        { 
+          reason: existingPage ? 'unauthorized' : 'not_found',
+          requestedUpdate: request 
+        },
+        context
+      );
+      
       return null;
     }
 
@@ -137,26 +170,74 @@ export class PageRepository implements IPageRepository {
       `,
       params: values
     }, {
-      action: 'UPDATE',
-      userId,
+      eventType: 'page_updated',
+      userId: context?.userId || userId,
       resourceType: 'Page',
       resourceId: id,
-      details: JSON.stringify(request)
-    });
+      details: JSON.stringify(request),
+      outcome: 'success'
+    }, context);
 
-    return this.getPageById(id);
+    const updatedPage = await this.getPageById(id);
+
+    // Log data change with AuditHelpers
+    if (updatedPage) {
+      await this.auditHelpers.logDataChange(
+        'updated',
+        'Page',
+        id,
+        context?.userId || userId,
+        this.extractChangedFields(existingPage, request),
+        updatedPage,
+        context
+      );
+    }
+
+    return updatedPage;
   }
 
-  async deletePage(id: string, userId: string): Promise<boolean> {
+  async deletePage(id: string, userId: string, context?: RequestContext): Promise<boolean> {
+    // Get existing page for audit purposes
+    const existingPage = await this.getPageById(id);
+    if (!existingPage || existingPage.userId !== userId) {
+      // Log access denied
+      await this.auditHelpers.logAccessControl(
+        false,
+        'Page',
+        id,
+        context?.userId || userId,
+        { reason: existingPage ? 'unauthorized' : 'not_found' },
+        context
+      );
+      
+      return false;
+    }
+    
     await this.dbService.executeWithAudit({
       sql: `DELETE FROM Page WHERE id = ? AND userId = ?`,
       params: [id, userId]
     }, {
-      action: 'DELETE',
-      userId,
+      eventType: 'page_deleted',
+      userId: context?.userId || userId,
       resourceType: 'Page',
-      resourceId: id
-    });
+      resourceId: id,
+      details: JSON.stringify({
+        shortId: existingPage.shortId,
+        type: existingPage.type 
+      }),
+      outcome: 'success'
+    }, context);
+
+    // Log data deletion with AuditHelpers
+    await this.auditHelpers.logDataChange(
+      'deleted',
+      'Page',
+      id,
+      context?.userId || userId,
+      existingPage,
+      undefined,
+      context
+    );
 
     return true;
   }
@@ -199,6 +280,46 @@ export class PageRepository implements IPageRepository {
     return result ? Number(result.count) : 0;
   }
 
+  /**
+   * Toggle a page's active status with audit logging
+   */
+  async togglePageActive(id: string, userId: string, context?: RequestContext): Promise<Page | null> {
+    // Get existing page for audit purposes
+    const existingPage = await this.getPageById(id);
+    if (!existingPage || existingPage.userId !== userId) {
+      // Log access denied
+      await this.auditHelpers.logAccessControl(
+        false,
+        'Page',
+        id,
+        context?.userId || userId,
+        { reason: existingPage ? 'unauthorized' : 'not_found' },
+        context
+      );
+      
+      return null;
+    }
+    
+    const newStatus = !existingPage.isActive;
+    
+    await this.dbService.executeWithAudit({
+      sql: `UPDATE Page SET isActive = ? WHERE id = ? AND userId = ?`,
+      params: [newStatus, id, userId]
+    }, {
+      eventType: newStatus ? 'page_activated' : 'page_deactivated',
+      userId: context?.userId || userId,
+      resourceType: 'Page',
+      resourceId: id,
+      details: JSON.stringify({
+        shortId: existingPage.shortId,
+        previousStatus: existingPage.isActive
+      }),
+      outcome: 'success'
+    }, context);
+
+    return this.getPageById(id);
+  }
+
   private parsePageResult(result: any): Page {
     return {
       id: result.id,
@@ -212,5 +333,34 @@ export class PageRepository implements IPageRepository {
       customization: result.customization ? JSON.parse(result.customization) : {},
       settings: JSON.parse(result.settings),
     };
+  }
+  
+  /**
+   * Extract the changed fields for better audit logs
+   */
+  private extractChangedFields(existingPage: Page, updateData: UpdatePageRequest): Partial<Page> {
+    const result: Partial<Page> = {};
+    
+    if (updateData.expiresAt !== undefined) {
+      result.expiresAt = existingPage.expiresAt;
+    }
+    
+    if (updateData.launchAt !== undefined) {
+      result.launchAt = existingPage.launchAt;
+    }
+    
+    if (updateData.isActive !== undefined) {
+      result.isActive = existingPage.isActive;
+    }
+    
+    if (updateData.customization !== undefined) {
+      result.customization = existingPage.customization;
+    }
+    
+    if (updateData.settings !== undefined) {
+      result.settings = existingPage.settings;
+    }
+    
+    return result;
   }
 }

@@ -28,6 +28,7 @@ protectedRoutes.post('/', pageHandlers.createPage);
 protectedRoutes.get('/:id', pageHandlers.getPage);
 protectedRoutes.put('/:id', pageHandlers.updatePage);
 protectedRoutes.delete('/:id', pageHandlers.deletePage);
+protectedRoutes.post('/:id/toggle-active', pageHandlers.togglePageActive);
 
 // Page Content operations
 protectedRoutes.post('/:pageId/contents', contentHandlers.createPageContent);
