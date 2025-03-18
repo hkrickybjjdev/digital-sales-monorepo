@@ -48,7 +48,8 @@ CREATE TABLE IF NOT EXISTS "User" (
   emailVerified INTEGER NOT NULL DEFAULT 0,
   failedAttempts INTEGER NOT NULL DEFAULT 0,
   activationToken TEXT,
-  activationTokenExpiresAt INTEGER
+  activationTokenExpiresAt INTEGER,
+  timezone TEXT
 );
 
 -- Plan table

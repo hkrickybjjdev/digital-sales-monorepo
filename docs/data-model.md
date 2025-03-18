@@ -18,6 +18,7 @@ erDiagram
         timestamp lockedAt
         boolean emailVerified
         integer failedAttempts
+        string timezone
     }
 
     PASSWORD_RESET {
@@ -137,6 +138,7 @@ Represents platform users who create and manage content.
 | lockedAt | Timestamp | When the account was locked (NULL if not locked) |
 | emailVerified | Boolean | Indicates if the email address has been verified |
 | failedAttempts | Integer | Number of consecutive failed login attempts |
+| timezone | String | User's preferred timezone (IANA timezone name, NULL if not set) |
 
 ### PasswordReset
 

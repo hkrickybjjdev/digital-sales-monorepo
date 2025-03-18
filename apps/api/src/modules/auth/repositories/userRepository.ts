@@ -47,8 +47,8 @@ export class UserRepository implements IUserRepository {
     await this.dbService.executeWithAudit(
       {
         sql: `
-        INSERT INTO User (id, email, name, passwordHash, createdAt, updatedAt, lockedAt, emailVerified, failedAttempts, activationToken, activationTokenExpiresAt) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO User (id, email, name, passwordHash, createdAt, updatedAt, lockedAt, emailVerified, failedAttempts, activationToken, activationTokenExpiresAt, timezone) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `,
         params: [
           id,
@@ -62,6 +62,7 @@ export class UserRepository implements IUserRepository {
           user.failedAttempts || 0,
           user.activationToken || null,
           user.activationTokenExpiresAt || null,
+          user.timezone || null,
         ],
       },
       {
@@ -87,6 +88,7 @@ export class UserRepository implements IUserRepository {
       failedAttempts: user.failedAttempts || 0,
       activationToken: user.activationToken || null,
       activationTokenExpiresAt: user.activationTokenExpiresAt || null,
+      timezone: user.timezone || null,
     };
   }
 
@@ -307,7 +309,7 @@ export class UserRepository implements IUserRepository {
 
   async updateUser(
     userId: string,
-    data: { name?: string; email?: string },
+    data: { name?: string; email?: string; timezone?: string },
     context?: RequestContext
   ): Promise<User | null> {
     const user = await this.getUserById(userId);
@@ -324,6 +326,11 @@ export class UserRepository implements IUserRepository {
     if (data.email !== undefined) {
       updates.push('email = ?');
       params.push(data.email.toLowerCase());
+    }
+
+    if (data.timezone !== undefined) {
+      updates.push('timezone = ?');
+      params.push(data.timezone);
     }
 
     if (updates.length === 0) {
