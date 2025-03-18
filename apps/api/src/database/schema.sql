@@ -169,6 +169,17 @@ CREATE TABLE IF NOT EXISTS "Subscription" (
   cancelAt INTEGER
 );
 
+-- AuditLog table for tracking database operations
+CREATE TABLE IF NOT EXISTS "AuditLog" (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  action TEXT NOT NULL,
+  userId TEXT,
+  resourceType TEXT NOT NULL,
+  resourceId TEXT,
+  details TEXT,
+  timestamp INTEGER NOT NULL
+);
+
 -- Create indexes for frequently accessed columns
 CREATE INDEX IF NOT EXISTS idx_users_email ON "User"(email);
 
@@ -204,6 +215,10 @@ CREATE INDEX IF NOT EXISTS idx_team_name ON "Team"(name);
 CREATE INDEX IF NOT EXISTS idx_teammember_teamId ON "TeamMember"(teamId);
 CREATE INDEX IF NOT EXISTS idx_teammember_userId ON "TeamMember"(userId);
 CREATE INDEX IF NOT EXISTS idx_teammember_role ON "TeamMember"(role);
+
+CREATE INDEX IF NOT EXISTS idx_audit_user ON "AuditLog"(userId);
+CREATE INDEX IF NOT EXISTS idx_audit_resource ON "AuditLog"(resourceType, resourceId);
+CREATE INDEX IF NOT EXISTS idx_audit_timestamp ON "AuditLog"(timestamp);
 
 -- Insert default plans
 INSERT OR IGNORE INTO "Plan" (id, name, description, isVisible, features) VALUES 

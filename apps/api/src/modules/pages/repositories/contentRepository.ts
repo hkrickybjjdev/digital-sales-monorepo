@@ -1,11 +1,16 @@
-import { D1Database } from '@cloudflare/workers-types';
-
+import { Env } from '../../../types';
+import { DatabaseFactory } from '../../../database/databaseFactory';
+import { DatabaseService } from '../../../database/databaseService';
 import { generateUUID } from '../../../utils/utils';
 import { PageContent, CreatePageContentRequest } from '../models/schemas';
 import { IContentRepository } from '../services/interfaces';
 
 export class ContentRepository implements IContentRepository {
-  constructor(private readonly db: D1Database) {}
+  private dbService: DatabaseService;
+
+  constructor(env: Env) {
+    this.dbService = DatabaseFactory.getInstance(env);
+  }
 
   async createPageContent(
     pageId: string,
@@ -32,16 +37,14 @@ export class ContentRepository implements IContentRepository {
       metadata: request.metadata || {},
     };
 
-    await this.db
-      .prepare(
-        `
-      INSERT INTO PageContent (
-        id, pageId, contentType, productId, title, 
-        description, priceInCents, currency, metadata
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `
-      )
-      .bind(
+    await this.dbService.executeWithAudit({
+      sql: `
+        INSERT INTO PageContent (
+          id, pageId, contentType, productId, title, 
+          description, priceInCents, currency, metadata
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `,
+      params: [
         content.id,
         content.pageId,
         content.contentType,
@@ -51,21 +54,26 @@ export class ContentRepository implements IContentRepository {
         content.priceInCents,
         content.currency,
         JSON.stringify(content.metadata)
-      )
-      .run();
+      ]
+    }, {
+      action: 'CREATE',
+      userId,
+      resourceType: 'PageContent',
+      resourceId: content.id,
+      details: JSON.stringify({
+        pageId: content.pageId,
+        contentType: content.contentType
+      })
+    });
 
     return content;
   }
 
   async getPageContentById(id: string): Promise<PageContent | null> {
-    const result = await this.db
-      .prepare(
-        `
-      SELECT * FROM PageContent WHERE id = ?
-    `
-      )
-      .bind(id)
-      .first();
+    const result = await this.dbService.queryOne<any>({
+      sql: `SELECT * FROM PageContent WHERE id = ?`,
+      params: [id]
+    });
 
     if (!result) return null;
 
@@ -73,18 +81,12 @@ export class ContentRepository implements IContentRepository {
   }
 
   async getPageContents(pageId: string): Promise<PageContent[]> {
-    const result = await this.db
-      .prepare(
-        `
-      SELECT * FROM PageContent WHERE pageId = ?
-    `
-      )
-      .bind(pageId)
-      .all();
+    const results = await this.dbService.queryMany<any>({
+      sql: `SELECT * FROM PageContent WHERE pageId = ?`,
+      params: [pageId]
+    });
 
-    if (!result.results) return [];
-
-    return result.results.map(row => this.parseContentResult(row));
+    return results.map(row => this.parseContentResult(row));
   }
 
   async updatePageContent(
@@ -99,13 +101,12 @@ export class ContentRepository implements IContentRepository {
       return null;
     }
 
-    // Check if content exists and belongs to the page
+    // Check if content exists
     const existingContent = await this.getPageContentById(id);
     if (!existingContent || existingContent.pageId !== pageId) {
       return null;
     }
 
-    // Build update query dynamically based on provided fields
     const updateFields: string[] = [];
     const values: any[] = [];
 
@@ -145,25 +146,28 @@ export class ContentRepository implements IContentRepository {
     }
 
     if (updateFields.length === 0) {
-      return existingContent; // Nothing to update
+      return existingContent;
     }
 
-    // Add id to values array
     values.push(id);
     values.push(pageId);
 
-    await this.db
-      .prepare(
-        `
-      UPDATE PageContent SET ${updateFields.join(', ')} 
-      WHERE id = ? AND pageId = ?
-    `
-      )
-      .bind(...values)
-      .run();
+    await this.dbService.executeWithAudit({
+      sql: `
+        UPDATE PageContent 
+        SET ${updateFields.join(', ')}
+        WHERE id = ? AND pageId = ?
+      `,
+      params: values
+    }, {
+      action: 'UPDATE',
+      userId,
+      resourceType: 'PageContent',
+      resourceId: id,
+      details: JSON.stringify(updates)
+    });
 
-    // Get updated content
-    return await this.getPageContentById(id);
+    return this.getPageContentById(id);
   }
 
   async deletePageContent(id: string, pageId: string, userId: string): Promise<boolean> {
@@ -173,29 +177,27 @@ export class ContentRepository implements IContentRepository {
       return false;
     }
 
-    const result = await this.db
-      .prepare(
-        `
-      DELETE FROM PageContent WHERE id = ? AND pageId = ?
-    `
-      )
-      .bind(id, pageId)
-      .run();
+    await this.dbService.executeWithAudit({
+      sql: `DELETE FROM PageContent WHERE id = ? AND pageId = ?`,
+      params: [id, pageId]
+    }, {
+      action: 'DELETE',
+      userId,
+      resourceType: 'PageContent',
+      resourceId: id,
+      details: JSON.stringify({ pageId })
+    });
 
-    return result.success;
+    return true;
   }
 
   private async checkPageOwnership(pageId: string, userId: string): Promise<boolean> {
-    const result = await this.db
-      .prepare(
-        `
-      SELECT id FROM Page WHERE id = ? AND userId = ?
-    `
-      )
-      .bind(pageId, userId)
-      .first();
+    const result = await this.dbService.queryOne<any>({
+      sql: `SELECT 1 FROM Page WHERE id = ? AND userId = ?`,
+      params: [pageId, userId]
+    });
 
-    return !!result;
+    return result !== null;
   }
 
   private parseContentResult(result: any): PageContent {
@@ -203,12 +205,12 @@ export class ContentRepository implements IContentRepository {
       id: result.id,
       pageId: result.pageId,
       contentType: result.contentType,
-      productId: result.productId || undefined,
+      productId: result.productId,
       title: result.title,
       description: result.description,
       priceInCents: Number(result.priceInCents),
       currency: result.currency,
-      metadata: JSON.parse(result.metadata || '{}'),
+      metadata: result.metadata ? JSON.parse(result.metadata) : {},
     };
   }
 }

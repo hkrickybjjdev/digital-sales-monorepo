@@ -567,3 +567,56 @@ STRIPE_WEBHOOK_SECRET=your_stripe_webhook_secret
 ## API Documentation
 
 API documentation is available at `/docs` when running the development server.
+
+## Centralized Database Access
+
+This API now uses a centralized database service to manage all database interactions, providing the following benefits:
+
+### Key Features
+
+1. **Centralized Database Access**
+   - All database interactions go through the `DatabaseService`
+   - Repository classes no longer directly use D1Database
+   - Common patterns for querying and updating data
+
+2. **Automatic Audit Logging**
+   - All write operations can be automatically logged
+   - Detailed tracking of who changed what and when
+   - Support for audit compliance requirements
+
+3. **Transaction Support**
+   - Simplified transaction API
+   - Automatic rollback on errors
+   - Better data consistency
+
+### How to Update Repositories
+
+When creating or updating a repository class, follow these steps:
+
+1. Import the database factory:
+   ```typescript
+   import { DatabaseFactory } from '../../database/databaseFactory';
+   import { DatabaseService } from '../../database/databaseService';
+   ```
+
+2. Initialize the database service in your constructor:
+   ```typescript
+   export class MyRepository {
+     private dbService: DatabaseService;
+
+     constructor(env: Env) {
+       this.dbService = DatabaseFactory.getInstance(env);
+     }
+     
+     // Repository methods
+   }
+   ```
+
+3. Use the database service methods:
+   - `queryOne<T>()` - For getting a single record
+   - `queryMany<T>()` - For getting multiple records
+   - `execute()` - For operations without audit logging
+   - `executeWithAudit()` - For operations with audit logging
+   - `transaction()` - For atomic operations
+
+See the [Database Service README](src/database/README.md) for detailed usage examples.

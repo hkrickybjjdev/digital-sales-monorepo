@@ -1,33 +1,41 @@
-import { D1Database } from '@cloudflare/workers-types';
-
-import { generateUUID } from '@/utils/utils';
+import { Env } from '../../../types';
+import { DatabaseFactory } from '../../../database/databaseFactory';
+import { DatabaseService } from '../../../database/databaseService';
+import { generateUUID } from '../../../utils/utils';
 
 import { TeamMember, TeamMemberWithUser } from '../models/schemas';
 
 import { ITeamMemberRepository } from './interfaces';
 
 export class TeamMemberRepository implements ITeamMemberRepository {
-  private db: D1Database;
+  private dbService: DatabaseService;
 
-  constructor(db: D1Database) {
-    this.db = db;
+  constructor(env: Env) {
+    this.dbService = DatabaseFactory.getInstance(env);
   }
 
   async addTeamMember(
     teamMember: Omit<TeamMember, 'id' | 'createdAt' | 'updatedAt'>
   ): Promise<TeamMember> {
     const id = generateUUID();
-    const now = Math.floor(Date.now() / 1000);
+    const now = Date.now();
 
-    await this.db
-      .prepare(
-        `
-      INSERT INTO "TeamMember" (id, teamId, userId, role, createdAt, updatedAt)
-      VALUES (?, ?, ?, ?, ?, ?)
-    `
-      )
-      .bind(id, teamMember.teamId, teamMember.userId, teamMember.role, now, now)
-      .run();
+    await this.dbService.executeWithAudit({
+      sql: `
+        INSERT INTO "TeamMember" (id, teamId, userId, role, createdAt, updatedAt)
+        VALUES (?, ?, ?, ?, ?, ?)
+      `,
+      params: [id, teamMember.teamId, teamMember.userId, teamMember.role, now, now]
+    }, {
+      action: 'CREATE',
+      userId: teamMember.userId,
+      resourceType: 'TeamMember',
+      resourceId: id,
+      details: JSON.stringify({
+        teamId: teamMember.teamId, 
+        role: teamMember.role
+      })
+    });
 
     return {
       id,
@@ -40,136 +48,145 @@ export class TeamMemberRepository implements ITeamMemberRepository {
   }
 
   async getTeamMembersByTeamId(teamId: string): Promise<TeamMember[]> {
-    const results = await this.db
-      .prepare(
-        `
-      SELECT * FROM "TeamMember" WHERE teamId = ? ORDER BY role ASC
-    `
-      )
-      .bind(teamId)
-      .all();
+    const results = await this.dbService.queryMany<TeamMember>({
+      sql: `SELECT * FROM "TeamMember" WHERE teamId = ? ORDER BY role ASC`,
+      params: [teamId]
+    });
 
-    return (results.results as TeamMember[]) || [];
+    return results.map(member => ({
+      ...member,
+      createdAt: Number(member.createdAt),
+      updatedAt: Number(member.updatedAt)
+    }));
   }
 
   async getTeamMemberById(id: string): Promise<TeamMember | null> {
-    const result = await this.db
-      .prepare(
-        `
-      SELECT * FROM "TeamMember" WHERE id = ?
-    `
-      )
-      .bind(id)
-      .first();
+    const result = await this.dbService.queryOne<TeamMember>({
+      sql: `SELECT * FROM "TeamMember" WHERE id = ?`,
+      params: [id]
+    });
 
-    return (result as TeamMember) || null;
+    if (!result) return null;
+
+    return {
+      ...result,
+      createdAt: Number(result.createdAt),
+      updatedAt: Number(result.updatedAt)
+    };
   }
 
   async getTeamMemberByTeamAndUserId(teamId: string, userId: string): Promise<TeamMember | null> {
-    const result = await this.db
-      .prepare(
-        `
-      SELECT * FROM "TeamMember" WHERE teamId = ? AND userId = ?
-    `
-      )
-      .bind(teamId, userId)
-      .first();
+    const result = await this.dbService.queryOne<TeamMember>({
+      sql: `SELECT * FROM "TeamMember" WHERE teamId = ? AND userId = ?`,
+      params: [teamId, userId]
+    });
 
-    return (result as TeamMember) || null;
+    if (!result) return null;
+
+    return {
+      ...result,
+      createdAt: Number(result.createdAt),
+      updatedAt: Number(result.updatedAt)
+    };
   }
 
   async updateTeamMember(id: string, teamMember: Partial<TeamMember>): Promise<TeamMember | null> {
-    const now = Math.floor(Date.now() / 1000);
-    const updateFields = [];
-    const values = [];
+    const existingMember = await this.getTeamMemberById(id);
+    if (!existingMember) {
+      return null;
+    }
+
+    const updates: string[] = [];
+    const values: any[] = [];
 
     if (teamMember.role !== undefined) {
-      updateFields.push('role = ?');
+      updates.push('role = ?');
       values.push(teamMember.role);
     }
 
-    if (updateFields.length === 0) {
-      // Nothing to update
-      return this.getTeamMemberById(id);
+    if (updates.length === 0) {
+      return existingMember;
     }
 
-    updateFields.push('updatedAt = ?');
+    const now = Date.now();
+    updates.push('updatedAt = ?');
     values.push(now);
     values.push(id);
 
-    await this.db
-      .prepare(
-        `
-      UPDATE "TeamMember"
-      SET ${updateFields.join(', ')}
-      WHERE id = ?
-    `
-      )
-      .bind(...values)
-      .run();
+    await this.dbService.executeWithAudit({
+      sql: `
+        UPDATE "TeamMember" 
+        SET ${updates.join(', ')} 
+        WHERE id = ?
+      `,
+      params: values
+    }, {
+      action: 'UPDATE',
+      userId: existingMember.userId,
+      resourceType: 'TeamMember',
+      resourceId: id,
+      details: JSON.stringify({ 
+        teamId: existingMember.teamId,
+        ...teamMember 
+      })
+    });
 
     return this.getTeamMemberById(id);
   }
 
   async deleteTeamMember(id: string): Promise<boolean> {
-    const result = await this.db
-      .prepare(
-        `
-      DELETE FROM "TeamMember" WHERE id = ?
-    `
-      )
-      .bind(id)
-      .run();
+    const member = await this.getTeamMemberById(id);
+    if (!member) return false;
 
-    return result.meta.changes > 0;
+    await this.dbService.executeWithAudit({
+      sql: `DELETE FROM "TeamMember" WHERE id = ?`,
+      params: [id]
+    }, {
+      action: 'DELETE',
+      userId: member.userId,
+      resourceType: 'TeamMember',
+      resourceId: id,
+      details: JSON.stringify({ teamId: member.teamId })
+    });
+
+    return true;
   }
 
   async getTeamMembersWithUserInfo(teamId: string): Promise<TeamMemberWithUser[]> {
-    const results = await this.db
-      .prepare(
-        `
-      SELECT tm.*, u.id as userId, u.email, u.name 
-      FROM "TeamMember" tm
-      JOIN "User" u ON tm.userId = u.id
-      WHERE tm.teamId = ?
-      ORDER BY 
-        CASE 
-          WHEN tm.role = 'owner' THEN 1
-          WHEN tm.role = 'admin' THEN 2
-          WHEN tm.role = 'member' THEN 3
-          WHEN tm.role = 'viewer' THEN 4
-          ELSE 5
-        END
-    `
-      )
-      .bind(teamId)
-      .all();
+    const results = await this.dbService.queryMany<TeamMemberWithUser>({
+      sql: `
+        SELECT 
+          tm.*, 
+          u.email as userEmail, 
+          u.name as userName
+        FROM "TeamMember" tm
+        JOIN "User" u ON tm.userId = u.id
+        WHERE tm.teamId = ?
+        ORDER BY 
+          CASE tm.role 
+            WHEN 'owner' THEN 1 
+            WHEN 'admin' THEN 2 
+            WHEN 'member' THEN 3 
+            WHEN 'viewer' THEN 4 
+            ELSE 5 
+          END
+      `,
+      params: [teamId]
+    });
 
-    return results.results.map((row: any) => ({
-      id: row.id,
-      teamId: row.teamId,
-      userId: row.userId,
-      role: row.role,
-      createdAt: row.createdAt,
-      updatedAt: row.updatedAt,
-      user: {
-        id: row.userId,
-        name: row.name,
-        email: row.email,
-      },
+    return results.map(member => ({
+      ...member,
+      createdAt: Number(member.createdAt),
+      updatedAt: Number(member.updatedAt)
     }));
   }
 
   async countTeamMembers(teamId: string): Promise<number> {
-    const result = await this.db
-      .prepare(
-        `
-      SELECT COUNT(*) as count FROM "TeamMember" WHERE teamId = ?
-    `
-      )
-      .bind(teamId)
-      .first<{ count: number }>();
+    const result = await this.dbService.queryOne<{ count: number }>({
+      sql: `SELECT COUNT(*) as count FROM "TeamMember" WHERE teamId = ?`,
+      params: [teamId]
+    });
 
-    return result?.count || 0;
+    return result ? Number(result.count) : 0;
   }
 }

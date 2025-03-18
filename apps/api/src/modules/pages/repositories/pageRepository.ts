@@ -1,5 +1,6 @@
-import { D1Database } from '@cloudflare/workers-types';
-
+import { Env } from '../../../types';
+import { DatabaseFactory } from '../../../database/databaseFactory';
+import { DatabaseService } from '../../../database/databaseService';
 import { generateUUID, generateShortID } from '../../../utils/utils';
 import { Page, CreatePageRequest, UpdatePageRequest, PageType } from '../models/schemas';
 import { IPageRepository } from '../services/interfaces';
@@ -7,7 +8,11 @@ import { IPageRepository } from '../services/interfaces';
 const SHORT_ID_LENGTH = 8;
 
 export class PageRepository implements IPageRepository {
-  constructor(private readonly db: D1Database) {}
+  private dbService: DatabaseService;
+
+  constructor(env: Env) {
+    this.dbService = DatabaseFactory.getInstance(env);
+  }
 
   async createPage(userId: string, request: CreatePageRequest): Promise<Page> {
     const id = generateUUID();
@@ -27,16 +32,14 @@ export class PageRepository implements IPageRepository {
       settings: request.settings,
     };
 
-    await this.db
-      .prepare(
-        `
-      INSERT INTO Page (
-        id, shortId, userId, type, createdAt, expiresAt, 
-        launchAt, isActive, customization, settings
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `
-      )
-      .bind(
+    await this.dbService.executeWithAudit({
+      sql: `
+        INSERT INTO Page (
+          id, shortId, userId, type, createdAt, expiresAt, 
+          launchAt, isActive, customization, settings
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `,
+      params: [
         page.id,
         page.shortId,
         page.userId,
@@ -47,21 +50,26 @@ export class PageRepository implements IPageRepository {
         page.isActive,
         JSON.stringify(page.customization),
         JSON.stringify(page.settings)
-      )
-      .run();
+      ]
+    }, {
+      action: 'CREATE',
+      userId,
+      resourceType: 'Page',
+      resourceId: page.id,
+      details: JSON.stringify({
+        type: page.type,
+        shortId: page.shortId
+      })
+    });
 
     return page;
   }
 
   async getPageById(id: string): Promise<Page | null> {
-    const result = await this.db
-      .prepare(
-        `
-      SELECT * FROM Page WHERE id = ?
-    `
-      )
-      .bind(id)
-      .first();
+    const result = await this.dbService.queryOne<any>({
+      sql: `SELECT * FROM Page WHERE id = ?`,
+      params: [id]
+    });
 
     if (!result) return null;
 
@@ -69,14 +77,10 @@ export class PageRepository implements IPageRepository {
   }
 
   async getPageByShortId(shortId: string): Promise<Page | null> {
-    const result = await this.db
-      .prepare(
-        `
-      SELECT * FROM Page WHERE shortId = ?
-    `
-      )
-      .bind(shortId)
-      .first();
+    const result = await this.dbService.queryOne<any>({
+      sql: `SELECT * FROM Page WHERE shortId = ?`,
+      params: [shortId]
+    });
 
     if (!result) return null;
 
@@ -84,111 +88,114 @@ export class PageRepository implements IPageRepository {
   }
 
   async updatePage(id: string, userId: string, request: UpdatePageRequest): Promise<Page | null> {
-    // First check if page exists and belongs to user
+    // Check if the page exists and belongs to the user
     const existingPage = await this.getPageById(id);
     if (!existingPage || existingPage.userId !== userId) {
       return null;
     }
 
-    // Build update query dynamically based on provided fields
-    const updates: string[] = [];
+    const updateFields: string[] = [];
     const values: any[] = [];
 
     if (request.expiresAt !== undefined) {
-      updates.push('expiresAt = ?');
+      updateFields.push('expiresAt = ?');
       values.push(request.expiresAt);
     }
 
     if (request.launchAt !== undefined) {
-      updates.push('launchAt = ?');
+      updateFields.push('launchAt = ?');
       values.push(request.launchAt);
     }
 
     if (request.isActive !== undefined) {
-      updates.push('isActive = ?');
+      updateFields.push('isActive = ?');
       values.push(request.isActive);
     }
 
-    if (request.customization) {
-      updates.push('customization = ?');
+    if (request.customization !== undefined) {
+      updateFields.push('customization = ?');
       values.push(JSON.stringify(request.customization));
     }
 
-    if (request.settings) {
-      updates.push('settings = ?');
+    if (request.settings !== undefined) {
+      updateFields.push('settings = ?');
       values.push(JSON.stringify(request.settings));
     }
 
-    if (updates.length === 0) {
-      return existingPage; // Nothing to update
+    if (updateFields.length === 0) {
+      return existingPage;
     }
 
-    // Add id and userId to values array
     values.push(id);
     values.push(userId);
 
-    await this.db
-      .prepare(
-        `
-      UPDATE Page SET ${updates.join(', ')} 
-      WHERE id = ? AND userId = ?
-    `
-      )
-      .bind(...values)
-      .run();
+    await this.dbService.executeWithAudit({
+      sql: `
+        UPDATE Page 
+        SET ${updateFields.join(', ')}
+        WHERE id = ? AND userId = ?
+      `,
+      params: values
+    }, {
+      action: 'UPDATE',
+      userId,
+      resourceType: 'Page',
+      resourceId: id,
+      details: JSON.stringify(request)
+    });
 
-    // Get updated page
-    return await this.getPageById(id);
+    return this.getPageById(id);
   }
 
   async deletePage(id: string, userId: string): Promise<boolean> {
-    const result = await this.db
-      .prepare(
-        `
-      DELETE FROM Page WHERE id = ? AND userId = ?
-    `
-      )
-      .bind(id, userId)
-      .run();
+    await this.dbService.executeWithAudit({
+      sql: `DELETE FROM Page WHERE id = ? AND userId = ?`,
+      params: [id, userId]
+    }, {
+      action: 'DELETE',
+      userId,
+      resourceType: 'Page',
+      resourceId: id
+    });
 
-    return result.success;
+    return true;
   }
 
   async listUserPages(userId: string, limit = 20, offset = 0, type?: PageType): Promise<Page[]> {
-    let query = `SELECT * FROM Page WHERE userId = ?`;
+    let sql = `SELECT * FROM Page WHERE userId = ?`;
     const params: any[] = [userId];
 
     if (type) {
-      query += ` AND type = ?`;
+      sql += ` AND type = ?`;
       params.push(type);
     }
 
-    query += ` ORDER BY createdAt DESC LIMIT ? OFFSET ?`;
-    params.push(limit, offset);
+    sql += ` ORDER BY createdAt DESC LIMIT ? OFFSET ?`;
+    params.push(limit);
+    params.push(offset);
 
-    const result = await this.db
-      .prepare(query)
-      .bind(...params)
-      .all();
+    const results = await this.dbService.queryMany<any>({
+      sql,
+      params
+    });
 
-    if (!result.results) return [];
-
-    return result.results.map(row => this.parsePageResult(row));
+    return results.map(this.parsePageResult);
   }
 
   async getUserPagesCount(userId: string, type?: PageType): Promise<number> {
-    let query = `SELECT COUNT(*) as count FROM Page WHERE userId = ?`;
+    let sql = `SELECT COUNT(*) as count FROM Page WHERE userId = ?`;
     const params: any[] = [userId];
 
     if (type) {
-      query += ` AND type = ?`;
+      sql += ` AND type = ?`;
       params.push(type);
     }
 
-    const result = await this.db
-      .prepare(query)
-      .bind(...params)
-      .first();
+    const result = await this.dbService.queryOne<{ count: number }>({
+      sql,
+      params
+    });
+
     return result ? Number(result.count) : 0;
   }
 
@@ -197,13 +204,13 @@ export class PageRepository implements IPageRepository {
       id: result.id,
       shortId: result.shortId,
       userId: result.userId,
-      type: result.type as PageType,
-      createdAt: result.createdAt,
-      expiresAt: result.expiresAt,
-      launchAt: result.launchAt,
+      type: result.type,
+      createdAt: Number(result.createdAt),
+      expiresAt: result.expiresAt ? Number(result.expiresAt) : null,
+      launchAt: result.launchAt ? Number(result.launchAt) : null,
       isActive: Boolean(result.isActive),
-      customization: JSON.parse(result.customization || '{}'),
-      settings: JSON.parse(result.settings || '{}'),
+      customization: result.customization ? JSON.parse(result.customization) : {},
+      settings: JSON.parse(result.settings),
     };
   }
 }

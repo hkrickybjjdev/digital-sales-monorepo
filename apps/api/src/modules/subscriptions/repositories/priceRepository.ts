@@ -1,52 +1,77 @@
-import { D1Database } from '@cloudflare/workers-types';
+import { Env } from '../../../types';
+import { DatabaseFactory } from '../../../database/databaseFactory';
+import { DatabaseService } from '../../../database/databaseService';
 
 import { Price } from '../models/schemas';
 import { IPriceRepository } from '../services/interfaces';
 
 export class PriceRepository implements IPriceRepository {
-  constructor(private readonly db: D1Database) {}
+  private dbService: DatabaseService;
+
+  constructor(env: Env) {
+    this.dbService = DatabaseFactory.getInstance(env);
+  }
 
   async getPricesByPlanId(planId: string): Promise<Price[]> {
-    const result = await this.db
-      .prepare(
-        `
-      SELECT * FROM "Price" WHERE planId = ? ORDER BY interval ASC
-    `
-      )
-      .bind(planId)
-      .all();
-
-    if (!result.results) return [];
-
-    return result.results.map(row => this.parsePriceResult(row));
+    return this.getPricesForPlan(planId);
   }
 
   async getPriceById(id: string): Promise<Price | null> {
-    const result = await this.db
-      .prepare(
-        `
-      SELECT * FROM "Price" WHERE id = ?
-    `
-      )
-      .bind(id)
-      .first();
+    const result = await this.dbService.queryOne<any>({
+      sql: `SELECT * FROM "Price" WHERE id = ?`,
+      params: [id]
+    });
 
     if (!result) return null;
 
-    return this.parsePriceResult(result);
-  }
-
-  private parsePriceResult(result: any): Price {
     return {
       id: result.id,
       planId: result.planId,
       productId: result.productId,
       currency: result.currency,
       interval: result.interval,
-      createdAt: result.createdAt,
-      updatedAt: result.updatedAt,
+      createdAt: Number(result.createdAt),
+      updatedAt: Number(result.updatedAt),
       billingScheme: result.billingScheme,
       type: result.type,
     };
+  }
+
+  async getPricesForPlan(planId: string): Promise<Price[]> {
+    const results = await this.dbService.queryMany<any>({
+      sql: `SELECT * FROM "Price" WHERE planId = ? ORDER BY interval`,
+      params: [planId]
+    });
+
+    return results.map(row => ({
+      id: row.id,
+      planId: row.planId,
+      productId: row.productId,
+      currency: row.currency,
+      interval: row.interval,
+      createdAt: Number(row.createdAt),
+      updatedAt: Number(row.updatedAt),
+      billingScheme: row.billingScheme,
+      type: row.type,
+    }));
+  }
+
+  async getPricesByInterval(interval: string): Promise<Price[]> {
+    const results = await this.dbService.queryMany<any>({
+      sql: `SELECT * FROM "Price" WHERE interval = ?`,
+      params: [interval]
+    });
+
+    return results.map(row => ({
+      id: row.id,
+      planId: row.planId,
+      productId: row.productId,
+      currency: row.currency,
+      interval: row.interval,
+      createdAt: Number(row.createdAt),
+      updatedAt: Number(row.updatedAt),
+      billingScheme: row.billingScheme,
+      type: row.type,
+    }));
   }
 }

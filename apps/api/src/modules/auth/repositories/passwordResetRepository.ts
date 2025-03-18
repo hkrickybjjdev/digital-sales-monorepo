@@ -1,13 +1,14 @@
-import { D1Database } from '@cloudflare/workers-types';
-
+import { Env } from '../../../types';
+import { DatabaseFactory } from '../../../database/databaseFactory';
+import { DatabaseService } from '../../../database/databaseService';
 import { generateUUID } from '../../../utils/utils';
 import { PasswordReset } from '../models/schemas';
 
 export class PasswordResetRepository {
-  private db: D1Database;
+  private dbService: DatabaseService;
 
-  constructor(db: D1Database) {
-    this.db = db;
+  constructor(env: Env) {
+    this.dbService = DatabaseFactory.getInstance(env);
   }
 
   async createPasswordReset(
@@ -15,8 +16,8 @@ export class PasswordResetRepository {
     token: string,
     expiryTimeInMinutes: number = 30
   ): Promise<PasswordReset> {
-    const now = Math.floor(Date.now() / 1000);
-    const expiresAt = now + expiryTimeInMinutes * 60;
+    const now = Date.now();
+    const expiresAt = now + expiryTimeInMinutes * 60 * 1000;
 
     const passwordReset: PasswordReset = {
       id: generateUUID(),
@@ -28,12 +29,10 @@ export class PasswordResetRepository {
       updatedAt: now,
     };
 
-    await this.db
-      .prepare(
-        `INSERT INTO "PasswordReset" (id, userId, token, expiresAt, used, createdAt, updatedAt)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`
-      )
-      .bind(
+    await this.dbService.executeWithAudit({
+      sql: `INSERT INTO "PasswordReset" (id, userId, token, expiresAt, used, createdAt, updatedAt)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      params: [
         passwordReset.id,
         passwordReset.userId,
         passwordReset.token,
@@ -41,38 +40,58 @@ export class PasswordResetRepository {
         passwordReset.used,
         passwordReset.createdAt,
         passwordReset.updatedAt
-      )
-      .run();
+      ]
+    }, {
+      action: 'CREATE',
+      userId,
+      resourceType: 'PasswordReset',
+      resourceId: passwordReset.id,
+      details: JSON.stringify({ token_expiry: expiryTimeInMinutes })
+    });
 
     return passwordReset;
   }
 
   async getPasswordResetByToken(token: string): Promise<PasswordReset | null> {
-    const stmt = await this.db
-      .prepare(`SELECT * FROM "PasswordReset" WHERE token = ? LIMIT 1`)
-      .bind(token)
-      .first();
-
-    return stmt as PasswordReset | null;
+    return this.dbService.queryOne<PasswordReset>({
+      sql: `SELECT * FROM "PasswordReset" WHERE token = ? LIMIT 1`,
+      params: [token]
+    });
   }
 
   async markTokenAsUsed(token: string): Promise<boolean> {
-    const now = Math.floor(Date.now() / 1000);
-    const result = await this.db
-      .prepare(`UPDATE "PasswordReset" SET used = 1, updatedAt = ? WHERE token = ?`)
-      .bind(now, token)
-      .run();
+    const now = Date.now();
+    
+    // First get the reset record to identify the user
+    const reset = await this.getPasswordResetByToken(token);
+    if (!reset) return false;
+    
+    await this.dbService.executeWithAudit({
+      sql: `UPDATE "PasswordReset" SET used = 1, updatedAt = ? WHERE token = ?`,
+      params: [now, token]
+    }, {
+      action: 'MARK_USED',
+      userId: reset.userId,
+      resourceType: 'PasswordReset',
+      resourceId: reset.id
+    });
 
-    return result.success;
+    return true;
   }
 
   async invalidateUserTokens(userId: string): Promise<boolean> {
-    const now = Math.floor(Date.now() / 1000);
-    const result = await this.db
-      .prepare(`UPDATE "PasswordReset" SET used = 1, updatedAt = ? WHERE userId = ? AND used = 0`)
-      .bind(now, userId)
-      .run();
+    const now = Date.now();
+    
+    await this.dbService.executeWithAudit({
+      sql: `UPDATE "PasswordReset" SET used = 1, updatedAt = ? WHERE userId = ? AND used = 0`,
+      params: [now, userId]
+    }, {
+      action: 'INVALIDATE_ALL',
+      userId,
+      resourceType: 'PasswordReset',
+      details: 'All user tokens invalidated'
+    });
 
-    return result.success;
+    return true;
   }
 }

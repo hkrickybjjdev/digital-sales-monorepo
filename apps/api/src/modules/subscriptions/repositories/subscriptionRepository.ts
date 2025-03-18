@@ -1,22 +1,26 @@
-import { D1Database } from '@cloudflare/workers-types';
+import { Env } from '../../../types';
+import { DatabaseFactory } from '../../../database/databaseFactory';
+import { DatabaseService } from '../../../database/databaseService';
 
 import { Subscription } from '../models/schemas';
 import { ISubscriptionRepository } from '../services/interfaces';
 
 export class SubscriptionRepository implements ISubscriptionRepository {
-  constructor(private readonly db: D1Database) {}
+  private dbService: DatabaseService;
+
+  constructor(env: Env) {
+    this.dbService = DatabaseFactory.getInstance(env);
+  }
 
   async createSubscription(subscription: Subscription): Promise<Subscription> {
-    await this.db
-      .prepare(
-        `
-      INSERT INTO "Subscription" (
-        id, teamId, planId, startDate, endDate, status, 
-        paymentGateway, subscriptionId, createdAt, updatedAt, cancelAt
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `
-      )
-      .bind(
+    await this.dbService.executeWithAudit({
+      sql: `
+        INSERT INTO "Subscription" (
+          id, teamId, planId, startDate, endDate, status, 
+          paymentGateway, subscriptionId, createdAt, updatedAt, cancelAt
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `,
+      params: [
         subscription.id,
         subscription.teamId,
         subscription.planId,
@@ -28,21 +32,26 @@ export class SubscriptionRepository implements ISubscriptionRepository {
         subscription.createdAt,
         subscription.updatedAt,
         subscription.cancelAt
-      )
-      .run();
+      ]
+    }, {
+      action: 'CREATE',
+      resourceType: 'Subscription',
+      resourceId: subscription.id,
+      details: JSON.stringify({
+        teamId: subscription.teamId,
+        planId: subscription.planId,
+        status: subscription.status
+      })
+    });
 
     return subscription;
   }
 
   async getSubscriptionById(id: string): Promise<Subscription | null> {
-    const result = await this.db
-      .prepare(
-        `
-      SELECT * FROM "Subscription" WHERE id = ?
-    `
-      )
-      .bind(id)
-      .first();
+    const result = await this.dbService.queryOne<any>({
+      sql: `SELECT * FROM "Subscription" WHERE id = ?`,
+      params: [id]
+    });
 
     if (!result) return null;
 
@@ -50,107 +59,104 @@ export class SubscriptionRepository implements ISubscriptionRepository {
   }
 
   async getTeamSubscriptions(teamId: string): Promise<Subscription[]> {
-    const result = await this.db
-      .prepare(
-        `
-      SELECT * FROM "Subscription" 
-      WHERE teamId = ? 
-      ORDER BY createdAt DESC
-    `
-      )
-      .bind(teamId)
-      .all();
+    const results = await this.dbService.queryMany<any>({
+      sql: `
+        SELECT * FROM "Subscription" 
+        WHERE teamId = ? 
+        ORDER BY createdAt DESC
+      `,
+      params: [teamId]
+    });
 
-    if (!result.results) return [];
-
-    return result.results.map(row => this.parseSubscriptionResult(row));
+    return results.map(this.parseSubscriptionResult);
   }
 
   async updateSubscription(id: string, data: Partial<Subscription>): Promise<Subscription | null> {
-    // First check if subscription exists
-    const existing = await this.getSubscriptionById(id);
-    if (!existing) return null;
-
-    // Build update query dynamically based on provided fields
-    const updates = [];
-    const values = [];
-
-    // For each property in data, add to the updates array
-    Object.entries(data).forEach(([key, value]) => {
-      // Don't update id and always update updatedAt
-      if (key !== 'id' && key !== 'updatedAt') {
-        updates.push(`${key} = ?`);
-        values.push(value);
-      }
-    });
-
-    // Always update the updatedAt timestamp
-    updates.push('updatedAt = ?');
-    values.push(Date.now());
-
-    if (updates.length > 0) {
-      await this.db
-        .prepare(
-          `
-        UPDATE "Subscription" SET ${updates.join(', ')} WHERE id = ?
-      `
-        )
-        .bind(...values, id)
-        .run();
+    const existingSubscription = await this.getSubscriptionById(id);
+    if (!existingSubscription) {
+      return null;
     }
 
-    // Return the updated subscription
+    const updateFields: string[] = [];
+    const values: any[] = [];
+
+    if (data.status !== undefined) {
+      updateFields.push('status = ?');
+      values.push(data.status);
+    }
+
+    if (data.endDate !== undefined) {
+      updateFields.push('endDate = ?');
+      values.push(data.endDate);
+    }
+
+    if (data.cancelAt !== undefined) {
+      updateFields.push('cancelAt = ?');
+      values.push(data.cancelAt);
+    }
+
+    if (updateFields.length === 0) {
+      return existingSubscription;
+    }
+
+    const now = Date.now();
+    updateFields.push('updatedAt = ?');
+    values.push(now);
+    values.push(id);
+
+    await this.dbService.executeWithAudit({
+      sql: `
+        UPDATE "Subscription" 
+        SET ${updateFields.join(', ')}
+        WHERE id = ?
+      `,
+      params: values
+    }, {
+      action: 'UPDATE',
+      resourceType: 'Subscription',
+      resourceId: id,
+      details: JSON.stringify(data)
+    });
+
     return this.getSubscriptionById(id);
   }
 
   async checkUserSubscriptionAccess(subscriptionId: string, userId: string): Promise<boolean> {
-    // Check if the user is a member of the team that owns this subscription
-    const result = await this.db
-      .prepare(
-        `
-      SELECT COUNT(*) as count 
-      FROM "Subscription" s
-      JOIN "TeamMember" tm ON s.teamId = tm.teamId
-      WHERE s.id = ? AND tm.userId = ?
-    `
-      )
-      .bind(subscriptionId, userId)
-      .first<{ count: number }>();
+    const result = await this.dbService.queryOne<any>({
+      sql: `
+        SELECT 1 FROM "Subscription" s
+        JOIN "TeamMember" tm ON s.teamId = tm.teamId
+        WHERE s.id = ? AND tm.userId = ?
+      `,
+      params: [subscriptionId, userId]
+    });
 
-    return result !== null && result.count > 0;
+    return result !== null;
   }
 
   async checkUserTeamAccess(teamId: string, userId: string): Promise<boolean> {
-    // Check if the user is a member of the given team
-    const result = await this.db
-      .prepare(
-        `
-      SELECT COUNT(*) as count 
-      FROM "TeamMember"
-      WHERE teamId = ? AND userId = ?
-    `
-      )
-      .bind(teamId, userId)
-      .first<{ count: number }>();
+    const result = await this.dbService.queryOne<any>({
+      sql: `
+        SELECT 1 FROM "TeamMember"
+        WHERE teamId = ? AND userId = ?
+      `,
+      params: [teamId, userId]
+    });
 
-    return result !== null && result.count > 0;
+    return result !== null;
   }
 
   async findByStripeSubscriptionId(stripeSubscriptionId: string): Promise<Subscription[]> {
-    const result = await this.db
-      .prepare(
-        `
-      SELECT * FROM "Subscription" 
-      WHERE subscriptionId = ? AND paymentGateway = 'stripe'
-      ORDER BY createdAt DESC
-    `
-      )
-      .bind(stripeSubscriptionId)
-      .all();
+    const results = await this.dbService.queryMany<any>({
+      sql: `
+        SELECT * FROM "Subscription" 
+        WHERE subscriptionId = ? 
+        ORDER BY createdAt DESC
+      `,
+      params: [stripeSubscriptionId]
+    });
 
-    if (!result.results) return [];
-
-    return result.results.map(row => this.parseSubscriptionResult(row));
+    return results.map(this.parseSubscriptionResult);
   }
 
   private parseSubscriptionResult(row: any): Subscription {
@@ -158,14 +164,14 @@ export class SubscriptionRepository implements ISubscriptionRepository {
       id: row.id,
       teamId: row.teamId,
       planId: row.planId,
-      startDate: row.startDate,
-      endDate: row.endDate,
+      startDate: Number(row.startDate),
+      endDate: row.endDate ? Number(row.endDate) : null,
       status: row.status,
       paymentGateway: row.paymentGateway,
       subscriptionId: row.subscriptionId,
-      createdAt: row.createdAt,
-      updatedAt: row.updatedAt,
-      cancelAt: row.cancelAt,
+      createdAt: Number(row.createdAt),
+      updatedAt: Number(row.updatedAt),
+      cancelAt: row.cancelAt ? Number(row.cancelAt) : null,
     };
   }
 }

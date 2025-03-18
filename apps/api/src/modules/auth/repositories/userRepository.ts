@@ -1,50 +1,48 @@
 import { Env } from '../../../types';
+import { DatabaseFactory } from '../../../database/databaseFactory';
+import { DatabaseService } from '../../../database/databaseService';
 import { generateUUID } from '../../../utils/utils';
 import { User, Session } from '../models/schemas';
 import { IUserRepository } from '../services/interfaces';
 
 export class UserRepository implements IUserRepository {
-  private db: D1Database;
+  private dbService: DatabaseService;
 
   constructor(env: Env) {
-    this.db = env.DB;
+    this.dbService = DatabaseFactory.getInstance(env);
   }
 
   async getUserByEmail(email: string): Promise<User | null> {
-    const stmt = this.db.prepare('SELECT * FROM User WHERE email = ?').bind(email.toLowerCase());
-
-    const result = await stmt.first();
-    return result as User | null;
+    return this.dbService.queryOne<User>({
+      sql: 'SELECT * FROM User WHERE email = ?',
+      params: [email.toLowerCase()]
+    });
   }
 
   async getUserById(id: string): Promise<User | null> {
-    const stmt = this.db.prepare('SELECT * FROM User WHERE id = ?').bind(id);
-
-    const result = await stmt.first();
-    return result as User | null;
+    return this.dbService.queryOne<User>({
+      sql: 'SELECT * FROM User WHERE id = ?',
+      params: [id]
+    });
   }
 
   async getUserByActivationToken(token: string): Promise<User | null> {
-    const stmt = this.db
-      .prepare('SELECT * FROM User WHERE activationToken = ? AND activationTokenExpiresAt > ?')
-      .bind(token, Date.now());
-
-    const result = await stmt.first();
-    return result as User | null;
+    return this.dbService.queryOne<User>({
+      sql: 'SELECT * FROM User WHERE activationToken = ? AND activationTokenExpiresAt > ?',
+      params: [token, Date.now()]
+    });
   }
 
   async createUser(user: Omit<User, 'id' | 'createdAt' | 'updatedAt'>): Promise<User> {
     const now = Date.now();
     const id = generateUUID();
 
-    const stmt = this.db
-      .prepare(
-        `
-      INSERT INTO User (id, email, name, passwordHash, createdAt, updatedAt, lockedAt, emailVerified, failedAttempts, activationToken, activationTokenExpiresAt) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `
-      )
-      .bind(
+    await this.dbService.executeWithAudit({
+      sql: `
+        INSERT INTO User (id, email, name, passwordHash, createdAt, updatedAt, lockedAt, emailVerified, failedAttempts, activationToken, activationTokenExpiresAt) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `,
+      params: [
         id,
         user.email.toLowerCase(),
         user.name,
@@ -56,9 +54,13 @@ export class UserRepository implements IUserRepository {
         user.failedAttempts || 0,
         user.activationToken || null,
         user.activationTokenExpiresAt || null
-      );
-
-    await stmt.run();
+      ]
+    }, {
+      action: 'CREATE',
+      resourceType: 'User',
+      resourceId: id,
+      details: JSON.stringify({ email: user.email.toLowerCase(), name: user.name })
+    });
 
     return {
       id,
@@ -77,232 +79,260 @@ export class UserRepository implements IUserRepository {
 
   async lockAccount(userId: string): Promise<void> {
     const now = Date.now();
-    await this.db
-      .prepare(
-        `
-      UPDATE User 
-      SET lockedAt = ?
-      WHERE id = ? AND lockedAt IS NULL
-    `
-      )
-      .bind(now, userId)
-      .run();
+    
+    await this.dbService.executeWithAudit({
+      sql: `
+        UPDATE User 
+        SET lockedAt = ?
+        WHERE id = ? AND lockedAt IS NULL
+      `,
+      params: [now, userId]
+    }, {
+      action: 'LOCK',
+      userId,
+      resourceType: 'User',
+      resourceId: userId
+    });
   }
 
   async unlockAccount(userId: string): Promise<void> {
-    await this.db
-      .prepare(
-        `
-      UPDATE User 
-      SET lockedAt = NULL
-      WHERE id = ?
-    `
-      )
-      .bind(userId)
-      .run();
+    await this.dbService.executeWithAudit({
+      sql: `
+        UPDATE User 
+        SET lockedAt = NULL
+        WHERE id = ?
+      `,
+      params: [userId]
+    }, {
+      action: 'UNLOCK',
+      userId,
+      resourceType: 'User',
+      resourceId: userId
+    });
   }
 
   async incrementFailedAttempts(userId: string): Promise<number> {
-    const result = await this.db
-      .prepare(
-        `
-      UPDATE User 
-      SET failedAttempts = failedAttempts + 1
-      WHERE id = ?
-      RETURNING failedAttempts
-    `
-      )
-      .bind(userId)
-      .first();
+    const result = await this.dbService.queryOne<{ failedAttempts: number }>({
+      sql: `
+        UPDATE User 
+        SET failedAttempts = failedAttempts + 1
+        WHERE id = ?
+        RETURNING failedAttempts
+      `,
+      params: [userId]
+    });
+
+    await this.dbService.execute({
+      sql: `
+        INSERT INTO AuditLog (action, userId, resourceType, resourceId, details, timestamp)
+        VALUES (?, ?, ?, ?, ?, ?)
+      `,
+      params: [
+        'INCREMENT_FAILED_ATTEMPTS', 
+        userId, 
+        'User', 
+        userId, 
+        JSON.stringify({ failedAttempts: result?.failedAttempts }),
+        Date.now()
+      ]
+    });
 
     return result ? Number(result.failedAttempts) : 0;
   }
 
   async resetFailedAttempts(userId: string): Promise<void> {
-    await this.db
-      .prepare(
-        `
-      UPDATE User 
-      SET failedAttempts = 0
-      WHERE id = ?
-    `
-      )
-      .bind(userId)
-      .run();
+    await this.dbService.executeWithAudit({
+      sql: `
+        UPDATE User 
+        SET failedAttempts = 0
+        WHERE id = ?
+      `,
+      params: [userId]
+    }, {
+      action: 'RESET_FAILED_ATTEMPTS',
+      userId,
+      resourceType: 'User',
+      resourceId: userId
+    });
   }
 
   async activateUser(userId: string): Promise<void> {
     const now = Date.now();
-    await this.db
-      .prepare(
-        `
-      UPDATE User 
-      SET emailVerified = 1, 
-          activationToken = NULL, 
-          activationTokenExpiresAt = NULL,
-          updatedAt = ?
-      WHERE id = ?
-    `
-      )
-      .bind(now, userId)
-      .run();
+    
+    await this.dbService.executeWithAudit({
+      sql: `
+        UPDATE User 
+        SET emailVerified = 1, 
+            activationToken = NULL, 
+            activationTokenExpiresAt = NULL,
+            updatedAt = ?
+        WHERE id = ?
+      `,
+      params: [now, userId]
+    }, {
+      action: 'ACTIVATE',
+      userId,
+      resourceType: 'User',
+      resourceId: userId
+    });
   }
 
   async setActivationToken(userId: string, token: string, expiresAt: number): Promise<void> {
     const now = Date.now();
-    await this.db
-      .prepare(
-        `
-      UPDATE User 
-      SET activationToken = ?, 
-          activationTokenExpiresAt = ?,
-          updatedAt = ?
-      WHERE id = ?
-    `
-      )
-      .bind(token, expiresAt, now, userId)
-      .run();
+    
+    await this.dbService.executeWithAudit({
+      sql: `
+        UPDATE User 
+        SET activationToken = ?, 
+            activationTokenExpiresAt = ?,
+            updatedAt = ?
+        WHERE id = ?
+      `,
+      params: [token, expiresAt, now, userId]
+    }, {
+      action: 'SET_ACTIVATION_TOKEN',
+      userId,
+      resourceType: 'User',
+      resourceId: userId
+    });
   }
 
   async createSession(
     userId: string,
     expiresInSeconds: number = 60 * 60 * 24 * 7
   ): Promise<Session> {
-    const id = generateUUID();
     const now = Date.now();
+    const id = generateUUID();
     const expiresAt = now + expiresInSeconds * 1000;
 
-    const stmt = this.db
-      .prepare(
-        `
-      INSERT INTO Session (id, userId, expiresAt, createdAt)
-      VALUES (?, ?, ?, ?)
-    `
-      )
-      .bind(id, userId, expiresAt, now);
-
-    await stmt.run();
+    await this.dbService.executeWithAudit({
+      sql: `
+        INSERT INTO Session (id, userId, expiresAt, createdAt) 
+        VALUES (?, ?, ?, ?)
+      `,
+      params: [id, userId, expiresAt, now]
+    }, {
+      action: 'CREATE',
+      userId,
+      resourceType: 'Session',
+      resourceId: id
+    });
 
     return {
       id,
-      userId: userId,
-      expiresAt: expiresAt,
+      userId,
+      expiresAt,
       createdAt: now,
     };
   }
 
   async getSessionById(id: string): Promise<Session | null> {
-    const stmt = this.db.prepare('SELECT * FROM Session WHERE id = ?').bind(id);
-
-    const result = await stmt.first();
-    return result as Session | null;
+    return this.dbService.queryOne<Session>({
+      sql: 'SELECT * FROM Session WHERE id = ?',
+      params: [id]
+    });
   }
 
   async deleteSession(id: string): Promise<void> {
-    const stmt = this.db.prepare('DELETE FROM Session WHERE id = ?').bind(id);
+    const session = await this.getSessionById(id);
+    if (!session) return;
 
-    await stmt.run();
+    await this.dbService.executeWithAudit({
+      sql: 'DELETE FROM Session WHERE id = ?',
+      params: [id]
+    }, {
+      action: 'DELETE',
+      userId: session.userId,
+      resourceType: 'Session',
+      resourceId: id
+    });
   }
 
   async deleteExpiredSessions(): Promise<void> {
     const now = Date.now();
-    const stmt = this.db.prepare('DELETE FROM Session WHERE expiresAt < ?').bind(now);
-
-    await stmt.run();
+    
+    await this.dbService.execute({
+      sql: 'DELETE FROM Session WHERE expiresAt < ?',
+      params: [now]
+    });
   }
 
   async updateUser(userId: string, data: { name?: string; email?: string }): Promise<User | null> {
-    // First, check if the user exists
     const user = await this.getUserById(userId);
-    if (!user) {
-      return null;
-    }
+    if (!user) return null;
 
-    // Build the update query dynamically based on provided fields
-    const updateFields: string[] = [];
-    const values: any[] = [];
+    const updates: string[] = [];
+    const params: any[] = [];
 
     if (data.name !== undefined) {
-      updateFields.push('name = ?');
-      values.push(data.name);
+      updates.push('name = ?');
+      params.push(data.name);
     }
 
     if (data.email !== undefined) {
-      updateFields.push('email = ?');
-      values.push(data.email.toLowerCase());
+      updates.push('email = ?');
+      params.push(data.email.toLowerCase());
     }
 
-    // Add updatedAt to the fields to update
-    updateFields.push('updatedAt = ?');
-    values.push(Date.now());
-
-    // Add userId as the last value for the WHERE clause
-    values.push(userId);
-
-    // If no fields to update, return the existing user
-    if (updateFields.length === 0) {
+    if (updates.length === 0) {
       return user;
     }
 
-    // Execute the update query
-    const stmt = this.db
-      .prepare(
-        `
-      UPDATE User
-      SET ${updateFields.join(', ')}
-      WHERE id = ?
-    `
-      )
-      .bind(...values);
+    updates.push('updatedAt = ?');
+    const now = Date.now();
+    params.push(now);
+    params.push(userId);
 
-    await stmt.run();
+    await this.dbService.executeWithAudit({
+      sql: `
+        UPDATE User 
+        SET ${updates.join(', ')}
+        WHERE id = ?
+      `,
+      params
+    }, {
+      action: 'UPDATE',
+      userId,
+      resourceType: 'User',
+      resourceId: userId,
+      details: JSON.stringify(data)
+    });
 
-    // Return the updated user
+    // Get the updated user
     return this.getUserById(userId);
   }
 
   async updateUserPassword(userId: string, passwordHash: string): Promise<boolean> {
-    const now = Math.floor(Date.now() / 1000);
-    const result = await this.db
-      .prepare(`UPDATE "User" SET passwordHash = ?, updatedAt = ? WHERE id = ?`)
-      .bind(passwordHash, now, userId)
-      .run();
+    const now = Date.now();
+    
+    await this.dbService.executeWithAudit({
+      sql: `
+        UPDATE User 
+        SET passwordHash = ?, updatedAt = ?
+        WHERE id = ?
+      `,
+      params: [passwordHash, now, userId]
+    }, {
+      action: 'UPDATE_PASSWORD',
+      userId,
+      resourceType: 'User',
+      resourceId: userId
+    });
 
-    return result.success;
+    return true;
   }
 
   async deleteUser(userId: string): Promise<boolean> {
-    // First, check if the user exists
-    const user = await this.getUserById(userId);
-    if (!user) {
-      return false;
-    }
+    await this.dbService.executeWithAudit({
+      sql: 'DELETE FROM User WHERE id = ?',
+      params: [userId]
+    }, {
+      action: 'DELETE',
+      userId,
+      resourceType: 'User',
+      resourceId: userId
+    });
 
-    // Delete all sessions for the user
-    const deleteSessionsStmt = this.db
-      .prepare(
-        `
-      DELETE FROM Session
-      WHERE userId = ?
-    `
-      )
-      .bind(userId);
-
-    await deleteSessionsStmt.run();
-
-    // Delete the user
-    const deleteUserStmt = this.db
-      .prepare(
-        `
-      DELETE FROM User
-      WHERE id = ?
-    `
-      )
-      .bind(userId);
-
-    const result = await deleteUserStmt.run();
-
-    // Return true if at least one row was affected
-    return result.meta.changes > 0;
+    return true;
   }
 }

@@ -1,31 +1,35 @@
-import { D1Database } from '@cloudflare/workers-types';
-
-import { generateUUID } from '@/utils/utils';
+import { Env } from '../../../types';
+import { DatabaseFactory } from '../../../database/databaseFactory';
+import { DatabaseService } from '../../../database/databaseService';
+import { generateUUID } from '../../../utils/utils';
 
 import { Team, TeamWithMemberCount } from '../models/schemas';
 
 import { ITeamRepository } from './interfaces';
 
 export class TeamRepository implements ITeamRepository {
-  private db: D1Database;
+  private dbService: DatabaseService;
 
-  constructor(db: D1Database) {
-    this.db = db;
+  constructor(env: Env) {
+    this.dbService = DatabaseFactory.getInstance(env);
   }
 
   async createTeam(team: Omit<Team, 'id' | 'createdAt' | 'updatedAt'>): Promise<Team> {
     const id = generateUUID();
-    const now = Math.floor(Date.now() / 1000);
+    const now = Date.now();
 
-    await this.db
-      .prepare(
-        `
-      INSERT INTO "Team" (id, name, createdAt, updatedAt)
-      VALUES (?, ?, ?, ?)
-    `
-      )
-      .bind(id, team.name, now, now)
-      .run();
+    await this.dbService.executeWithAudit({
+      sql: `
+        INSERT INTO "Team" (id, name, createdAt, updatedAt)
+        VALUES (?, ?, ?, ?)
+      `,
+      params: [id, team.name, now, now]
+    }, {
+      action: 'CREATE',
+      resourceType: 'Team',
+      resourceId: id,
+      details: JSON.stringify({ name: team.name })
+    });
 
     return {
       id,
@@ -36,115 +40,117 @@ export class TeamRepository implements ITeamRepository {
   }
 
   async getTeamById(id: string): Promise<Team | null> {
-    const result = await this.db
-      .prepare(
-        `
-      SELECT * FROM "Team" WHERE id = ?
-    `
-      )
-      .bind(id)
-      .first();
+    const result = await this.dbService.queryOne<Team>({
+      sql: `SELECT * FROM "Team" WHERE id = ?`,
+      params: [id]
+    });
 
-    return (result as Team) || null;
+    return result || null;
   }
 
   async getTeamsByUserId(userId: string): Promise<TeamWithMemberCount[]> {
-    const results = await this.db
-      .prepare(
-        `
-      SELECT t.*, COUNT(tm2.id) as memberCount 
-      FROM "Team" t
-      JOIN "TeamMember" tm ON t.id = tm.teamId
-      LEFT JOIN "TeamMember" tm2 ON t.id = tm2.teamId
-      WHERE tm.userId = ?
-      GROUP BY t.id
-      ORDER BY t.name ASC
-    `
-      )
-      .bind(userId)
-      .all();
+    const results = await this.dbService.queryMany<TeamWithMemberCount>({
+      sql: `
+        SELECT 
+          t.id, 
+          t.name, 
+          t.createdAt, 
+          t.updatedAt,
+          COUNT(tm.id) as memberCount
+        FROM "Team" t
+        JOIN "TeamMember" tm ON t.id = tm.teamId
+        WHERE tm.userId = ?
+        GROUP BY t.id
+      `,
+      params: [userId]
+    });
 
-    return (results.results || []).map(row => ({
-      id: String(row.id),
-      name: String(row.name),
-      createdAt: Number(row.createdAt),
-      updatedAt: Number(row.updatedAt),
-      memberCount: Number(row.memberCount),
+    return results.map(team => ({
+      ...team,
+      createdAt: Number(team.createdAt),
+      updatedAt: Number(team.updatedAt),
+      memberCount: Number(team.memberCount),
     }));
   }
 
   async updateTeam(id: string, team: Partial<Team>): Promise<Team | null> {
-    const now = Math.floor(Date.now() / 1000);
-    const updateFields = [];
-    const values = [];
+    const existingTeam = await this.getTeamById(id);
+    if (!existingTeam) {
+      return null;
+    }
+
+    const updates: string[] = [];
+    const values: any[] = [];
 
     if (team.name !== undefined) {
-      updateFields.push('name = ?');
+      updates.push('name = ?');
       values.push(team.name);
     }
 
-    if (updateFields.length === 0) {
-      // Nothing to update
-      return this.getTeamById(id);
+    if (updates.length === 0) {
+      return existingTeam;
     }
 
-    updateFields.push('updatedAt = ?');
+    const now = Date.now();
+    updates.push('updatedAt = ?');
     values.push(now);
     values.push(id);
 
-    await this.db
-      .prepare(
-        `
-      UPDATE "Team"
-      SET ${updateFields.join(', ')}
-      WHERE id = ?
-    `
-      )
-      .bind(...values)
-      .run();
+    await this.dbService.executeWithAudit({
+      sql: `
+        UPDATE "Team" 
+        SET ${updates.join(', ')}
+        WHERE id = ?
+      `,
+      params: values
+    }, {
+      action: 'UPDATE',
+      resourceType: 'Team',
+      resourceId: id,
+      details: JSON.stringify(team)
+    });
 
     return this.getTeamById(id);
   }
 
   async deleteTeam(id: string): Promise<boolean> {
-    const result = await this.db
-      .prepare(
-        `
-      DELETE FROM "Team" WHERE id = ?
-    `
-      )
-      .bind(id)
-      .run();
+    await this.dbService.executeWithAudit({
+      sql: `DELETE FROM "Team" WHERE id = ?`,
+      params: [id]
+    }, {
+      action: 'DELETE',
+      resourceType: 'Team',
+      resourceId: id
+    });
 
-    return result.meta.changes > 0;
+    return true;
   }
 
   async checkUserRole(teamId: string, userId: string, roles: string[]): Promise<boolean> {
-    const result = await this.db
-      .prepare(
-        `
-      SELECT 1 FROM "TeamMember" 
-      WHERE teamId = ? 
-      AND userId = ? 
-      AND role IN (${roles.map(() => '?').join(', ')})
-    `
-      )
-      .bind(teamId, userId, ...roles)
-      .first();
+    const result = await this.dbService.queryOne<{ role: string }>({
+      sql: `
+        SELECT role FROM "TeamMember" 
+        WHERE teamId = ? AND userId = ?
+      `,
+      params: [teamId, userId]
+    });
 
-    return result !== null;
+    if (!result) return false;
+
+    return roles.includes(result.role);
   }
 
   async getTeamCountByUserId(userId: string): Promise<number> {
-    const result = await this.db
-      .prepare(
-        `
-      SELECT COUNT(*) as count FROM "TeamMember" WHERE userId = ?
-    `
-      )
-      .bind(userId)
-      .first<{ count: number }>();
+    const result = await this.dbService.queryOne<{ count: number }>({
+      sql: `
+        SELECT COUNT(DISTINCT t.id) as count
+        FROM "Team" t
+        JOIN "TeamMember" tm ON t.id = tm.teamId
+        WHERE tm.userId = ?
+      `,
+      params: [userId]
+    });
 
-    return result?.count || 0;
+    return result ? Number(result.count) : 0;
   }
 }

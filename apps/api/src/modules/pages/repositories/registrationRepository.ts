@@ -1,11 +1,16 @@
-import { D1Database } from '@cloudflare/workers-types';
-
+import { Env } from '../../../types';
+import { DatabaseFactory } from '../../../database/databaseFactory';
+import { DatabaseService } from '../../../database/databaseService';
 import { generateUUID } from '../../../utils/utils';
 import { Registration, CreateRegistrationRequest } from '../models/schemas';
 import { IRegistrationRepository } from '../services/interfaces';
 
 export class RegistrationRepository implements IRegistrationRepository {
-  constructor(private readonly db: D1Database) {}
+  private dbService: DatabaseService;
+
+  constructor(env: Env) {
+    this.dbService = DatabaseFactory.getInstance(env);
+  }
 
   async createRegistration(
     pageId: string,
@@ -24,24 +29,31 @@ export class RegistrationRepository implements IRegistrationRepository {
       customFields: request.customFields,
     };
 
-    await this.db
-      .prepare(
-        `
-      INSERT INTO Registration (
-        id, pageId, email, name, phone, registeredAt, customFields
-      ) VALUES (?, ?, ?, ?, ?, ?, ?)
-    `
-      )
-      .bind(
+    await this.dbService.executeWithAudit({
+      sql: `
+        INSERT INTO Registration (
+          id, pageId, email, name, phone, registeredAt, customFields
+        ) VALUES (?, ?, ?, ?, ?, ?, ?)
+      `,
+      params: [
         registration.id,
         registration.pageId,
         registration.email,
         registration.name,
         registration.phone || null,
         registration.registeredAt,
-        JSON.stringify(registration.customFields || {})
-      )
-      .run();
+        JSON.stringify(registration.customFields)
+      ]
+    }, {
+      action: 'CREATE',
+      resourceType: 'Registration',
+      resourceId: registration.id,
+      details: JSON.stringify({
+        pageId: registration.pageId,
+        email: registration.email,
+        name: registration.name
+      })
+    });
 
     return registration;
   }
@@ -58,47 +70,35 @@ export class RegistrationRepository implements IRegistrationRepository {
       return [];
     }
 
-    const result = await this.db
-      .prepare(
-        `
-      SELECT * FROM Registration 
-      WHERE pageId = ? 
-      ORDER BY registeredAt DESC
-      LIMIT ? OFFSET ?
-    `
-      )
-      .bind(pageId, limit, offset)
-      .all();
+    const results = await this.dbService.queryMany<any>({
+      sql: `
+        SELECT * FROM Registration 
+        WHERE pageId = ? 
+        ORDER BY registeredAt DESC 
+        LIMIT ? OFFSET ?
+      `,
+      params: [pageId, limit, offset]
+    });
 
-    if (!result.results) return [];
-
-    return result.results.map(row => this.parseRegistrationResult(row));
+    return results.map(row => this.parseRegistrationResult(row));
   }
 
   async getRegistrationCount(pageId: string): Promise<number> {
-    const result = await this.db
-      .prepare(
-        `
-      SELECT COUNT(*) as count FROM Registration WHERE pageId = ?
-    `
-      )
-      .bind(pageId)
-      .first();
+    const result = await this.dbService.queryOne<{ count: number }>({
+      sql: `SELECT COUNT(*) as count FROM Registration WHERE pageId = ?`,
+      params: [pageId]
+    });
 
     return result ? Number(result.count) : 0;
   }
 
   private async checkPageOwnership(pageId: string, userId: string): Promise<boolean> {
-    const result = await this.db
-      .prepare(
-        `
-      SELECT id FROM Page WHERE id = ? AND userId = ?
-    `
-      )
-      .bind(pageId, userId)
-      .first();
+    const result = await this.dbService.queryOne<any>({
+      sql: `SELECT 1 FROM Page WHERE id = ? AND userId = ?`,
+      params: [pageId, userId]
+    });
 
-    return !!result;
+    return result !== null;
   }
 
   private parseRegistrationResult(result: any): Registration {
@@ -107,9 +107,9 @@ export class RegistrationRepository implements IRegistrationRepository {
       pageId: result.pageId,
       email: result.email,
       name: result.name,
-      phone: result.phone || undefined,
-      registeredAt: result.registeredAt,
-      customFields: JSON.parse(result.customFields || '{}'),
+      phone: result.phone,
+      registeredAt: Number(result.registeredAt),
+      customFields: result.customFields ? JSON.parse(result.customFields) : {},
     };
   }
 }
