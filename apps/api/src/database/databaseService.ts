@@ -27,11 +27,29 @@ export interface RequestContext {
   sessionId?: string;
 }
 
+// Default retry configuration
+const DEFAULT_RETRY_CONFIG = {
+  maxAttempts: 3,
+  initialDelayMs: 100,
+  maxDelayMs: 5000,
+  backoffFactor: 2,
+};
+
+// Interface for retry configuration
+export interface RetryConfig {
+  maxAttempts?: number;
+  initialDelayMs?: number;
+  maxDelayMs?: number;
+  backoffFactor?: number;
+}
+
 export class DatabaseService {
   private db: D1Database;
+  private retryConfig: RetryConfig;
 
-  constructor(env: Env) {
+  constructor(env: Env, retryConfig?: RetryConfig) {
     this.db = env.DB;
+    this.retryConfig = { ...DEFAULT_RETRY_CONFIG, ...retryConfig };
   }
 
   /**
@@ -58,12 +76,37 @@ export class DatabaseService {
 
   /**
    * Execute a query that doesn't return any data (INSERT, UPDATE, DELETE)
+   * Now with retry capability and exponential backoff
    */
-  async execute(query: QueryParams): Promise<D1Result> {
-    const { sql, params = [] } = query;
-    const stmt = this.db.prepare(sql);
-    const boundStmt = this.bindParams(stmt, params);
-    return await boundStmt.run();
+  async execute(query: QueryParams, retryOptions?: RetryConfig): Promise<D1Result> {
+    const config = { ...this.retryConfig, ...retryOptions };
+    let lastError: Error | null = null;
+    let delayMs = config.initialDelayMs!;
+
+    for (let attempt = 1; attempt <= config.maxAttempts!; attempt++) {
+      try {
+        const { sql, params = [] } = query;
+        const stmt = this.db.prepare(sql);
+        const boundStmt = this.bindParams(stmt, params);
+        return await boundStmt.run();
+      } catch (error) {
+        lastError = error as Error;
+
+        // If this is the last attempt, or the error is not retryable, throw it
+        if (attempt >= config.maxAttempts! || !this.isRetryableError(error)) {
+          throw error;
+        }
+
+        // Wait before the next retry with exponential backoff
+        await this.delay(delayMs);
+
+        // Increase delay for next attempt with exponential backoff
+        delayMs = Math.min(delayMs * config.backoffFactor!, config.maxDelayMs!);
+      }
+    }
+
+    // This should never be reached, but TypeScript requires a return statement
+    throw lastError;
   }
 
   /**
@@ -199,5 +242,38 @@ export class DatabaseService {
       return stmt;
     }
     return stmt.bind(...params);
+  }
+
+  /**
+   * Helper method to determine if an error is retryable
+   * Override this method to customize which errors should be retried
+   */
+  protected isRetryableError(error: any): boolean {
+    // Common transient errors that should be retried
+    // Examples: connection issues, deadlocks, etc.
+    const retryableErrors = [
+      'database is locked',
+      'busy',
+      'connection',
+      'timeout',
+      'network',
+      'SQLITE_BUSY',
+      'SQLITE_LOCKED',
+    ];
+
+    if (error && error.message) {
+      return retryableErrors.some(retryErr =>
+        error.message.toLowerCase().includes(retryErr.toLowerCase())
+      );
+    }
+
+    return false;
+  }
+
+  /**
+   * Helper method to wait for the specified delay
+   */
+  private delay(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
   }
 }
