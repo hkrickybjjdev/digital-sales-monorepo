@@ -318,7 +318,7 @@ npm install
 # STRIPE_WEBHOOK_SECRET=whsec_placeholder
 
 # Initialize the database (required before first run)
-npx wrangler d1 execute DB --local --file=./src/database/schema.sql
+npx wrangler d1 execute DB --local --file=./src/scripts/schema.sql
 
 # Start development server
 npm run dev
@@ -483,12 +483,12 @@ Before running the application for the first time, you need to initialize the da
 
 ```bash
 # Initialize the local development database
-npx wrangler d1 execute DB --local --file=./src/database/schema.sql
+npx wrangler d1 execute DB --local --file=./src/scripts/schema.sql
 # or
 npm run db:init
 
 # Initialize the production database (when deploying)
-npx wrangler d1 execute DB --file=./src/database/schema.sql
+npx wrangler d1 execute DB --file=./src/scripts/schema.sql
 ```
 
 ### Database Management
@@ -499,12 +499,12 @@ To clear all data from the tables (useful for testing):
 
 ```bash
 # Clear tables in the local development database
-npx wrangler d1 execute DB --local --file=./src/database/clear_tables.sql
+npx wrangler d1 execute DB --local --file=./src/scripts/clear_tables.sql
 # or
 npm run db:clear
 
 # Clear tables in the production database
-npx wrangler d1 execute DB --file=./src/database/clear_tables.sql
+npx wrangler d1 execute DB --file=./src/scripts/clear_tables.sql
 ```
 
 #### Dropping Tables
@@ -513,12 +513,12 @@ To completely remove all tables from the database:
 
 ```bash
 # Drop all tables in the local development database
-npx wrangler d1 execute DB --local --file=./src/database/drop_tables.sql
+npx wrangler d1 execute DB --local --file=./src/scripts/drop_tables.sql
 # or
 npm run db:drop
 
 # Drop all tables in the production database
-npx wrangler d1 execute DB --file=./src/database/drop_tables.sql
+npx wrangler d1 execute DB --file=./src/scripts/drop_tables.sql
 ```
 
 ## Environment Variables
