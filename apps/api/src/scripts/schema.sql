@@ -135,12 +135,12 @@ CREATE INDEX IF NOT EXISTS idx_audit_outcome ON "AuditLog"(outcome);
 -- Create Page table
 CREATE TABLE IF NOT EXISTS "Page" (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    userId INTEGER NOT NULL, -- Foreign Key to the User table
+    teamId INTEGER NOT NULL, -- Foreign Key to the User table
     slug TEXT UNIQUE,
     status TEXT DEFAULT 'draft', -- 'draft', 'published', 'expired', 'archived'
     createdAt INTEGER, -- Unix timestamp (seconds since epoch)
     updatedAt INTEGER, -- Unix timestamp (seconds since epoch)
-    FOREIGN KEY (userId) REFERENCES "User"(id)
+    FOREIGN KEY (teamId) REFERENCES "Team"(id)
 );
 
 -- Create ExpirationSetting table
@@ -213,7 +213,7 @@ CREATE TABLE IF NOT EXISTS "ContentBlockTranslation" (
 
 -- Create indexes for Pages module tables
 CREATE INDEX IF NOT EXISTS idx_page_slug ON "Page"(slug);
-CREATE INDEX IF NOT EXISTS idx_page_user ON "Page"(userId);
+CREATE INDEX IF NOT EXISTS idx_page_team ON "Page"(teamId);
 CREATE INDEX IF NOT EXISTS idx_page_status ON "Page"(status);
 CREATE INDEX IF NOT EXISTS idx_pageversion_page ON "PageVersion"(pageId);
 CREATE INDEX IF NOT EXISTS idx_pageversion_published ON "PageVersion"(isPublished);

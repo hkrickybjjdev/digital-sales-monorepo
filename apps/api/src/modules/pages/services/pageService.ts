@@ -54,7 +54,7 @@ export class PageService implements IPageService {
     // 1. Create the page
     const page = await this.pageRepository.createPage(
       {
-        userId: data.userId,
+        teamId: data.teamId,
         slug: data.slug || null,
         status: 'draft',
       },
