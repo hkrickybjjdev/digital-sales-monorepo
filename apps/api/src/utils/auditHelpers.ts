@@ -23,11 +23,7 @@ export class AuditHelpers {
     details: Record<string, any> = {},
     context?: RequestContext
   ): Promise<void> {
-    await this.dbService.executeWithAudit(
-      {
-        sql: 'SELECT 1', // No-op query
-        params: [],
-      },
+    await this.dbService.createAuditLog(
       {
         eventType,
         userId,
@@ -51,11 +47,7 @@ export class AuditHelpers {
     details: Record<string, any> = {},
     context?: RequestContext
   ): Promise<void> {
-    await this.dbService.executeWithAudit(
-      {
-        sql: 'SELECT 1', // No-op query
-        params: [],
-      },
+    await this.dbService.createAuditLog(
       {
         eventType,
         userId,
@@ -79,11 +71,7 @@ export class AuditHelpers {
     details: Record<string, any> = {},
     context?: RequestContext
   ): Promise<void> {
-    await this.dbService.executeWithAudit(
-      {
-        sql: 'SELECT 1', // No-op query
-        params: [],
-      },
+    await this.dbService.createAuditLog(
       {
         eventType: granted ? 'access_granted' : 'access_denied',
         userId,
@@ -110,11 +98,7 @@ export class AuditHelpers {
     const errorMessage = error instanceof Error ? error.message : error;
     const errorStack = error instanceof Error ? error.stack : undefined;
 
-    await this.dbService.executeWithAudit(
-      {
-        sql: 'SELECT 1', // No-op query
-        params: [],
-      },
+    await this.dbService.createAuditLog(
       {
         eventType,
         userId,
@@ -142,11 +126,7 @@ export class AuditHelpers {
     after?: Record<string, any>,
     context?: RequestContext
   ): Promise<void> {
-    await this.dbService.executeWithAudit(
-      {
-        sql: 'SELECT 1', // No-op query
-        params: [],
-      },
+    await this.dbService.createAuditLog(
       {
         eventType: `${resourceType.toLowerCase()}_${operation}`,
         userId,

@@ -1,3 +1,5 @@
+import { AuditHelpers } from '@/utils/auditHelpers';
+
 import { DatabaseFactory } from '../../../database/databaseFactory';
 import { DatabaseService, RequestContext } from '../../../database/databaseService';
 import { Env } from '../../../types';
@@ -7,9 +9,11 @@ import { IUserRepository } from '../services/interfaces';
 
 export class UserRepository implements IUserRepository {
   private dbService: DatabaseService;
+  private auditHelpers: AuditHelpers;
 
   constructor(env: Env) {
     this.dbService = DatabaseFactory.getInstance(env);
+    this.auditHelpers = new AuditHelpers(this.dbService);
   }
 
   async getUserByEmail(email: string): Promise<User | null> {
@@ -140,21 +144,13 @@ export class UserRepository implements IUserRepository {
       `,
       params: [userId],
     });
-
-    // Use executeWithAudit instead of direct SQL insert
-    await this.dbService.executeWithAudit(
-      {
-        sql: 'SELECT 1', // No-op query since we already executed the update
-        params: [],
-      },
-      {
-        eventType: 'user_failed_attempt_incremented',
-        userId,
-        resourceType: 'User',
-        resourceId: userId,
-        details: JSON.stringify({ failedAttempts: result?.failedAttempts }),
-        outcome: 'success',
-      },
+    
+    await this.auditHelpers.logFailure(
+      'user_failed_attempt_incremented',
+      'User',
+      userId,
+      userId,
+      { failedAttempts: result?.failedAttempts },
       context
     );
 

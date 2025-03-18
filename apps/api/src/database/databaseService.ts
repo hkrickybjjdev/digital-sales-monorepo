@@ -98,6 +98,32 @@ export class DatabaseService {
   }
 
   /**
+   * Create an audit log entry without executing a database operation
+   * This is useful for logging events that don't modify the database
+   */
+  async createAuditLog(
+    auditInfo: {
+      eventType: string;
+      userId?: string;
+      resourceType?: string;
+      resourceId?: string;
+      details?: string;
+      outcome: string;
+    },
+    context?: RequestContext
+  ): Promise<void> {
+    await this.logAudit({
+      ...auditInfo,
+      ipAddress: context?.ipAddress,
+      userAgent: context?.userAgent,
+      sessionId: context?.sessionId,
+      timestamp: Date.now(),
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    });
+  }
+
+  /**
    * Begin a database transaction
    */
   async transaction<T>(callback: (tx: DatabaseService) => Promise<T>): Promise<T> {
