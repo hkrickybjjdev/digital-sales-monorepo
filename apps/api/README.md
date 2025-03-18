@@ -16,7 +16,6 @@ API versions follow this format:
 For example:
 - `/api/v1/auth/login`
 - `/api/v2/auth/login`
-- `/api/v1/pages/123`
 
 ### Available Versions
 
@@ -126,10 +125,6 @@ Common error codes:
 - `Forbidden` - Insufficient permissions
 - `InternalServerError` - Server-side error
 - `UnsupportedApiVersion` - Requested API version is not supported
-- `PageExpired` - Requested page has expired
-- `PageNotLaunched` - Page is not yet available
-- `PageInactive` - Page is no longer active
-- `RegistrationLimitReached` - Event registration limit reached
 
 ### Headers
 
@@ -343,8 +338,6 @@ modules/
   │   │   └── container.ts  # DI container implementation
   │   ├── v2/               # v2 API implementation
   │   └── index.ts          # Route definitions and module exports
-  ├── pages/                # Page management
-  ├── products/             # Digital product handling
   ├── payments/             # Stripe integration
   ├── teams/                # Team and subscription management
   │   ├── webhooks/         # Integration with other modules
@@ -352,9 +345,9 @@ modules/
   └── analytics/            # Usage tracking and reporting
 ```
 
-### Pages Module Architecture
+### Team Module Architecture
 
-The pages module follows a clean architecture pattern:
+The teams module follows a clean architecture pattern:
 
 1. **Models Layer** (`models/schemas.ts`)
    - Defines data structures using Zod schemas for validation and type safety.
@@ -366,7 +359,7 @@ The pages module follows a clean architecture pattern:
    - Provides data access abstraction
    - Implements CRUD operations for each entity
    - Uses `D1Database`, passed in the constructor
-   - Example: `pageRepository.ts`, `contentRepository.ts`, `registrationRepository.ts`
+   - Example: `TeamRepository.ts`, `TeamMemberRepository.ts`
 
 3. **Service Layer** (`services/`)
    - Implements business logic
@@ -374,14 +367,14 @@ The pages module follows a clean architecture pattern:
    - Uses repositories, passed in the constructor
    - Should not call any db function directly, but instead use the repository
    - Handles caching and complex operations
-   - Example: `PageService.ts`, `ContentService.ts`, `RegistrationService.ts`
+   - Example: `teamService.ts`, `teamMemberService.ts`
 
 4. **Controller Layer** (`controllers/`)
    - Contains handler functions for HTTP requests
    - Validates input using Zod schemas
    - Calls appropriate service methods
    - Formats responses according to API standards
-   - Example: `pageHandlers.ts`, `contentHandlers.ts`, `registrationHandlers.ts`
+   - Example: `teamHandlers.ts`, `teamMemberHandlers.ts`
 
 5. **Dependency Injection** (`di/container.ts`)
    - Manages dependencies between different layers of the application.

@@ -8,9 +8,7 @@ import { versionMiddleware } from './middleware/versionMiddleware';
 import { analyticsModule } from './modules/analytics';
 import { authModule } from './modules/auth';
 import { authModuleV2 } from './modules/auth/v2';
-import { pagesModule } from './modules/pages';
 import { paymentsModule } from './modules/payments';
-import { productsModule } from './modules/products';
 import { storageModule } from './modules/storage';
 import { subscriptionsModule } from './modules/subscriptions'; // Import the subscriptions module
 import { teamsModule } from './modules/teams'; // Import the teams module
@@ -72,8 +70,6 @@ const v1 = new Hono<{ Bindings: Env }>();
 // Mount the modules to v1
 v1.route('/auth', authModule);
 v1.route('/teams', teamsModule); // Mount the teams module
-v1.route('/pages', pagesModule);
-v1.route('/products', productsModule);
 v1.route('/payments', paymentsModule);
 v1.route('/storage', storageModule);
 v1.route('/analytics', analyticsModule);
@@ -88,8 +84,6 @@ v2.route('/auth', authModuleV2);
 
 // For other modules, use v1 implementations until v2 versions are ready
 v2.route('/teams', teamsModule); // Mount the teams module in v2 as well
-v2.route('/pages', pagesModule);
-v2.route('/products', productsModule);
 v2.route('/payments', paymentsModule);
 v2.route('/storage', storageModule);
 v2.route('/analytics', analyticsModule);
