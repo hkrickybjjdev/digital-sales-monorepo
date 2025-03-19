@@ -2,23 +2,22 @@ import { Context } from 'hono';
 
 import { Env } from '../../../types';
 import { formatResponse, formatError, format500Error } from '../../../utils/apiResponse';
-import { getTeamsContainer } from '../di/container';
+import { getService } from '../di/container';
 import { createTeamSchema, updateTeamSchema } from '../models/schemas';
 
 // Get all teams for the current user
-export const getUserTeams = async (c: Context<{ Bindings: Env }>) => {
+export const getTeams = async (c: Context<{ Bindings: Env }>) => {
   try {
     const userId = c.get('jwtPayload').sub;
-
-    const container = getTeamsContainer(c.env);
-    const teams = await container.teamService.getUserTeams(userId);
-
+    const teamService = getService(c.env, 'teamService');
+    
+    const teams = await teamService.getUserTeams(userId);
     return formatResponse(c, { teams });
   } catch (error) {
-    console.error('Get user teams error:', error);
-    return format500Error(error as Error);
+    console.error('Error getting teams:', error);
+    return formatError(c, 'Failed to get teams', 'InternalServerError', 500);
   }
-};
+}
 
 // Get a single team by ID
 export const getTeam = async (c: Context<{ Bindings: Env }>) => {
@@ -26,10 +25,10 @@ export const getTeam = async (c: Context<{ Bindings: Env }>) => {
     const userId = c.get('jwtPayload').sub;
     const teamId = c.req.param('teamId');
 
-    const container = getTeamsContainer(c.env);
+    const teamService = getService(c.env, 'teamService');
 
     // Check if the user has access to this team
-    const hasAccess = await container.teamService.checkTeamPermission(teamId, userId, [
+    const hasAccess = await teamService.checkTeamPermission(teamId, userId, [
       'owner',
       'admin',
       'member',
@@ -39,7 +38,7 @@ export const getTeam = async (c: Context<{ Bindings: Env }>) => {
       return formatError(c, 'You do not have access to this team', 'Forbidden', 403);
     }
 
-    const team = await container.teamService.getTeamById(teamId);
+    const team = await teamService.getTeamById(teamId);
     if (!team) {
       return formatError(c, 'Team not found', 'ResourceNotFound', 404);
     }
@@ -65,10 +64,10 @@ export const createTeam = async (c: Context<{ Bindings: Env }>) => {
 
     const data = parseResult.data;
 
-    const container = getTeamsContainer(c.env);
+    const teamService = getService(c.env, 'teamService');
 
     try {
-      const team = await container.teamService.createTeam(userId, data);
+      const team = await teamService.createTeam(userId, data);
       return formatResponse(c, { team }, 201);
     } catch (serviceError) {
       if ((serviceError as Error).message.includes('maximum')) {
@@ -97,10 +96,10 @@ export const updateTeam = async (c: Context<{ Bindings: Env }>) => {
 
     const data = parseResult.data;
 
-    const container = getTeamsContainer(c.env);
+    const teamService = getService(c.env, 'teamService');
 
     try {
-      const team = await container.teamService.updateTeam(teamId, userId, data);
+      const team = await teamService.updateTeam(teamId, userId, data);
       if (!team) {
         return formatError(c, 'Team not found', 'ResourceNotFound', 404);
       }
@@ -124,10 +123,10 @@ export const deleteTeam = async (c: Context<{ Bindings: Env }>) => {
     const userId = c.get('jwtPayload').sub;
     const teamId = c.req.param('teamId');
 
-    const container = getTeamsContainer(c.env);
+    const teamService = getService(c.env, 'teamService');
 
     try {
-      const result = await container.teamService.deleteTeam(teamId, userId);
+      const result = await teamService.deleteTeam(teamId, userId);
       if (!result) {
         return formatError(c, 'Team not found', 'ResourceNotFound', 404);
       }
@@ -154,10 +153,10 @@ export const getTeamMembers = async (c: Context<{ Bindings: Env }>) => {
     const userId = c.get('jwtPayload').sub;
     const teamId = c.req.param('teamId');
 
-    const container = getTeamsContainer(c.env);
+    const teamService = getService(c.env, 'teamService');
 
     try {
-      const members = await container.teamService.getTeamMembersWithUserInfo(teamId, userId);
+      const members = await teamService.getTeamMembersWithUserInfo(teamId, userId);
       return formatResponse(c, { members });
     } catch (serviceError) {
       if ((serviceError as Error).message.includes('permission')) {

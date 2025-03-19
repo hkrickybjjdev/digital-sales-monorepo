@@ -17,68 +17,109 @@ interface TeamsContainer {
   teamMemberService: ITeamMemberService;
 }
 
-// In-memory singleton instances
-let teamRepositoryInstance: ITeamRepository | null = null;
-let teamMemberRepositoryInstance: ITeamMemberRepository | null = null;
-let teamServiceInstance: ITeamService | null = null;
-let teamMemberServiceInstance: ITeamMemberService | null = null;
-let containerEnv: Env | null = null;
-
 /**
- * Returns a container with all the Teams module dependencies
- * Uses singleton pattern for stateless services
+ * Class-based dependency injection container for the teams module
+ * Creates and manages singleton instances of services
  */
-export function getTeamsContainer(env: Env): TeamsContainer {
-  // If environment changes, recreate all instances
-  if (containerEnv && env !== containerEnv) {
-    resetTeamsContainer();
+export class Container {
+  private static instance: Container;
+  private services: Partial<TeamsContainer> = {};
+  private env: Env | null = null;
+
+  private constructor() {}
+
+  /**
+   * Gets the singleton container instance
+   * @returns The container instance
+   */
+  public static getInstance(): Container {
+    if (!Container.instance) {
+      Container.instance = new Container();
+    }
+    return Container.instance;
   }
 
-  // Store current environment
-  containerEnv = env;
+  /**
+   * Initializes the container with environment variables
+   * @param env Cloudflare Workers environment
+   */
+  public initialize(env: Env): void {
+    // If environment changes, reset the container
+    if (this.env && this.env !== env) {
+      this.clear();
+    }
+    
+    // Store current environment
+    this.env = env;
 
-  // Create repository instances if they don't exist
-  if (!teamRepositoryInstance) {
-    teamRepositoryInstance = new TeamRepository(env.DB);
+    // Only initialize services if they haven't been created yet
+    if (Object.keys(this.services).length === 0) {
+      // Create repository instances
+      const teamRepository = new TeamRepository(env);
+      const teamMemberRepository = new TeamMemberRepository(env);
+
+      // Create service instances
+      const teamService = new TeamService(
+        teamRepository,
+        teamMemberRepository,
+        env
+      );
+      
+      const teamMemberService = new TeamMemberService(
+        teamRepository,
+        teamMemberRepository
+      );
+
+      // Register all services
+      this.services.teamRepository = teamRepository;
+      this.services.teamMemberRepository = teamMemberRepository;
+      this.services.teamService = teamService;
+      this.services.teamMemberService = teamMemberService;
+    }
   }
 
-  if (!teamMemberRepositoryInstance) {
-    teamMemberRepositoryInstance = new TeamMemberRepository(env.DB);
+  /**
+   * Gets a service instance by name
+   * @param serviceName The name of the service to retrieve
+   * @returns The service instance
+   */
+  public get<K extends keyof TeamsContainer>(serviceName: K): TeamsContainer[K] {
+    const service = this.services[serviceName];
+    if (!service) {
+      throw new Error(`Service ${serviceName} not found or not initialized`);
+    }
+    return service as TeamsContainer[K];
   }
 
-  // Create service instances if they don't exist
-  // Pass repositories to services
-  if (!teamServiceInstance) {
-    teamServiceInstance = new TeamService(
-      teamRepositoryInstance,
-      teamMemberRepositoryInstance,
-      env
-    );
+  /**
+   * For testing: clear all services and reset the container
+   */
+  public clear(): void {
+    this.services = {};
+    this.env = null;
   }
-
-  if (!teamMemberServiceInstance) {
-    teamMemberServiceInstance = new TeamMemberService(
-      teamRepositoryInstance,
-      teamMemberRepositoryInstance
-    );
-  }
-
-  return {
-    teamRepository: teamRepositoryInstance,
-    teamMemberRepository: teamMemberRepositoryInstance,
-    teamService: teamServiceInstance,
-    teamMemberService: teamMemberServiceInstance,
-  };
 }
 
 /**
- * Reset all container instances
- * Useful for testing and when environment changes
+ * Factory function to get the teams container
+ * @param env Cloudflare Workers environment
+ * @returns The initialized teams container
  */
-export function resetTeamsContainer(): void {
-  teamRepositoryInstance = null;
-  teamMemberRepositoryInstance = null;
-  teamServiceInstance = null;
-  teamMemberServiceInstance = null;
-  containerEnv = null;
+function getContainer(env: Env): Container {
+  const container = Container.getInstance();
+  container.initialize(env);
+  return container;
+}
+
+/**
+ * Helper function to get a service from the container
+ * @param env Cloudflare Workers environment
+ * @param serviceName The name of the service to retrieve
+ * @returns The service instance
+ */
+export function getService<K extends keyof TeamsContainer>(
+  env: Env,
+  serviceName: K
+): TeamsContainer[K] {
+  return getContainer(env).get(serviceName);
 }

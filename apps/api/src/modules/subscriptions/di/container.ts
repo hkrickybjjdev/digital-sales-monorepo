@@ -26,69 +26,106 @@ export interface SubscriptionsContainer {
   stripeService: IStripeService;
 }
 
-// Singleton instances
-let planRepositoryInstance: IPlanRepository | null = null;
-let subscriptionRepositoryInstance: ISubscriptionRepository | null = null;
-let planServiceInstance: IPlanService | null = null;
-let subscriptionServiceInstance: ISubscriptionService | null = null;
-let stripeServiceInstance: IStripeService | null = null;
-let containerEnv: Env | null = null;
-
 /**
- * Returns a container with all the subscriptions module dependencies
- * Uses singleton pattern for stateless services
+ * Class-based dependency injection container for the subscriptions module
+ * Creates and manages singleton instances of services
  */
-export function getSubscriptionsContainer(env: Env): SubscriptionsContainer {
-  // If environment changes, reset instances
-  if (containerEnv && containerEnv !== env) {
-    resetSubscriptionsContainer();
+export class Container {
+  private static instance: Container;
+  private services: Partial<SubscriptionsContainer> = {};
+  private env: Env | null = null;
+
+  private constructor() {}
+
+  /**
+   * Gets the singleton container instance
+   * @returns The container instance
+   */
+  public static getInstance(): Container {
+    if (!Container.instance) {
+      Container.instance = new Container();
+    }
+    return Container.instance;
   }
 
-  containerEnv = env;
+  /**
+   * Initializes the container with environment variables
+   * @param env Cloudflare Workers environment
+   */
+  public initialize(env: Env): void {
+    // If environment changes, reset the container
+    if (this.env && this.env !== env) {
+      this.clear();
+    }
+    
+    // Store current environment
+    this.env = env;
 
-  // Create repositories if they don't exist
-  if (!planRepositoryInstance) {
-    planRepositoryInstance = new PlanRepository(env);
+    // Only initialize services if they haven't been created yet
+    if (Object.keys(this.services).length === 0) {
+      // Create repositories
+      const planRepository = new PlanRepository(env);
+      const subscriptionRepository = new SubscriptionRepository(env);
+
+      // Create services
+      const planService = new PlanService(planRepository);
+      const subscriptionService = new SubscriptionService(
+        subscriptionRepository,
+        planRepository
+      );
+      const stripeService = new StripeService(env);
+
+      // Register all services
+      this.services.planRepository = planRepository;
+      this.services.subscriptionRepository = subscriptionRepository;
+      this.services.planService = planService;
+      this.services.subscriptionService = subscriptionService;
+      this.services.stripeService = stripeService;
+    }
   }
 
-  if (!subscriptionRepositoryInstance) {
-    subscriptionRepositoryInstance = new SubscriptionRepository(env);
+  /**
+   * Gets a service instance by name
+   * @param serviceName The name of the service to retrieve
+   * @returns The service instance
+   */
+  public get<K extends keyof SubscriptionsContainer>(serviceName: K): SubscriptionsContainer[K] {
+    const service = this.services[serviceName];
+    if (!service) {
+      throw new Error(`Service ${serviceName} not found or not initialized`);
+    }
+    return service as SubscriptionsContainer[K];
   }
 
-  // Create services if they don't exist
-  if (!planServiceInstance) {
-    planServiceInstance = new PlanService(planRepositoryInstance);
+  /**
+   * For testing: clear all services and reset the container
+   */
+  public clear(): void {
+    this.services = {};
+    this.env = null;
   }
-
-  if (!subscriptionServiceInstance) {
-    subscriptionServiceInstance = new SubscriptionService(
-      subscriptionRepositoryInstance,
-      planRepositoryInstance
-    );
-  }
-
-  if (!stripeServiceInstance) {
-    stripeServiceInstance = new StripeService(env);
-  }
-
-  // Return the container with all dependencies
-  return {
-    planRepository: planRepositoryInstance,
-    subscriptionRepository: subscriptionRepositoryInstance,
-    planService: planServiceInstance,
-    subscriptionService: subscriptionServiceInstance,
-    stripeService: stripeServiceInstance,
-  };
 }
 
 /**
- * For testing purposes - allows resetting the singletons
+ * Factory function to get the subscriptions container
+ * @param env Cloudflare Workers environment
+ * @returns The initialized subscriptions container
  */
-export function resetSubscriptionsContainer(): void {
-  planRepositoryInstance = null;
-  subscriptionRepositoryInstance = null;
-  planServiceInstance = null;
-  subscriptionServiceInstance = null;
-  stripeServiceInstance = null;
-  containerEnv = null;
+function getContainer(env: Env): Container {
+  const container = Container.getInstance();
+  container.initialize(env);
+  return container;
+}
+
+/**
+ * Helper function to get a service from the container
+ * @param env Cloudflare Workers environment
+ * @param serviceName The name of the service to retrieve
+ * @returns The service instance
+ */
+export function getService<K extends keyof SubscriptionsContainer>(
+  env: Env,
+  serviceName: K
+): SubscriptionsContainer[K] {
+  return getContainer(env).get(serviceName);
 }

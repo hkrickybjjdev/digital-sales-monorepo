@@ -2,7 +2,7 @@ import { Context } from 'hono';
 
 import { Env } from '../../../types';
 import { formatResponse, formatError, format500Error } from '../../../utils/apiResponse';
-import { getTeamsContainer } from '../di/container';
+import { getService } from '../di/container';
 import { addTeamMemberSchema, updateTeamMemberSchema } from '../models/schemas';
 
 // Add a member to a team
@@ -19,11 +19,10 @@ export const addTeamMember = async (c: Context<{ Bindings: Env }>) => {
     }
 
     const data = parseResult.data;
-
-    const container = getTeamsContainer(c.env);
+    const teamMemberService = getService(c.env, 'teamMemberService');
 
     try {
-      const member = await container.teamMemberService.addTeamMember(teamId, userId, data);
+      const member = await teamMemberService.addTeamMember(teamId, userId, data);
       return formatResponse(c, { member }, 201);
     } catch (serviceError) {
       const errorMessage = (serviceError as Error).message;
@@ -58,11 +57,10 @@ export const updateTeamMember = async (c: Context<{ Bindings: Env }>) => {
     }
 
     const data = parseResult.data;
-
-    const container = getTeamsContainer(c.env);
+    const teamMemberService = getService(c.env, 'teamMemberService');
 
     try {
-      const member = await container.teamMemberService.updateTeamMember(
+      const member = await teamMemberService.updateTeamMember(
         teamId,
         memberId,
         userId,
@@ -100,10 +98,10 @@ export const removeTeamMember = async (c: Context<{ Bindings: Env }>) => {
     const teamId = c.req.param('teamId');
     const memberId = c.req.param('memberId');
 
-    const container = getTeamsContainer(c.env);
+    const teamMemberService = getService(c.env, 'teamMemberService');
 
     try {
-      const result = await container.teamMemberService.removeTeamMember(teamId, memberId, userId);
+      const result = await teamMemberService.removeTeamMember(teamId, memberId, userId);
       if (!result) {
         return formatError(c, 'Team member not found', 'ResourceNotFound', 404);
       }

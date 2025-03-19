@@ -2,7 +2,7 @@ import { Context } from 'hono';
 
 import { Env } from '../../../types';
 import { formatResponse, formatError, format500Error } from '../../../utils/apiResponse';
-import { getAuthContainer } from '../di/container';
+import { getService } from '../di/container';
 import { resendActivationSchema } from '../models/schemas';
 
 /**
@@ -17,9 +17,9 @@ export const activateAccount = async (c: Context<{ Bindings: Env }>) => {
       return formatError(c, 'Activation token is required', 'ValidationError', 400);
     }
 
-    // Use the DI container
-    const container = getAuthContainer(c.env);
-    const result = await container.authService.activateUser(token);
+    // Use the getService helper
+    const authService = getService(c.env, 'authService');
+    const result = await authService.activateUser(token);
 
     if (!result.success) {
       return formatError(c, result.message, 'ActivationError', 400);
@@ -48,9 +48,9 @@ export const resendActivation = async (c: Context<{ Bindings: Env }>) => {
 
     const data = parseResult.data;
 
-    // Use the DI container
-    const container = getAuthContainer(c.env);
-    const result = await container.authService.resendActivationEmail(data);
+    // Use the getService helper
+    const authService = getService(c.env, 'authService');
+    const result = await authService.resendActivationEmail(data);
 
     // Always return a success response to avoid email enumeration
     return formatResponse(c, result);

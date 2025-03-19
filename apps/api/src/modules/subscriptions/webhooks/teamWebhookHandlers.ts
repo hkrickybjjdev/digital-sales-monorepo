@@ -2,7 +2,7 @@ import { Context } from 'hono';
 
 import { Env } from '../../../types';
 import { formatResponse, formatError } from '../../../utils/apiResponse';
-import { getSubscriptionsContainer } from '../di/container';
+import { getService } from '../di/container';
 import { TeamCreatedWebhookSchema, TeamDeletedWebhookSchema } from '../models/webhookSchemas';
 
 /**
@@ -66,16 +66,13 @@ export async function handleTeamCreated(c: Context<{ Bindings: Env }>) {
 
     const { team } = payload.data;
 
-    // Get subscriptions container
-    const container = getSubscriptionsContainer(c.env);
-
     // Find free plan
-    const plans = await container.planService.getPlans();
+    const plans = await getService(c.env, 'planService').getPlans();
     const freePlan = plans.find(plan => plan.name.toLowerCase().includes('free'));
 
     if (freePlan) {
       // Create subscription with free plan
-      await container.subscriptionService.createSubscription(team.userId, {
+      await getService(c.env, 'subscriptionService').createSubscription(team.userId, {
         teamId: team.id,
         planId: freePlan.id,
         interval: 'month', // Default interval for free plan
@@ -118,18 +115,15 @@ export async function handleTeamDeleted(c: Context<{ Bindings: Env }>) {
 
     const { team } = payload.data;
 
-    // Get subscriptions container
-    const container = getSubscriptionsContainer(c.env);
-
     // Get all subscriptions for the team
-    const subscriptions = await container.subscriptionService.getTeamSubscriptions(
+    const subscriptions = await getService(c.env, 'subscriptionService').getTeamSubscriptions(
       team.id,
       team.userId
     );
 
     // Cancel each subscription
     for (const subscription of subscriptions) {
-      await container.subscriptionService.cancelSubscription(subscription.id, team.userId);
+      await getService(c.env, 'subscriptionService').cancelSubscription(subscription.id, team.userId);
     }
 
     return formatResponse(c, {

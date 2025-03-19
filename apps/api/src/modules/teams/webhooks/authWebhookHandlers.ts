@@ -2,7 +2,7 @@ import { Context } from 'hono';
 
 import { Env } from '../../../types';
 import { formatResponse, formatError } from '../../../utils/apiResponse';
-import { getTeamsContainer } from '../di/container';
+import { getService } from '../di/container';
 import {
   UserCreatedWebhookSchema,
   UserUpdatedWebhookSchema,
@@ -72,11 +72,11 @@ export async function handleUserCreated(c: Context<{ Bindings: Env }>) {
 
     const { user } = payload.data;
 
-    // Get container with services
-    const container = getTeamsContainer(c.env);
+    // Get team services
+    const teamService = getService(c.env, 'teamService');
 
     // Create a new team for the user
-    const team = await container.teamService.createTeam(user.id, {
+    const team = await teamService.createTeam(user.id, {
       name: `${user.name ? user.name : 'New'}'s Team`,
     });
 
@@ -131,18 +131,18 @@ export async function handleUserUpdated(c: Context<{ Bindings: Env }>) {
 
     const { user } = payload.data;
 
-    // Get container with services
-    const container = getTeamsContainer(c.env);
+    // Get team services
+    const teamService = getService(c.env, 'teamService');
 
     // Find all teams where the user is a member
     // This would typically be a more direct query in a real implementation
-    const teams = await container.teamService.getUserTeams(user.id);
+    const teams = await teamService.getUserTeams(user.id);
 
     // For each team, update the member's information
     // In a real implementation, this would be a more optimized bulk operation
     for (const team of teams) {
-      const members = await container.teamService.getTeamMembersWithUserInfo(team.id, user.id);
-      const userMember = members.find(member => member.userId === user.id);
+      const members = await teamService.getTeamMembersWithUserInfo(team.id, user.id);
+      const userMember = members.find((member: { userId: string }) => member.userId === user.id);
 
       if (userMember) {
         // No need to update anything here as the user information is fetched
@@ -188,30 +188,33 @@ export async function handleUserDeleted(c: Context<{ Bindings: Env }>) {
 
     const { user } = payload.data;
 
-    // Get container with services
-    const container = getTeamsContainer(c.env);
+    // Get services
+    const teamService = getService(c.env, 'teamService');
+    const teamMemberService = getService(c.env, 'teamMemberService');
 
     // Find all teams where the user is a member
-    const teams = await container.teamService.getUserTeams(user.id);
+    const teams = await teamService.getUserTeams(user.id);
 
     // Process each team
     for (const team of teams) {
       // Get team members
-      const members = await container.teamService.getTeamMembersWithUserInfo(team.id, user.id);
-      const userMember = members.find(member => member.userId === user.id);
+      const members = await teamService.getTeamMembersWithUserInfo(team.id, user.id);
+      const userMember = members.find((member: { userId: string; id: string; role: string }) => 
+        member.userId === user.id
+      );
 
       if (userMember) {
         // If user is the owner, try to transfer ownership
         if (userMember.role === 'owner') {
           // Find another admin or member to transfer ownership to
           const potentialNewOwner = members.find(
-            member =>
+            (member: { userId: string; role: string; id: string }) =>
               member.userId !== user.id && (member.role === 'admin' || member.role === 'member')
           );
 
           if (potentialNewOwner) {
             // Transfer ownership
-            await container.teamMemberService.updateTeamMember(
+            await teamMemberService.updateTeamMember(
               team.id,
               potentialNewOwner.id,
               user.id, // Still using the deleted user's ID for authorization
@@ -219,12 +222,12 @@ export async function handleUserDeleted(c: Context<{ Bindings: Env }>) {
             );
 
             // Downgrade the current owner
-            await container.teamMemberService.updateTeamMember(team.id, userMember.id, user.id, {
+            await teamMemberService.updateTeamMember(team.id, userMember.id, user.id, {
               role: 'member',
             });
 
             // Remove the user from the team
-            await container.teamMemberService.removeTeamMember(
+            await teamMemberService.removeTeamMember(
               team.id,
               userMember.id,
               potentialNewOwner.userId // Use new owner's ID for authorization
@@ -232,14 +235,14 @@ export async function handleUserDeleted(c: Context<{ Bindings: Env }>) {
           } else {
             // No one to transfer to, archive or delete the team
             // In this example, we'll delete the team, but archiving might be better
-            await container.teamService.deleteTeam(team.id, user.id);
+            await teamService.deleteTeam(team.id, user.id);
 
             // Note: We no longer need to directly interact with subscriptions here
             // The subscriptions module should handle team deletion events
           }
         } else {
           // User is not the owner, just remove them from the team
-          await container.teamMemberService.removeTeamMember(team.id, userMember.id, user.id);
+          await teamMemberService.removeTeamMember(team.id, userMember.id, user.id);
         }
       }
     }

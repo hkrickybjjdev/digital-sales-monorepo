@@ -2,7 +2,7 @@ import { Context } from 'hono';
 
 import { Env } from '../../../types';
 import { formatResponse, formatError, format500Error } from '../../../utils/apiResponse';
-import { getSubscriptionsContainer } from '../di/container';
+import { getService } from '../di/container';
 import { createSubscriptionSchema, updateSubscriptionSchema } from '../models/schemas';
 
 /**
@@ -19,8 +19,8 @@ export const createSubscription = async (c: Context<{ Bindings: Env }>) => {
       return formatError(c, 'Invalid input', 'ValidationError', 400);
     }
 
-    const container = getSubscriptionsContainer(c.env);
-    const subscription = await container.subscriptionService.createSubscription(
+    const subscriptionService = getService(c.env, 'subscriptionService');
+    const subscription = await subscriptionService.createSubscription(
       userId,
       parseResult.data
     );
@@ -54,11 +54,11 @@ export const getTeamSubscriptions = async (c: Context<{ Bindings: Env }>) => {
     const userId = c.get('jwtPayload').sub;
     const teamId = c.req.param('teamId');
 
-    const container = getSubscriptionsContainer(c.env);
-    const subscriptions = await container.subscriptionService.getTeamSubscriptions(teamId, userId);
+    const subscriptionService = getService(c.env, 'subscriptionService');
+    const subscriptions = await subscriptionService.getTeamSubscriptions(teamId, userId);
 
     const activeSubscription = subscriptions.find(
-      sub => sub.status === 'active' || sub.status === 'trialing'
+      (sub: { status: string }) => sub.status === 'active' || sub.status === 'trialing'
     );
 
     return formatResponse(c, {
@@ -84,8 +84,8 @@ export const getSubscriptionById = async (c: Context<{ Bindings: Env }>) => {
     const userId = c.get('jwtPayload').sub;
     const subscriptionId = c.req.param('subscriptionId');
 
-    const container = getSubscriptionsContainer(c.env);
-    const subscription = await container.subscriptionService.getSubscriptionById(
+    const subscriptionService = getService(c.env, 'subscriptionService');
+    const subscription = await subscriptionService.getSubscriptionById(
       subscriptionId,
       userId
     );
@@ -126,8 +126,8 @@ export const updateSubscription = async (c: Context<{ Bindings: Env }>) => {
       return formatError(c, 'Invalid input', 'ValidationError', 400);
     }
 
-    const container = getSubscriptionsContainer(c.env);
-    const subscription = await container.subscriptionService.updateSubscription(
+    const subscriptionService = getService(c.env, 'subscriptionService');
+    const subscription = await subscriptionService.updateSubscription(
       subscriptionId,
       userId,
       parseResult.data
@@ -167,8 +167,8 @@ export const cancelSubscription = async (c: Context<{ Bindings: Env }>) => {
     const userId = c.get('jwtPayload').sub;
     const subscriptionId = c.req.param('subscriptionId');
 
-    const container = getSubscriptionsContainer(c.env);
-    const subscription = await container.subscriptionService.cancelSubscription(
+    const subscriptionService = getService(c.env, 'subscriptionService');
+    const subscription = await subscriptionService.cancelSubscription(
       subscriptionId,
       userId
     );

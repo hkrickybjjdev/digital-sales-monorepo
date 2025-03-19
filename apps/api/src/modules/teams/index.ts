@@ -24,7 +24,7 @@ teamsModule.route('/webhooks', createWebhookRouter());
 teamsModule.use('*', validateJWT);
 
 // Team routes
-teamsModule.get('/', teamHandlers.getUserTeams);
+teamsModule.get('/', teamHandlers.getTeams);
 teamsModule.post('/', teamHandlers.createTeam);
 teamsModule.get('/:teamId', teamHandlers.getTeam);
 teamsModule.put('/:teamId', teamHandlers.updateTeam);

@@ -2,13 +2,14 @@ import { Context } from 'hono';
 import Stripe from 'stripe';
 
 import { Env } from '../../../types';
-import { getSubscriptionsContainer } from '../di/container';
+import { formatResponse, formatError } from '../../../utils/apiResponse';
+import { getService } from '../di/container';
 
 /**
  * Handle Stripe webhook events
  */
 export const handleStripeWebhook = async (c: Context<{ Bindings: Env }>) => {
-  const container = getSubscriptionsContainer(c.env);
+  const env = c.env;
 
   // Get the signature from the header
   const signature = c.req.header('stripe-signature');
@@ -24,12 +25,12 @@ export const handleStripeWebhook = async (c: Context<{ Bindings: Env }>) => {
     const payload = await c.req.text();
 
     // Create a Stripe instance
-    const stripe = new Stripe(c.env.STRIPE_SECRET_KEY, {
+    const stripe = new Stripe(env.STRIPE_SECRET_KEY, {
       apiVersion: '2023-10-16',
     });
 
     // Verify the webhook signature
-    event = stripe.webhooks.constructEvent(payload, signature, c.env.STRIPE_WEBHOOK_SECRET);
+    event = stripe.webhooks.constructEvent(payload, signature, env.STRIPE_WEBHOOK_SECRET);
   } catch (err) {
     console.log(`⚠️ Webhook signature verification failed: ${(err as Error).message}`);
     return c.text(`Webhook signature verification failed: ${(err as Error).message}`, 400);
@@ -53,7 +54,7 @@ export const handleStripeWebhook = async (c: Context<{ Bindings: Env }>) => {
 
         if (session.mode === 'subscription' && session.subscription) {
           // Store the subscription in our database
-          await handleSubscriptionCreated(c.env, container, session.subscription as string, teamId);
+          await handleSubscriptionCreated(env, session.subscription as string, teamId);
         }
         break;
 
@@ -63,7 +64,7 @@ export const handleStripeWebhook = async (c: Context<{ Bindings: Env }>) => {
         teamId = subscription.metadata?.teamId as string;
 
         if (teamId) {
-          await handleSubscriptionCreated(c.env, container, subscription.id, teamId);
+          await handleSubscriptionCreated(env, subscription.id, teamId);
         } else {
           console.log('⚠️ No team ID found in subscription metadata');
         }
@@ -71,12 +72,12 @@ export const handleStripeWebhook = async (c: Context<{ Bindings: Env }>) => {
 
       case 'customer.subscription.updated':
         subscription = event.data.object as Stripe.Subscription;
-        await handleSubscriptionUpdated(container, subscription);
+        await handleSubscriptionUpdated(env, subscription);
         break;
 
       case 'customer.subscription.deleted':
         subscription = event.data.object as Stripe.Subscription;
-        await handleSubscriptionDeleted(container, subscription);
+        await handleSubscriptionDeleted(env, subscription);
         break;
 
       case 'customer.subscription.trial_will_end':
@@ -101,7 +102,6 @@ export const handleStripeWebhook = async (c: Context<{ Bindings: Env }>) => {
  */
 async function handleSubscriptionCreated(
   env: Env,
-  container: ReturnType<typeof getSubscriptionsContainer>,
   subscriptionId: string,
   teamId: string
 ) {
@@ -121,10 +121,10 @@ async function handleSubscriptionCreated(
     const priceId = item.price.id;
 
     // Find the corresponding plan in our system
-    // This assumes you have a way to map Stripe prices to your plans
-    // You might need to store Stripe price IDs in your plan records
-    const plans = await container.planService.getPlans();
-    const matchingPlan = plans.find(plan => plan.prices?.some(price => price.id === priceId));
+    const plans = await getService(env, 'planService').getPlans();
+    const matchingPlan = plans.find((plan) => 
+      plan.prices?.some((price) => price.id === priceId)
+    );
 
     if (!matchingPlan) {
       console.error(`No matching plan found for Stripe price ${priceId}`);
@@ -149,7 +149,7 @@ async function handleSubscriptionCreated(
     };
 
     // Save to database
-    await container.subscriptionRepository.createSubscription(subscription);
+    await getService(env, 'subscriptionRepository').createSubscription(subscription);
 
     console.log(`Subscription ${subscriptionId} created for team ${teamId}`);
   } catch (error) {
@@ -162,12 +162,12 @@ async function handleSubscriptionCreated(
  * Handle subscription updated event
  */
 async function handleSubscriptionUpdated(
-  container: ReturnType<typeof getSubscriptionsContainer>,
+  env: Env,
   stripeSubscription: Stripe.Subscription
 ) {
   try {
     // Find the subscription in our database
-    const subscriptions = await container.subscriptionRepository.findByStripeSubscriptionId(
+    const subscriptions = await getService(env, 'subscriptionRepository').findByStripeSubscriptionId(
       stripeSubscription.id
     );
 
@@ -185,7 +185,7 @@ async function handleSubscriptionUpdated(
         updatedAt: Date.now(),
       };
 
-      await container.subscriptionRepository.updateSubscription(subscription.id, updateData);
+      await getService(env, 'subscriptionRepository').updateSubscription(subscription.id, updateData);
     }
 
     console.log(`Subscription ${stripeSubscription.id} updated`);
@@ -199,12 +199,12 @@ async function handleSubscriptionUpdated(
  * Handle subscription deleted event
  */
 async function handleSubscriptionDeleted(
-  container: ReturnType<typeof getSubscriptionsContainer>,
+  env: Env,
   stripeSubscription: Stripe.Subscription
 ) {
   try {
     // Find the subscription in our database
-    const subscriptions = await container.subscriptionRepository.findByStripeSubscriptionId(
+    const subscriptions = await getService(env, 'subscriptionRepository').findByStripeSubscriptionId(
       stripeSubscription.id
     );
 
@@ -222,7 +222,7 @@ async function handleSubscriptionDeleted(
         updatedAt: Date.now(),
       };
 
-      await container.subscriptionRepository.updateSubscription(subscription.id, updateData);
+      await getService(env, 'subscriptionRepository').updateSubscription(subscription.id, updateData);
     }
 
     console.log(`Subscription ${stripeSubscription.id} marked as cancelled`);

@@ -20,69 +20,113 @@ export interface AuthContainer {
   emailService: IEmailService;
 }
 
-// Singleton instances with their associated environment
-let userRepositoryInstance: UserRepository | null = null;
-let passwordResetRepositoryInstance: PasswordResetRepository | null = null;
-let authServiceInstance: AuthService | null = null;
-let webhookServiceInstance: WebhookService | null = null;
-let emailServiceInstance: EmailService | null = null;
-let containerEnv: Env | null = null;
+/**
+ * Class-based dependency injection container for the auth module
+ * Creates and manages singleton instances of services
+ */
+export class Container {
+  private static instance: Container;
+  private services: Partial<AuthContainer> = {};
+  private env: Env | null = null;
 
-// Factory function to create the auth container
-export function getAuthContainer(env: Env): AuthContainer {
-  // If environment changes, recreate the instances to ensure consistency
-  if (containerEnv && env !== containerEnv) {
-    resetAuthContainer();
+  private constructor() {}
+
+  /**
+   * Gets the singleton container instance
+   * @returns The container instance
+   */
+  public static getInstance(): Container {
+    if (!Container.instance) {
+      Container.instance = new Container();
+    }
+    return Container.instance;
   }
 
-  // Store the current environment
-  containerEnv = env;
+  /**
+   * Initializes the container with environment variables
+   * @param env Cloudflare Workers environment
+   */
+  public initialize(env: Env): void {
+    // If environment changes, reset the container
+    if (this.env && this.env !== env) {
+      this.clear();
+    }
+    
+    // Store current environment
+    this.env = env;
 
-  // Create the repositories as singletons
-  if (!userRepositoryInstance) {
-    userRepositoryInstance = new UserRepository(env);
+    // Only initialize services if they haven't been created yet
+    if (Object.keys(this.services).length === 0) {
+      // Create the repositories
+      const userRepository = new UserRepository(env);
+      const passwordResetRepository = new PasswordResetRepository(env);
+      
+      // Create the webhook service
+      const webhookService = new WebhookService(env);
+      
+      // Create the email service
+      const emailService = new EmailService(env);
+      
+      // Create the auth service with its dependencies
+      const authService = new AuthService(
+        env,
+        userRepository,
+        passwordResetRepository,
+        webhookService,
+        emailService
+      );
+
+      // Register all services
+      this.services.userRepository = userRepository;
+      this.services.passwordResetRepository = passwordResetRepository;
+      this.services.authService = authService;
+      this.services.webhookService = webhookService;
+      this.services.emailService = emailService;
+    }
   }
 
-  if (!passwordResetRepositoryInstance) {
-    passwordResetRepositoryInstance = new PasswordResetRepository(env);
+  /**
+   * Gets a service instance by name
+   * @param serviceName The name of the service to retrieve
+   * @returns The service instance
+   */
+  public get<K extends keyof AuthContainer>(serviceName: K): AuthContainer[K] {
+    const service = this.services[serviceName];
+    if (!service) {
+      throw new Error(`Service ${serviceName} not found or not initialized`);
+    }
+    return service as AuthContainer[K];
   }
 
-  // Create the webhook service as a singleton
-  if (!webhookServiceInstance) {
-    webhookServiceInstance = new WebhookService(env);
+  /**
+   * For testing: clear all services and reset the container
+   */
+  public clear(): void {
+    this.services = {};
+    this.env = null;
   }
-
-  // Create the email service as a singleton
-  if (!emailServiceInstance) {
-    emailServiceInstance = new EmailService(env);
-  }
-
-  // Create the services with their dependencies as singletons
-  if (!authServiceInstance) {
-    authServiceInstance = new AuthService(
-      env,
-      userRepositoryInstance,
-      passwordResetRepositoryInstance,
-      webhookServiceInstance,
-      emailServiceInstance
-    );
-  }
-
-  return {
-    userRepository: userRepositoryInstance,
-    passwordResetRepository: passwordResetRepositoryInstance,
-    authService: authServiceInstance,
-    webhookService: webhookServiceInstance,
-    emailService: emailServiceInstance,
-  };
 }
 
-// For testing purposes - allows resetting the singletons
-export function resetAuthContainer(): void {
-  userRepositoryInstance = null;
-  passwordResetRepositoryInstance = null;
-  authServiceInstance = null;
-  webhookServiceInstance = null;
-  emailServiceInstance = null;
-  containerEnv = null;
+/**
+ * Factory function to get the auth container
+ * @param env Cloudflare Workers environment
+ * @returns The initialized auth container
+ */
+function getContainer(env: Env): Container {
+  const container = Container.getInstance();
+  container.initialize(env);
+  return container;
+}
+
+/**
+ * Helper function to get a service from the container
+ * @param env Cloudflare Workers environment
+ * @param serviceName The name of the service to retrieve
+ * @returns The service instance
+ */
+export function getService<K extends keyof AuthContainer>(
+  env: Env,
+  serviceName: K
+): AuthContainer[K] {
+  return getContainer(env).get(serviceName);
 }

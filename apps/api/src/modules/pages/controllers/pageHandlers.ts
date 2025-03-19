@@ -2,7 +2,7 @@ import { Context } from 'hono';
 
 import { Env } from '../../../types';
 import { formatResponse, formatError, format500Error } from '../../../utils/apiResponse';
-import { getPagesContainer } from '../di/container';
+import { getService } from '../di/container';
 import { createPageSchema, savePageDraftSchema, publishPageSchema } from '../models/schemas';
 
 // Create a new page
@@ -17,10 +17,10 @@ export const createPage = async (c: Context<{ Bindings: Env }>) => {
     }
 
     const data = parseResult.data;
-    const container = getPagesContainer(c.env);
-
+    
     try {
-      const page = await container.pageService.createPage(data);
+      const pageService = getService(c.env, 'pageService');
+      const page = await pageService.createPage(data);
       return formatResponse(c, { page }, 201);
     } catch (serviceError) {
       return formatError(c, (serviceError as Error).message, 'ServiceError', 400);
@@ -39,8 +39,8 @@ export const getPageById = async (c: Context<{ Bindings: Env }>) => {
       return formatError(c, 'Invalid page ID', 'ValidationError', 400);
     }
 
-    const container = getPagesContainer(c.env);
-    const page = await container.pageService.getPageById(id);
+    const pageService = getService(c.env, 'pageService');
+    const page = await pageService.getPageById(id);
 
     if (!page) {
       return formatError(c, 'Page not found', 'ResourceNotFound', 404);
@@ -57,8 +57,8 @@ export const getPageById = async (c: Context<{ Bindings: Env }>) => {
 export const getPageBySlug = async (c: Context<{ Bindings: Env }>) => {
   try {
     const slug = c.req.param('slug');
-    const container = getPagesContainer(c.env);
-    const page = await container.pageService.getPageBySlug(slug);
+    const pageService = getService(c.env, 'pageService');
+    const page = await pageService.getPageBySlug(slug);
 
     if (!page) {
       return formatError(c, 'Page not found', 'ResourceNotFound', 404);
@@ -80,8 +80,8 @@ export const getPageWithVersionById = async (c: Context<{ Bindings: Env }>) => {
     }
 
     const languageCode = c.req.query('languageCode') || 'en';
-    const container = getPagesContainer(c.env);
-    const pageWithVersion = await container.pageService.getPageWithVersionDetails(id, languageCode);
+    const pageService = getService(c.env, 'pageService');
+    const pageWithVersion = await pageService.getPageWithVersionDetails(id, languageCode);
 
     if (!pageWithVersion) {
       return formatError(
@@ -104,8 +104,8 @@ export const getPageWithVersionBySlug = async (c: Context<{ Bindings: Env }>) =>
   try {
     const slug = c.req.param('slug');
     const languageCode = c.req.query('languageCode') || 'en';
-    const container = getPagesContainer(c.env);
-    const pageWithVersion = await container.pageService.getPageBySlugWithVersionDetails(
+    const pageService = getService(c.env, 'pageService');
+    const pageWithVersion = await pageService.getPageBySlugWithVersionDetails(
       slug,
       languageCode
     );
@@ -138,10 +138,10 @@ export const savePageDraft = async (c: Context<{ Bindings: Env }>) => {
     }
 
     const data = parseResult.data;
-    const container = getPagesContainer(c.env);
-
+    
     try {
-      const pageVersion = await container.pageService.savePageDraft(data);
+      const pageService = getService(c.env, 'pageService');
+      const pageVersion = await pageService.savePageDraft(data);
       return formatResponse(c, { pageVersion });
     } catch (serviceError) {
       if ((serviceError as Error).message.includes('not found')) {
@@ -167,10 +167,10 @@ export const publishPage = async (c: Context<{ Bindings: Env }>) => {
     }
 
     const data = parseResult.data;
-    const container = getPagesContainer(c.env);
-
+    
     try {
-      const pageVersion = await container.pageService.publishPage(data);
+      const pageService = getService(c.env, 'pageService');
+      const pageVersion = await pageService.publishPage(data);
       return formatResponse(c, { pageVersion });
     } catch (serviceError) {
       if ((serviceError as Error).message.includes('not found')) {
@@ -192,10 +192,9 @@ export const deletePage = async (c: Context<{ Bindings: Env }>) => {
       return formatError(c, 'Invalid page ID', 'ValidationError', 400);
     }
 
-    const container = getPagesContainer(c.env);
-
     try {
-      const success = await container.pageService.deletePage(id);
+      const pageService = getService(c.env, 'pageService');
+      const success = await pageService.deletePage(id);
       if (!success) {
         return formatError(c, 'Failed to delete page', 'ServiceError', 500);
       }

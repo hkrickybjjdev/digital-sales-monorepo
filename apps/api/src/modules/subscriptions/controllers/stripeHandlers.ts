@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 import { Env } from '../../../types';
 import { formatResponse, formatError, format500Error } from '../../../utils/apiResponse';
-import { getSubscriptionsContainer } from '../di/container';
+import { getService } from '../di/container';
 
 // Schema for create checkout session request
 const createCheckoutSessionSchema = z.object({
@@ -43,15 +43,16 @@ export const createCheckoutSession = async (c: Context<{ Bindings: Env }>) => {
       parseResult.data.cancelUrl || `${baseUrl}/teams/${teamId}/billing?canceled=true`;
 
     // Check if user has access to the team
-    const container = getSubscriptionsContainer(c.env);
-    const hasAccess = await container.subscriptionRepository.checkUserTeamAccess(teamId, userId);
+    const subscriptionRepository = getService(c.env, 'subscriptionRepository');
+    const hasAccess = await subscriptionRepository.checkUserTeamAccess(teamId, userId);
 
     if (!hasAccess) {
       return formatError(c, 'Access denied', 'AccessDenied', 403);
     }
 
     // Create checkout session
-    const session = await container.stripeService.createCheckoutSession({
+    const stripeService = getService(c.env, 'stripeService');
+    const session = await stripeService.createCheckoutSession({
       teamId,
       lookupKey,
       successUrl,
@@ -86,11 +87,12 @@ export const createPortalSession = async (c: Context<{ Bindings: Env }>) => {
 
     const { sessionId } = parseResult.data;
 
-    // Get the container
-    const container = getSubscriptionsContainer(c.env);
+    // Get services
+    const stripeService = getService(c.env, 'stripeService');
+    const subscriptionRepository = getService(c.env, 'subscriptionRepository');
 
     // Retrieve the checkout session to get customer ID
-    const checkoutSession = await container.stripeService.retrieveCheckoutSession(sessionId);
+    const checkoutSession = await stripeService.retrieveCheckoutSession(sessionId);
 
     if (!checkoutSession.customer) {
       return formatError(c, 'No customer found for this session', 'ResourceNotFound', 404);
@@ -105,7 +107,7 @@ export const createPortalSession = async (c: Context<{ Bindings: Env }>) => {
     }
 
     // Check if user has access to the team
-    const hasAccess = await container.subscriptionRepository.checkUserTeamAccess(teamId, userId);
+    const hasAccess = await subscriptionRepository.checkUserTeamAccess(teamId, userId);
 
     if (!hasAccess) {
       return formatError(c, 'Access denied', 'AccessDenied', 403);
@@ -116,7 +118,7 @@ export const createPortalSession = async (c: Context<{ Bindings: Env }>) => {
     const returnUrl = `${baseUrl}/teams/${teamId}/billing`;
 
     // Create portal session
-    const portalSession = await container.stripeService.createPortalSession({
+    const portalSession = await stripeService.createPortalSession({
       customerId: checkoutSession.customer as string,
       returnUrl,
     });

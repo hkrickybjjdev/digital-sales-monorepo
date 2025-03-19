@@ -2,7 +2,7 @@ import { Context } from 'hono';
 
 import { Env } from '../../../types';
 import { formatResponse, formatError, format500Error } from '../../../utils/apiResponse';
-import { getAuthContainer } from '../di/container';
+import { getService } from '../di/container';
 import { loginSchema, registerSchema } from '../models/schemas';
 
 // Export a single handler function
@@ -19,9 +19,9 @@ export const login = async (c: Context<{ Bindings: Env }>) => {
 
     const data = parseResult.data;
 
-    // Use the DI container
-    const container = getAuthContainer(c.env);
-    const result = await container.authService.login(data);
+    // Use the getService helper instead of directly accessing container properties
+    const authService = getService(c.env, 'authService');
+    const result = await authService.login(data);
 
     if (result.error) {
       if (result.error === 'Invalid email or password') {
@@ -47,9 +47,9 @@ export const logout = async (c: Context<{ Bindings: Env }>) => {
       return formatError(c, 'Invalid session', 'InvalidSession', 400);
     }
 
-    // Use the DI container
-    const container = getAuthContainer(c.env);
-    await container.userRepository.deleteSession(sessionId);
+    // Use the getService helper instead of directly accessing container properties
+    const userRepository = getService(c.env, 'userRepository');
+    await userRepository.deleteSession(sessionId);
 
     return formatResponse(c, { success: true, message: 'Logged out successfully' });
   } catch (error) {
@@ -71,9 +71,9 @@ export const register = async (c: Context<{ Bindings: Env }>) => {
 
     const data = parseResult.data;
 
-    // Use the DI container
-    const container = getAuthContainer(c.env);
-    const result = await container.authService.register(data);
+    // Use the getService helper instead of directly accessing container properties
+    const authService = getService(c.env, 'authService');
+    const result = await authService.register(data);
 
     if (result.error) {
       if (result.error === 'User with this email already exists') {
@@ -97,9 +97,9 @@ export const getCurrentUser = async (c: Context<{ Bindings: Env }>) => {
       return formatError(c, 'User not found', 'ResourceNotFound', 404);
     }
 
-    // Use the DI container
-    const container = getAuthContainer(c.env);
-    const user = await container.authService.getUserById(userId);
+    // Use the getService helper instead of directly accessing container properties
+    const authService = getService(c.env, 'authService');
+    const user = await authService.getUserById(userId);
 
     if (!user) {
       return formatError(c, 'User not found', 'ResourceNotFound', 404);

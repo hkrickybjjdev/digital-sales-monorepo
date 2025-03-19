@@ -2,7 +2,7 @@ import { Context } from 'hono';
 
 import { Env } from '../../../types';
 import { formatResponse, formatError, format500Error } from '../../../utils/apiResponse';
-import { getPagesContainer } from '../di/container';
+import { getService } from '../di/container';
 import { expirationSettingSchema } from '../models/schemas';
 
 // Create a new expiration setting
@@ -19,10 +19,10 @@ export const createExpirationSetting = async (c: Context<{ Bindings: Env }>) => 
     }
 
     const data = parseResult.data;
-    const container = getPagesContainer(c.env);
+    const expirationService = getService(c.env, 'expirationService');
 
     try {
-      const expirationSetting = await container.expirationService.createExpirationSetting(
+      const expirationSetting = await expirationService.createExpirationSetting(
         data.expirationType,
         data.expiresAtDatetime,
         data.durationSeconds,
@@ -47,8 +47,8 @@ export const getExpirationSettingById = async (c: Context<{ Bindings: Env }>) =>
       return formatError(c, 'Invalid expiration setting ID', 'ValidationError', 400);
     }
 
-    const container = getPagesContainer(c.env);
-    const expirationSetting = await container.expirationService.getExpirationSettingById(id);
+    const expirationService = getService(c.env, 'expirationService');
+    const expirationSetting = await expirationService.getExpirationSettingById(id);
 
     if (!expirationSetting) {
       return formatError(c, 'Expiration setting not found', 'ResourceNotFound', 404);
@@ -81,10 +81,10 @@ export const updateExpirationSetting = async (c: Context<{ Bindings: Env }>) => 
     }
 
     const updates = parseResult.data;
-    const container = getPagesContainer(c.env);
+    const expirationService = getService(c.env, 'expirationService');
 
     try {
-      const expirationSetting = await container.expirationService.updateExpirationSetting(
+      const expirationSetting = await expirationService.updateExpirationSetting(
         id,
         updates
       );
@@ -111,10 +111,10 @@ export const deleteExpirationSetting = async (c: Context<{ Bindings: Env }>) => 
       return formatError(c, 'Invalid expiration setting ID', 'ValidationError', 400);
     }
 
-    const container = getPagesContainer(c.env);
+    const expirationService = getService(c.env, 'expirationService');
 
     try {
-      const success = await container.expirationService.deleteExpirationSetting(id);
+      const success = await expirationService.deleteExpirationSetting(id);
       if (!success) {
         return formatError(c, 'Failed to delete expiration setting', 'ServiceError', 500);
       }
@@ -134,8 +134,8 @@ export const deleteExpirationSetting = async (c: Context<{ Bindings: Env }>) => 
 // Manually process expirations - should be called from a scheduled task in a real app
 export const processExpirations = async (c: Context<{ Bindings: Env }>) => {
   try {
-    const container = getPagesContainer(c.env);
-    await container.expirationService.processExpirations();
+    const expirationService = getService(c.env, 'expirationService');
+    await expirationService.processExpirations();
     return formatResponse(c, { success: true, message: 'Expirations processed successfully' });
   } catch (error) {
     console.error('Process expirations error:', error);
