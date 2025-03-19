@@ -1,4 +1,4 @@
-import { RequestContext } from '../../../database/databaseService';
+import { RequestContext } from '../../../database/sqlDatabase';
 import {
   Page,
   PageVersion,
@@ -11,19 +11,16 @@ import {
 
 export interface IPageService {
   createPage(data: CreatePageRequest, context?: RequestContext): Promise<Page>;
-  getPageById(id: number): Promise<Page | null>;
+  getPageById(id: string): Promise<Page | null>;
   getPageBySlug(slug: string): Promise<Page | null>;
-  getPageWithVersionDetails(
-    pageId: number | string,
-    languageCode: string
-  ): Promise<PageWithVersion | null>;
+  getPageWithVersionDetails(pageId: string, languageCode: string): Promise<PageWithVersion | null>;
   getPageBySlugWithVersionDetails(
     slug: string,
     languageCode: string
   ): Promise<PageWithVersion | null>;
   savePageDraft(data: SavePageDraftRequest, context?: RequestContext): Promise<PageVersion>;
   publishPage(data: PublishPageRequest, context?: RequestContext): Promise<PageVersion>;
-  deletePage(id: number, context?: RequestContext): Promise<boolean>;
+  deletePage(id: string, context?: RequestContext): Promise<boolean>;
 }
 
 export interface IExpirationService {
@@ -36,15 +33,15 @@ export interface IExpirationService {
     context?: RequestContext
   ): Promise<ExpirationSetting>;
 
-  getExpirationSettingById(id: number): Promise<ExpirationSetting | null>;
+  getExpirationSettingById(id: string): Promise<ExpirationSetting | null>;
 
   updateExpirationSetting(
-    id: number,
+    id: string,
     updates: Partial<ExpirationSetting>,
     context?: RequestContext
   ): Promise<ExpirationSetting | null>;
 
-  deleteExpirationSetting(id: number, context?: RequestContext): Promise<boolean>;
+  deleteExpirationSetting(id: string, context?: RequestContext): Promise<boolean>;
 
   processExpirations(): Promise<void>;
 }

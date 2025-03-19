@@ -34,8 +34,8 @@ export const createPage = async (c: Context<{ Bindings: Env }>) => {
 // Get a page by ID
 export const getPageById = async (c: Context<{ Bindings: Env }>) => {
   try {
-    const id = parseInt(c.req.param('id'), 10);
-    if (isNaN(id)) {
+    const id = c.req.param('id');
+    if (!id) {
       return formatError(c, 'Invalid page ID', 'ValidationError', 400);
     }
 
@@ -74,8 +74,8 @@ export const getPageBySlug = async (c: Context<{ Bindings: Env }>) => {
 // Get page with version details by ID
 export const getPageWithVersionById = async (c: Context<{ Bindings: Env }>) => {
   try {
-    const id = parseInt(c.req.param('id'), 10);
-    if (isNaN(id)) {
+    const id = c.req.param('id');
+    if (!id) {
       return formatError(c, 'Invalid page ID', 'ValidationError', 400);
     }
 
@@ -187,8 +187,8 @@ export const publishPage = async (c: Context<{ Bindings: Env }>) => {
 // Delete page
 export const deletePage = async (c: Context<{ Bindings: Env }>) => {
   try {
-    const id = parseInt(c.req.param('id'), 10);
-    if (isNaN(id)) {
+    const id = c.req.param('id');
+    if (!id) {
       return formatError(c, 'Invalid page ID', 'ValidationError', 400);
     }
 

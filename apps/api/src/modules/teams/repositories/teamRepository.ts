@@ -1,5 +1,5 @@
 import { DatabaseFactory } from '../../../database/databaseFactory';
-import { DatabaseService, RequestContext } from '../../../database/databaseService';
+import { SQLDatabase, RequestContext } from '../../../database/sqlDatabase';
 import { Env } from '../../../types';
 import { generateUUID } from '../../../utils/utils';
 import { Team, TeamWithMemberCount } from '../models/schemas';
@@ -7,7 +7,7 @@ import { Team, TeamWithMemberCount } from '../models/schemas';
 import { ITeamRepository } from './interfaces';
 
 export class TeamRepository implements ITeamRepository {
-  private dbService: DatabaseService;
+  private dbService: SQLDatabase;
 
   constructor(env: Env) {
     this.dbService = DatabaseFactory.getInstance(env);

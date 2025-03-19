@@ -1,4 +1,4 @@
-import { DatabaseService, RequestContext } from '../database/databaseService';
+import { RequestContext, SQLDatabase } from '../database/sqlDatabase';
 
 /**
  * Helper functions for consistent audit logging across repositories
@@ -6,9 +6,9 @@ import { DatabaseService, RequestContext } from '../database/databaseService';
  * consistent audit log patterns
  */
 export class AuditHelpers {
-  private dbService: DatabaseService;
+  private dbService: SQLDatabase;
 
-  constructor(dbService: DatabaseService) {
+  constructor(dbService: SQLDatabase) {
     this.dbService = dbService;
   }
 

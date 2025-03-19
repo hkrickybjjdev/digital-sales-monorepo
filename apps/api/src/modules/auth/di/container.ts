@@ -44,7 +44,7 @@ export function getAuthContainer(env: Env): AuthContainer {
   }
 
   if (!passwordResetRepositoryInstance) {
-    passwordResetRepositoryInstance = new PasswordResetRepository(env.DB);
+    passwordResetRepositoryInstance = new PasswordResetRepository(env);
   }
 
   // Create the webhook service as a singleton

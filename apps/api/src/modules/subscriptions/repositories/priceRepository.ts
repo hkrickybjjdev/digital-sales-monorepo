@@ -1,11 +1,11 @@
 import { DatabaseFactory } from '../../../database/databaseFactory';
-import { DatabaseService } from '../../../database/databaseService';
+import { SQLDatabase } from '../../../database/sqlDatabase';
 import { Env } from '../../../types';
 import { Price } from '../models/schemas';
 import { IPriceRepository } from '../services/interfaces';
 
 export class PriceRepository implements IPriceRepository {
-  private dbService: DatabaseService;
+  private dbService: SQLDatabase;
 
   constructor(env: Env) {
     this.dbService = DatabaseFactory.getInstance(env);

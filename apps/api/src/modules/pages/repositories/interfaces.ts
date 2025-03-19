@@ -1,4 +1,4 @@
-import { DatabaseService, RequestContext } from '../../../database/databaseService';
+import { RequestContext } from '../../../database/sqlDatabase';
 import {
   Page,
   PageVersion,

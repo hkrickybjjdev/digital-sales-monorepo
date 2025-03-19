@@ -1,11 +1,11 @@
 import { DatabaseFactory } from '../../../database/databaseFactory';
-import { DatabaseService } from '../../../database/databaseService';
+import { SQLDatabase } from '../../../database/sqlDatabase';
 import { Env } from '../../../types';
 import { Plan, Price } from '../models/schemas';
 import { IPlanRepository } from '../services/interfaces';
 
 export class PlanRepository implements IPlanRepository {
-  private dbService: DatabaseService;
+  private dbService: SQLDatabase;
 
   constructor(env: Env) {
     this.dbService = DatabaseFactory.getInstance(env);

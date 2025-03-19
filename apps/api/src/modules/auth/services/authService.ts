@@ -63,6 +63,7 @@ export class AuthService implements IAuthService {
       failedAttempts: 0,
       activationToken,
       activationTokenExpiresAt,
+      timezone: null, // Add timezone property
     });
 
     // Generate activation link

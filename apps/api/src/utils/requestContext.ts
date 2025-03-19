@@ -1,6 +1,6 @@
 import { Context } from 'hono';
 
-import { RequestContext } from '../database/databaseService';
+import { RequestContext } from '../database/sqlDatabase';
 
 /**
  * Extract RequestContext information from Hono Context

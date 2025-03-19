@@ -1,30 +1,16 @@
 import { Env } from '../types';
 
-interface QueryParams {
-  sql: string;
-  params?: any[];
-}
+import { AuditInfo, QueryParams, RequestContext, SQLDatabase } from './sqlDatabase';
 
-interface AuditLog {
-  userId?: string;
-  eventType: string;
-  resourceType?: string;
-  resourceId?: string;
-  details?: string;
+// Audit log entry structure - extends the public AuditInfo interface with database-specific fields
+interface AuditLog extends AuditInfo {
   ipAddress?: string;
   userAgent?: string;
   sessionId?: string;
   timestamp: number;
   createdAt: number;
   updatedAt: number;
-  outcome: string;
-}
-
-export interface RequestContext {
-  userId?: string;
-  ipAddress?: string;
-  userAgent?: string;
-  sessionId?: string;
+  // outcome is already in AuditInfo
 }
 
 // Default retry configuration
@@ -43,12 +29,15 @@ export interface RetryConfig {
   backoffFactor?: number;
 }
 
-export class DatabaseService {
+/**
+ * Cloudflare D1 implementation of the SQLDatabase interface
+ */
+export class CloudflareD1Database implements SQLDatabase {
   private db: D1Database;
   private retryConfig: RetryConfig;
 
-  constructor(env: Env, retryConfig?: RetryConfig) {
-    this.db = env.DB;
+  constructor(db: D1Database, retryConfig?: RetryConfig) {
+    this.db = db;
     this.retryConfig = { ...DEFAULT_RETRY_CONFIG, ...retryConfig };
   }
 
@@ -114,14 +103,7 @@ export class DatabaseService {
    */
   async executeWithAudit(
     query: QueryParams,
-    auditInfo: {
-      eventType: string;
-      userId?: string;
-      resourceType?: string;
-      resourceId?: string;
-      details?: string;
-      outcome: string;
-    },
+    auditInfo: AuditInfo,
     context?: RequestContext
   ): Promise<D1Result> {
     const result = await this.execute(query);
@@ -144,17 +126,7 @@ export class DatabaseService {
    * Create an audit log entry without executing a database operation
    * This is useful for logging events that don't modify the database
    */
-  async createAuditLog(
-    auditInfo: {
-      eventType: string;
-      userId?: string;
-      resourceType?: string;
-      resourceId?: string;
-      details?: string;
-      outcome: string;
-    },
-    context?: RequestContext
-  ): Promise<void> {
+  async createAuditLog(auditInfo: AuditInfo, context?: RequestContext): Promise<void> {
     await this.logAudit({
       ...auditInfo,
       ipAddress: context?.ipAddress,
@@ -169,7 +141,7 @@ export class DatabaseService {
   /**
    * Begin a database transaction
    */
-  async transaction<T>(callback: (tx: DatabaseService) => Promise<T>): Promise<T> {
+  async transaction<T>(callback: (tx: SQLDatabase) => Promise<T>): Promise<T> {
     try {
       await this.execute({ sql: 'BEGIN TRANSACTION' });
       const result = await callback(this);
@@ -275,5 +247,15 @@ export class DatabaseService {
    */
   private delay(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
+  }
+}
+
+/**
+ * For backwards compatibility, maintaining the DatabaseService class
+ * that extends the CloudflareD1Database implementation
+ */
+export class DatabaseService extends CloudflareD1Database {
+  constructor(env: Env, retryConfig?: RetryConfig) {
+    super(env.DB, retryConfig);
   }
 }

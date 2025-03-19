@@ -1,11 +1,11 @@
 import { DatabaseFactory } from '../../../database/databaseFactory';
-import { DatabaseService, RequestContext } from '../../../database/databaseService';
+import { SQLDatabase, RequestContext } from '../../../database/sqlDatabase';
 import { Env } from '../../../types';
 import { Subscription } from '../models/schemas';
 import { ISubscriptionRepository } from '../services/interfaces';
 
 export class SubscriptionRepository implements ISubscriptionRepository {
-  private dbService: DatabaseService;
+  private dbService: SQLDatabase;
 
   constructor(env: Env) {
     this.dbService = DatabaseFactory.getInstance(env);

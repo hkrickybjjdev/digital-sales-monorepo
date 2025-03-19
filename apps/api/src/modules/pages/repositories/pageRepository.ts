@@ -1,5 +1,5 @@
 import { DatabaseFactory } from '../../../database/databaseFactory';
-import { DatabaseService, RequestContext } from '../../../database/databaseService';
+import { SQLDatabase, RequestContext } from '../../../database/sqlDatabase';
 import { Env } from '../../../types';
 import { generateUUID } from '../../../utils/utils';
 import { Page } from '../models/schemas';
@@ -7,7 +7,7 @@ import { Page } from '../models/schemas';
 import { IPageRepository } from './interfaces';
 
 export class PageRepository implements IPageRepository {
-  private dbService: DatabaseService;
+  private dbService: SQLDatabase;
 
   constructor(env: Env) {
     this.dbService = DatabaseFactory.getInstance(env);

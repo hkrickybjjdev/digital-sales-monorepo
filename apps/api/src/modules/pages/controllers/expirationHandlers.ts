@@ -42,8 +42,8 @@ export const createExpirationSetting = async (c: Context<{ Bindings: Env }>) => 
 // Get an expiration setting by ID
 export const getExpirationSettingById = async (c: Context<{ Bindings: Env }>) => {
   try {
-    const id = parseInt(c.req.param('id'), 10);
-    if (isNaN(id)) {
+    const id = c.req.param('id');
+    if (!id) {
       return formatError(c, 'Invalid expiration setting ID', 'ValidationError', 400);
     }
 
@@ -64,8 +64,8 @@ export const getExpirationSettingById = async (c: Context<{ Bindings: Env }>) =>
 // Update an expiration setting
 export const updateExpirationSetting = async (c: Context<{ Bindings: Env }>) => {
   try {
-    const id = parseInt(c.req.param('id'), 10);
-    if (isNaN(id)) {
+    const id = c.req.param('id');
+    if (!id) {
       return formatError(c, 'Invalid expiration setting ID', 'ValidationError', 400);
     }
 
@@ -106,8 +106,8 @@ export const updateExpirationSetting = async (c: Context<{ Bindings: Env }>) => 
 // Delete an expiration setting
 export const deleteExpirationSetting = async (c: Context<{ Bindings: Env }>) => {
   try {
-    const id = parseInt(c.req.param('id'), 10);
-    if (isNaN(id)) {
+    const id = c.req.param('id');
+    if (!id) {
       return formatError(c, 'Invalid expiration setting ID', 'ValidationError', 400);
     }
 

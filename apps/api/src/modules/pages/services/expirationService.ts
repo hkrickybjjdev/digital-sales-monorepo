@@ -1,4 +1,4 @@
-import { RequestContext } from '../../../database/databaseService';
+import { RequestContext } from '../../../database/sqlDatabase';
 import { Env } from '../../../types';
 import { ExpirationSetting } from '../models/schemas';
 import {
@@ -63,7 +63,7 @@ export class ExpirationService implements IExpirationService {
   /**
    * Gets an expiration setting by its ID
    */
-  async getExpirationSettingById(id: number): Promise<ExpirationSetting | null> {
+  async getExpirationSettingById(id: string): Promise<ExpirationSetting | null> {
     return this.expirationSettingRepository.getExpirationSettingById(id);
   }
 
@@ -71,7 +71,7 @@ export class ExpirationService implements IExpirationService {
    * Updates an expiration setting
    */
   async updateExpirationSetting(
-    id: number,
+    id: string,
     updates: Partial<ExpirationSetting>,
     context?: RequestContext
   ): Promise<ExpirationSetting | null> {
@@ -116,7 +116,7 @@ export class ExpirationService implements IExpirationService {
   /**
    * Deletes an expiration setting
    */
-  async deleteExpirationSetting(id: number, context?: RequestContext): Promise<boolean> {
+  async deleteExpirationSetting(id: string, context?: RequestContext): Promise<boolean> {
     return this.expirationSettingRepository.deleteExpirationSetting(id, context);
   }
 

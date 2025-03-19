@@ -48,11 +48,11 @@ export function getSubscriptionsContainer(env: Env): SubscriptionsContainer {
 
   // Create repositories if they don't exist
   if (!planRepositoryInstance) {
-    planRepositoryInstance = new PlanRepository(env.DB);
+    planRepositoryInstance = new PlanRepository(env);
   }
 
   if (!subscriptionRepositoryInstance) {
-    subscriptionRepositoryInstance = new SubscriptionRepository(env.DB);
+    subscriptionRepositoryInstance = new SubscriptionRepository(env);
   }
 
   // Create services if they don't exist

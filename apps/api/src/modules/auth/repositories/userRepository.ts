@@ -1,14 +1,14 @@
 import { AuditHelpers } from '@/utils/auditHelpers';
 
 import { DatabaseFactory } from '../../../database/databaseFactory';
-import { DatabaseService, RequestContext } from '../../../database/databaseService';
+import { SQLDatabase, RequestContext } from '../../../database/sqlDatabase';
 import { Env } from '../../../types';
 import { generateUUID } from '../../../utils/utils';
 import { User, Session } from '../models/schemas';
 import { IUserRepository } from '../services/interfaces';
 
 export class UserRepository implements IUserRepository {
-  private dbService: DatabaseService;
+  private dbService: SQLDatabase;
   private auditHelpers: AuditHelpers;
 
   constructor(env: Env) {

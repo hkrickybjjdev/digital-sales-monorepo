@@ -3,7 +3,7 @@ import { z } from 'zod';
 // Page schema for validation
 export const pageSchema = z.object({
   id: z.string(),
-  teamId: z.number(),
+  teamId: z.string(),
   slug: z.string().nullable(),
   status: z.enum(['draft', 'published', 'expired', 'archived']).default('draft'),
   createdAt: z.number(),

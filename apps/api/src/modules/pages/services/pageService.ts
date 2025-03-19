@@ -1,4 +1,4 @@
-import { RequestContext } from '../../../database/databaseService';
+import { RequestContext } from '../../../database/sqlDatabase';
 import { Env } from '../../../types';
 import {
   Page,
@@ -152,7 +152,7 @@ export class PageService implements IPageService {
   /**
    * Gets a page by its ID
    */
-  async getPageById(id: number): Promise<Page | null> {
+  async getPageById(id: string): Promise<Page | null> {
     return this.pageRepository.getPageById(id);
   }
 
@@ -167,13 +167,11 @@ export class PageService implements IPageService {
    * Gets a page along with its published version, content blocks, and translations
    */
   async getPageWithVersionDetails(
-    pageId: number | string,
+    pageId: string,
     languageCode: string
   ): Promise<PageWithVersion | null> {
-    const id = typeof pageId === 'string' ? parseInt(pageId, 10) : pageId;
-
     // 1. Get the page
-    const page = await this.pageRepository.getPageById(id);
+    const page = await this.pageRepository.getPageById(pageId);
     if (!page) {
       return null;
     }
@@ -379,7 +377,7 @@ export class PageService implements IPageService {
       );
 
       // Create a map for quick lookup
-      const existingBlocksMap = new Map<number, ContentBlock>();
+      const existingBlocksMap = new Map<string, ContentBlock>();
       existingBlocks.forEach(block => {
         if (block.id) {
           existingBlocksMap.set(block.id, block);
@@ -508,7 +506,7 @@ export class PageService implements IPageService {
   /**
    * Deletes a page and all associated data
    */
-  async deletePage(id: number, context?: RequestContext): Promise<boolean> {
+  async deletePage(id: string, context?: RequestContext): Promise<boolean> {
     // The database cascading deletes will handle most of the relationships
     // But we'll explicitly delete associated data to keep audit trails
 
