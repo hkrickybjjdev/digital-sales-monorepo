@@ -4,7 +4,7 @@ compatibility_date = "2023-10-25"
 
 # KV Namespace bindings
 kv_namespaces = [
-  { binding = "PAGES_METADATA", id = "your-kv-namespace-id-here", preview_id = "your-preview-kv-namespace-id-here" }
+  { binding = "BUILDER_KV", id = "your-kv-namespace-id-here", preview_id = "your-preview-kv-namespace-id-here" }
 ]
 
 # R2 bucket binding

@@ -8,7 +8,7 @@ export interface Env {
   EMAIL_FROM: string;
 
   // KV Namespaces
-  PAGES_METADATA: KVNamespace;
+  BUILDER_KV: KVNamespace;
 
   // R2 Buckets
   STORAGE_BUCKET: R2Bucket;
