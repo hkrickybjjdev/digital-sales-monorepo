@@ -84,10 +84,7 @@ export const updateExpirationSetting = async (c: Context<{ Bindings: Env }>) => 
     const expirationService = getService(c.env, 'expirationService');
 
     try {
-      const expirationSetting = await expirationService.updateExpirationSetting(
-        id,
-        updates
-      );
+      const expirationSetting = await expirationService.updateExpirationSetting(id, updates);
 
       if (!expirationSetting) {
         return formatError(c, 'Expiration setting not found', 'ResourceNotFound', 404);

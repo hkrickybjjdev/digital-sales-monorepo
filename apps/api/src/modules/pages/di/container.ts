@@ -63,10 +63,10 @@ export class Container {
     if (this.env && this.env !== env) {
       this.clear();
     }
-    
+
     // Store current environment
     this.env = env;
-    
+
     // Only initialize services if they haven't been created yet
     if (Object.keys(this.services).length === 0) {
       // Create repository instances

@@ -57,7 +57,7 @@ export class Container {
     if (this.env && this.env !== env) {
       this.clear();
     }
-    
+
     // Store current environment
     this.env = env;
 
@@ -69,10 +69,7 @@ export class Container {
 
       // Create services
       const planService = new PlanService(planRepository);
-      const subscriptionService = new SubscriptionService(
-        subscriptionRepository,
-        planRepository
-      );
+      const subscriptionService = new SubscriptionService(subscriptionRepository, planRepository);
       const stripeService = new StripeService(env);
 
       // Register all services

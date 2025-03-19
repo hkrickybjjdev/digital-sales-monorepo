@@ -60,12 +60,7 @@ export const updateTeamMember = async (c: Context<{ Bindings: Env }>) => {
     const teamMemberService = getService(c.env, 'teamMemberService');
 
     try {
-      const member = await teamMemberService.updateTeamMember(
-        teamId,
-        memberId,
-        userId,
-        data
-      );
+      const member = await teamMemberService.updateTeamMember(teamId, memberId, userId, data);
       if (!member) {
         return formatError(c, 'Team member not found', 'ResourceNotFound', 404);
       }

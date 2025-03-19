@@ -11,7 +11,6 @@ import { predefinedContentBlockSchema } from '../models/schemas';
  */
 export const getAllContentBlocks = async (c: Context<{ Bindings: Env }>) => {
   try {
-    
     const service = getService(c.env, 'predefinedContentBlockService');
     const blocks = await service.getAll();
 
@@ -170,7 +169,6 @@ export const getContentBlocksByCategory = async (c: Context<{ Bindings: Env }>) 
  */
 export const getPublicContentBlocks = async (c: Context<{ Bindings: Env }>) => {
   try {
-    
     const service = getService(c.env, 'predefinedContentBlockService');
     const blocks = await service.getPublicBlocks();
 

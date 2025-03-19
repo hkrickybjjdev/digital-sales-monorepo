@@ -199,8 +199,8 @@ export async function handleUserDeleted(c: Context<{ Bindings: Env }>) {
     for (const team of teams) {
       // Get team members
       const members = await teamService.getTeamMembersWithUserInfo(team.id, user.id);
-      const userMember = members.find((member: { userId: string; id: string; role: string }) => 
-        member.userId === user.id
+      const userMember = members.find(
+        (member: { userId: string; id: string; role: string }) => member.userId === user.id
       );
 
       if (userMember) {

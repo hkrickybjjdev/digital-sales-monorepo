@@ -17,7 +17,7 @@ export const createPage = async (c: Context<{ Bindings: Env }>) => {
     }
 
     const data = parseResult.data;
-    
+
     try {
       const pageService = getService(c.env, 'pageService');
       const page = await pageService.createPage(data);
@@ -105,10 +105,7 @@ export const getPageWithVersionBySlug = async (c: Context<{ Bindings: Env }>) =>
     const slug = c.req.param('slug');
     const languageCode = c.req.query('languageCode') || 'en';
     const pageService = getService(c.env, 'pageService');
-    const pageWithVersion = await pageService.getPageBySlugWithVersionDetails(
-      slug,
-      languageCode
-    );
+    const pageWithVersion = await pageService.getPageBySlugWithVersionDetails(slug, languageCode);
 
     if (!pageWithVersion) {
       return formatError(
@@ -138,7 +135,7 @@ export const savePageDraft = async (c: Context<{ Bindings: Env }>) => {
     }
 
     const data = parseResult.data;
-    
+
     try {
       const pageService = getService(c.env, 'pageService');
       const pageVersion = await pageService.savePageDraft(data);
@@ -167,7 +164,7 @@ export const publishPage = async (c: Context<{ Bindings: Env }>) => {
     }
 
     const data = parseResult.data;
-    
+
     try {
       const pageService = getService(c.env, 'pageService');
       const pageVersion = await pageService.publishPage(data);

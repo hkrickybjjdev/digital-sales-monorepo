@@ -51,7 +51,7 @@ export class Container {
     if (this.env && this.env !== env) {
       this.clear();
     }
-    
+
     // Store current environment
     this.env = env;
 
@@ -60,13 +60,13 @@ export class Container {
       // Create the repositories
       const userRepository = new UserRepository(env);
       const passwordResetRepository = new PasswordResetRepository(env);
-      
+
       // Create the webhook service
       const webhookService = new WebhookService(env);
-      
+
       // Create the email service
       const emailService = new EmailService(env);
-      
+
       // Create the auth service with its dependencies
       const authService = new AuthService(
         env,

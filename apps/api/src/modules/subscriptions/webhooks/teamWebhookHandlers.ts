@@ -123,7 +123,10 @@ export async function handleTeamDeleted(c: Context<{ Bindings: Env }>) {
 
     // Cancel each subscription
     for (const subscription of subscriptions) {
-      await getService(c.env, 'subscriptionService').cancelSubscription(subscription.id, team.userId);
+      await getService(c.env, 'subscriptionService').cancelSubscription(
+        subscription.id,
+        team.userId
+      );
     }
 
     return formatResponse(c, {

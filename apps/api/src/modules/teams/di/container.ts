@@ -48,7 +48,7 @@ export class Container {
     if (this.env && this.env !== env) {
       this.clear();
     }
-    
+
     // Store current environment
     this.env = env;
 
@@ -59,16 +59,9 @@ export class Container {
       const teamMemberRepository = new TeamMemberRepository(env);
 
       // Create service instances
-      const teamService = new TeamService(
-        teamRepository,
-        teamMemberRepository,
-        env
-      );
-      
-      const teamMemberService = new TeamMemberService(
-        teamRepository,
-        teamMemberRepository
-      );
+      const teamService = new TeamService(teamRepository, teamMemberRepository, env);
+
+      const teamMemberService = new TeamMemberService(teamRepository, teamMemberRepository);
 
       // Register all services
       this.services.teamRepository = teamRepository;

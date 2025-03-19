@@ -20,10 +20,7 @@ export const createSubscription = async (c: Context<{ Bindings: Env }>) => {
     }
 
     const subscriptionService = getService(c.env, 'subscriptionService');
-    const subscription = await subscriptionService.createSubscription(
-      userId,
-      parseResult.data
-    );
+    const subscription = await subscriptionService.createSubscription(userId, parseResult.data);
 
     return formatResponse(c, { subscription }, 201);
   } catch (error) {
@@ -85,10 +82,7 @@ export const getSubscriptionById = async (c: Context<{ Bindings: Env }>) => {
     const subscriptionId = c.req.param('subscriptionId');
 
     const subscriptionService = getService(c.env, 'subscriptionService');
-    const subscription = await subscriptionService.getSubscriptionById(
-      subscriptionId,
-      userId
-    );
+    const subscription = await subscriptionService.getSubscriptionById(subscriptionId, userId);
 
     if (!subscription) {
       return formatError(
@@ -168,10 +162,7 @@ export const cancelSubscription = async (c: Context<{ Bindings: Env }>) => {
     const subscriptionId = c.req.param('subscriptionId');
 
     const subscriptionService = getService(c.env, 'subscriptionService');
-    const subscription = await subscriptionService.cancelSubscription(
-      subscriptionId,
-      userId
-    );
+    const subscription = await subscriptionService.cancelSubscription(subscriptionId, userId);
 
     if (!subscription) {
       return formatError(

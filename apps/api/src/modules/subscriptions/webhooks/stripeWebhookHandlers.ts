@@ -100,11 +100,7 @@ export const handleStripeWebhook = async (c: Context<{ Bindings: Env }>) => {
 /**
  * Handle subscription created event
  */
-async function handleSubscriptionCreated(
-  env: Env,
-  subscriptionId: string,
-  teamId: string
-) {
+async function handleSubscriptionCreated(env: Env, subscriptionId: string, teamId: string) {
   try {
     // Create a Stripe instance
     const stripe = new Stripe(env.STRIPE_SECRET_KEY, {
@@ -122,9 +118,7 @@ async function handleSubscriptionCreated(
 
     // Find the corresponding plan in our system
     const plans = await getService(env, 'planService').getPlans();
-    const matchingPlan = plans.find((plan) => 
-      plan.prices?.some((price) => price.id === priceId)
-    );
+    const matchingPlan = plans.find(plan => plan.prices?.some(price => price.id === priceId));
 
     if (!matchingPlan) {
       console.error(`No matching plan found for Stripe price ${priceId}`);
@@ -161,15 +155,13 @@ async function handleSubscriptionCreated(
 /**
  * Handle subscription updated event
  */
-async function handleSubscriptionUpdated(
-  env: Env,
-  stripeSubscription: Stripe.Subscription
-) {
+async function handleSubscriptionUpdated(env: Env, stripeSubscription: Stripe.Subscription) {
   try {
     // Find the subscription in our database
-    const subscriptions = await getService(env, 'subscriptionRepository').findByStripeSubscriptionId(
-      stripeSubscription.id
-    );
+    const subscriptions = await getService(
+      env,
+      'subscriptionRepository'
+    ).findByStripeSubscriptionId(stripeSubscription.id);
 
     if (!subscriptions.length) {
       console.log(`No subscription found for Stripe subscription ${stripeSubscription.id}`);
@@ -185,7 +177,10 @@ async function handleSubscriptionUpdated(
         updatedAt: Date.now(),
       };
 
-      await getService(env, 'subscriptionRepository').updateSubscription(subscription.id, updateData);
+      await getService(env, 'subscriptionRepository').updateSubscription(
+        subscription.id,
+        updateData
+      );
     }
 
     console.log(`Subscription ${stripeSubscription.id} updated`);
@@ -198,15 +193,13 @@ async function handleSubscriptionUpdated(
 /**
  * Handle subscription deleted event
  */
-async function handleSubscriptionDeleted(
-  env: Env,
-  stripeSubscription: Stripe.Subscription
-) {
+async function handleSubscriptionDeleted(env: Env, stripeSubscription: Stripe.Subscription) {
   try {
     // Find the subscription in our database
-    const subscriptions = await getService(env, 'subscriptionRepository').findByStripeSubscriptionId(
-      stripeSubscription.id
-    );
+    const subscriptions = await getService(
+      env,
+      'subscriptionRepository'
+    ).findByStripeSubscriptionId(stripeSubscription.id);
 
     if (!subscriptions.length) {
       console.log(`No subscription found for Stripe subscription ${stripeSubscription.id}`);
@@ -222,7 +215,10 @@ async function handleSubscriptionDeleted(
         updatedAt: Date.now(),
       };
 
-      await getService(env, 'subscriptionRepository').updateSubscription(subscription.id, updateData);
+      await getService(env, 'subscriptionRepository').updateSubscription(
+        subscription.id,
+        updateData
+      );
     }
 
     console.log(`Subscription ${stripeSubscription.id} marked as cancelled`);

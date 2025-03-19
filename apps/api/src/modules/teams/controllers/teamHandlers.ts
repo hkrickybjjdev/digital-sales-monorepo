@@ -10,14 +10,14 @@ export const getTeams = async (c: Context<{ Bindings: Env }>) => {
   try {
     const userId = c.get('jwtPayload').sub;
     const teamService = getService(c.env, 'teamService');
-    
+
     const teams = await teamService.getUserTeams(userId);
     return formatResponse(c, { teams });
   } catch (error) {
     console.error('Error getting teams:', error);
     return formatError(c, 'Failed to get teams', 'InternalServerError', 500);
   }
-}
+};
 
 // Get a single team by ID
 export const getTeam = async (c: Context<{ Bindings: Env }>) => {

@@ -3,10 +3,7 @@ import { Context } from 'hono';
 import { Env } from '../../../types';
 import { formatResponse, formatError } from '../../../utils/apiResponse';
 import { getService } from '../di/container';
-import {
-  forgotPasswordSchema,
-  resetPasswordSchema,
-} from '../models/schemas';
+import { forgotPasswordSchema, resetPasswordSchema } from '../models/schemas';
 
 /**
  * Handle forgot password requests
@@ -21,10 +18,10 @@ export async function forgotPassword(c: Context<{ Bindings: Env }>) {
     }
 
     const { email } = result.data;
-    
+
     // Get the authService using getService
     const authService = getService(c.env, 'authService');
-    
+
     const resetResult = await authService.forgotPassword({ email });
 
     if (!resetResult.success) {
@@ -51,10 +48,10 @@ export async function resetPassword(c: Context<{ Bindings: Env }>) {
     }
 
     const { token, password } = result.data;
-    
+
     // Get the authService using getService
     const authService = getService(c.env, 'authService');
-    
+
     const resetResult = await authService.resetPassword({ token, password });
 
     if (!resetResult.success) {

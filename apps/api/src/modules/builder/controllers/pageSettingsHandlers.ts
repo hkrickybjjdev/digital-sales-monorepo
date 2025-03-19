@@ -11,7 +11,6 @@ import { pageSettingsDefinitionSchema } from '../models/schemas';
  */
 export const getAllPageSettings = async (c: Context<{ Bindings: Env }>) => {
   try {
-    
     const service = getService(c.env, 'pageSettingsDefinitionService');
     const settings = await service.getAll();
 
