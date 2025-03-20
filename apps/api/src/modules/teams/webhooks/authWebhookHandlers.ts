@@ -2,7 +2,7 @@ import { Context } from 'hono';
 
 import { Env } from '../../../types';
 import { formatResponse, formatError } from '../../../utils/apiResponse';
-import { createTeamMemberService, createTeamService } from '../factory';
+import { createTeamMemberService, createTeamService, createTeamsWebhookService } from '../factory';
 import {
   UserCreatedWebhookSchema,
   UserUpdatedWebhookSchema,
@@ -83,7 +83,7 @@ export async function handleUserCreated(c: Context<{ Bindings: Env }>) {
     // The team service automatically adds the user as owner, so no need to call addTeamMember
 
     // Emit team created event instead of directly interacting with subscriptions
-    const teamsWebhookService = new TeamsWebhookService(c.env);
+    const teamsWebhookService = createTeamsWebhookService(c.env);
     await teamsWebhookService.triggerTeamCreated({
       id: team.id,
       name: team.name,

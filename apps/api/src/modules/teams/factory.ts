@@ -7,6 +7,8 @@ import { TeamRepository } from './repositories/teamRepository';
 import { ITeamService, ITeamMemberService } from './services/interfaces';
 import { TeamMemberService } from './services/teamMemberService';
 import { TeamService } from './services/teamService';
+import { TeamsWebhookService } from './services/webhookService';
+import { ITeamsWebhookService } from './services/webhookService';
 
 /**
  * Factory functions for creating service instances
@@ -50,7 +52,8 @@ export function createTeamRepository(env: Env): TeamRepository {
 export function createTeamService(env: Env): ITeamService {
   const teamMemberRepository = createTeamMemberRepository(env);
   const teamRepository = createTeamRepository(env);
-  return new TeamService(teamRepository, teamMemberRepository, env);
+  const teamsWebhookService = createTeamsWebhookService(env);
+  return new TeamService(teamRepository, teamMemberRepository, teamsWebhookService);
 }
 
 /**
@@ -60,4 +63,11 @@ export function createTeamMemberService(env: Env): ITeamMemberService {
   const teamMemberRepository = createTeamMemberRepository(env);
   const teamRepository = createTeamRepository(env);
   return new TeamMemberService(teamRepository, teamMemberRepository);
+}
+
+/**
+ * Create a teamsWebhookService instance
+ */
+export function createTeamsWebhookService(env: Env): ITeamsWebhookService {
+  return new TeamsWebhookService(env);
 }
