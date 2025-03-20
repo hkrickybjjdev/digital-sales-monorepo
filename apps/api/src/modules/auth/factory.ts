@@ -1,7 +1,11 @@
 import { createDatabase } from '../../database/databaseFactory';
 import { Env } from '../../types';
+import { createAuditHelpers } from '../audit/auditHelpers';
 
-import { PasswordResetRepository, IPasswordResetRepository } from './repositories/passwordResetRepository';
+import {
+  PasswordResetRepository,
+  IPasswordResetRepository,
+} from './repositories/passwordResetRepository';
 import { UserRepository } from './repositories/userRepository';
 import { AuthService } from './services/authService';
 import { EmailService } from './services/emailService';
@@ -32,7 +36,8 @@ export interface AuthServices {
  */
 export function createUserRepository(env: Env): IUserRepository {
   const dbService = createDatabase(env);
-  return new UserRepository(dbService);
+  const auditHelpers = createAuditHelpers(dbService);
+  return new UserRepository(dbService, auditHelpers);
 }
 
 /**

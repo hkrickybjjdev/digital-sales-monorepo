@@ -1,17 +1,15 @@
-import { AuditHelpers } from '@/utils/auditHelpers';
+import { IAuditHelpers } from '@/modules/audit/auditHelpers';
 
 import { SQLDatabase, RequestContext } from '../../../database/sqlDatabase';
-import { Env } from '../../../types';
 import { generateUUID } from '../../../utils/utils';
 import { User, Session } from '../models/schemas';
 import { IUserRepository } from '../services/interfaces';
 
 export class UserRepository implements IUserRepository {
-  private auditHelpers: AuditHelpers;
-
-  constructor(private readonly dbService: SQLDatabase) {
-    this.auditHelpers = new AuditHelpers(this.dbService);
-  }
+  constructor(
+    private readonly dbService: SQLDatabase,
+    private readonly auditHelpers: IAuditHelpers
+  ) {}
 
   async getUserByEmail(email: string): Promise<User | null> {
     return this.dbService.queryOne<User>({

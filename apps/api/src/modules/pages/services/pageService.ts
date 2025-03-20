@@ -22,7 +22,6 @@ import {
 import { IPageService } from './interfaces';
 
 export class PageService implements IPageService {
-
   constructor(
     private readonly pageRepository: IPageRepository,
     private readonly pageVersionRepository: IPageVersionRepository,
@@ -30,8 +29,7 @@ export class PageService implements IPageService {
     private readonly contentBlockRepository: IContentBlockRepository,
     private readonly contentBlockTranslationRepository: IContentBlockTranslationRepository,
     private readonly expirationSettingRepository: IExpirationSettingRepository
-  ) {
-  }
+  ) {}
 
   /**
    * Creates a new page with initial content and translations

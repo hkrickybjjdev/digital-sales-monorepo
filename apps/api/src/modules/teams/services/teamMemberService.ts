@@ -4,13 +4,11 @@ import { ITeamRepository, ITeamMemberRepository } from '../repositories/interfac
 import { ITeamMemberService } from './interfaces';
 
 export class TeamMemberService implements ITeamMemberService {
-  
   constructor(
     private readonly teamRepository: ITeamRepository,
     private readonly teamMemberRepository: ITeamMemberRepository,
     private readonly maxMembersPerTeam: number = 10
-  ) {
-  }
+  ) {}
 
   async addTeamMember(
     teamId: string,

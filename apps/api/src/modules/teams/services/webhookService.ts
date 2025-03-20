@@ -10,7 +10,7 @@ export interface ITeamsWebhookService {
     userId: string; // Owner ID
     createdAt: number;
   }): Promise<void>;
-  
+
   triggerTeamDeleted(team: {
     id: string;
     name: string;

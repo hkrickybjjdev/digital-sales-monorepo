@@ -13,11 +13,11 @@ export interface IPasswordResetRepository {
     expiryTimeInMinutes?: number,
     context?: RequestContext
   ): Promise<PasswordReset>;
-  
+
   getPasswordResetByToken(token: string): Promise<PasswordReset | null>;
-  
+
   markTokenAsUsed(token: string, context?: RequestContext): Promise<boolean>;
-  
+
   invalidateUserTokens(userId: string, context?: RequestContext): Promise<boolean>;
 }
 

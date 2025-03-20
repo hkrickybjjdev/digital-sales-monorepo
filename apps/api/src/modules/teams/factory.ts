@@ -7,8 +7,7 @@ import { TeamRepository } from './repositories/teamRepository';
 import { ITeamService, ITeamMemberService } from './services/interfaces';
 import { TeamMemberService } from './services/teamMemberService';
 import { TeamService } from './services/teamService';
-import { TeamsWebhookService } from './services/webhookService';
-import { ITeamsWebhookService } from './services/webhookService';
+import { TeamsWebhookService, ITeamsWebhookService } from './services/webhookService';
 
 /**
  * Factory functions for creating service instances

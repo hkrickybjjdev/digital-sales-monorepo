@@ -1,11 +1,62 @@
-import { RequestContext, SQLDatabase } from '../database/sqlDatabase';
+import { RequestContext, SQLDatabase } from '../../database/sqlDatabase';
+
+/**
+ * Interface for audit logging operations
+ */
+export interface IAuditHelpers {
+  logSuccess(
+    eventType: string,
+    resourceType: string,
+    resourceId?: string,
+    userId?: string,
+    details?: Record<string, any>,
+    context?: RequestContext
+  ): Promise<void>;
+
+  logFailure(
+    eventType: string,
+    resourceType: string,
+    resourceId?: string,
+    userId?: string,
+    details?: Record<string, any>,
+    context?: RequestContext
+  ): Promise<void>;
+
+  logAccessControl(
+    granted: boolean,
+    resourceType: string,
+    resourceId?: string,
+    userId?: string,
+    details?: Record<string, any>,
+    context?: RequestContext
+  ): Promise<void>;
+
+  logError(
+    eventType: string,
+    error: Error | string,
+    resourceType?: string,
+    resourceId?: string,
+    userId?: string,
+    context?: RequestContext
+  ): Promise<void>;
+
+  logDataChange(
+    operation: 'created' | 'updated' | 'deleted',
+    resourceType: string,
+    resourceId?: string,
+    userId?: string,
+    before?: Record<string, any>,
+    after?: Record<string, any>,
+    context?: RequestContext
+  ): Promise<void>;
+}
 
 /**
  * Helper functions for consistent audit logging across repositories
  * These can be imported and used by various repositories to ensure
  * consistent audit log patterns
  */
-export class AuditHelpers {
+export class AuditHelpers implements IAuditHelpers {
   private dbService: SQLDatabase;
 
   constructor(dbService: SQLDatabase) {
@@ -168,3 +219,10 @@ export class AuditHelpers {
     return changedFields;
   }
 }
+
+/**
+ * Factory function to create an AuditHelpers instance
+ */
+export const createAuditHelpers = (dbService: SQLDatabase): IAuditHelpers => {
+  return new AuditHelpers(dbService);
+};

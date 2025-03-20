@@ -11,14 +11,12 @@ import { ITeamService } from './interfaces';
 import { ITeamsWebhookService } from './webhookService';
 
 export class TeamService implements ITeamService {
-  
   constructor(
     private readonly teamRepository: ITeamRepository,
-    private readonly teamMemberRepository: ITeamMemberRepository,    
+    private readonly teamMemberRepository: ITeamMemberRepository,
     private readonly webhookService: ITeamsWebhookService,
     private readonly maxTeamsPerUser: number = 5
-  ) {  
-  }
+  ) {}
 
   async createTeam(userId: string, data: CreateTeamRequest): Promise<Team> {
     // Check if user has reached the limit of teams they can create

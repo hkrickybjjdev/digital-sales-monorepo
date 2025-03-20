@@ -9,13 +9,11 @@ import {
 import { IExpirationService } from './interfaces';
 
 export class ExpirationService implements IExpirationService {
-  
   constructor(
     private readonly expirationSettingRepository: IExpirationSettingRepository,
     private readonly pageRepository: IPageRepository,
     private readonly pageVersionRepository: IPageVersionRepository
-  ) {    
-  }
+  ) {}
 
   /**
    * Creates a new expiration setting
