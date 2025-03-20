@@ -267,11 +267,12 @@ The API uses a factory-based dependency management approach optimized for Cloudf
 
 ```typescript
 // Factory functions for creating services
-export function createUserRepository(env: Env): IUserRepository {
-  return new UserRepository(env);
+export function createUserRepository(env: Env): UserRepository {
+  const dbService = createDatabase(env);
+  return new UserRepository(dbService);
 }
 
-export function createAuthService(env: Env): IAuthService {
+export function createAuthService(env: Env): AuthService {
   const userRepository = createUserRepository(env);
   const passwordResetRepository = createPasswordResetRepository(env);
   // Create other dependencies as needed
@@ -563,14 +564,14 @@ API documentation is available at `/docs` when running the development server.
 
 ## Centralized Database Access
 
-This API now uses a centralized database service to manage all database interactions, providing the following benefits:
+This API uses a stateless approach to database access with direct dependency injection:
 
 ### Key Features
 
-1. **Centralized Database Access**
-   - All database interactions go through the `DatabaseService`
-   - Repository classes no longer directly use D1Database
-   - Common patterns for querying and updating data
+1. **Centralized Database Creation**
+   - Database instances are created with the `createDatabase()` factory function
+   - Repository classes receive database instances through their constructors
+   - No shared database state between requests
 
 2. **Automatic Audit Logging**
    - All write operations can be automatically logged
@@ -582,30 +583,32 @@ This API now uses a centralized database service to manage all database interact
    - Automatic rollback on errors
    - Better data consistency
 
-### How to Update Repositories
+### How to Create Repositories
 
 When creating or updating a repository class, follow these steps:
 
-1. Import the database factory:
+1. Define the repository with SQLDatabase as a constructor parameter:
    ```typescript
-   import { DatabaseFactory } from '../../database/databaseFactory';
-   import { DatabaseService } from '../../database/databaseService';
-   ```
-
-2. Initialize the database service in your constructor:
-   ```typescript
+   import { SQLDatabase, RequestContext } from '../../database/sqlDatabase';
+   
    export class MyRepository {
-     private dbService: DatabaseService;
-
-     constructor(env: Env) {
-       this.dbService = DatabaseFactory.getInstance(env);
-     }
+     constructor(private readonly dbService: SQLDatabase) {}
      
      // Repository methods
    }
    ```
 
-3. Use the database service methods:
+2. Create factory functions that create and inject the database:
+   ```typescript
+   import { createDatabase } from '../../database/databaseFactory';
+   
+   export function createMyRepository(env: Env): MyRepository {
+     const dbService = createDatabase(env);
+     return new MyRepository(dbService);
+   }
+   ```
+
+3. Use the database service methods in repository methods:
    - `queryOne<T>()` - For getting a single record
    - `queryMany<T>()` - For getting multiple records
    - `execute()` - For operations without audit logging
