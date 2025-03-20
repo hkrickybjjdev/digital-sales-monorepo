@@ -2,7 +2,7 @@ import { Context } from 'hono';
 
 import { Env } from '../../../types';
 import { formatResponse, formatError, format500Error } from '../../../utils/apiResponse';
-import { getService } from '../di/container';
+import { createSubscriptionService } from '../factory';
 import { createSubscriptionSchema, updateSubscriptionSchema } from '../models/schemas';
 
 /**
@@ -19,7 +19,7 @@ export const createSubscription = async (c: Context<{ Bindings: Env }>) => {
       return formatError(c, 'Invalid input', 'ValidationError', 400);
     }
 
-    const subscriptionService = getService(c.env, 'subscriptionService');
+    const subscriptionService = createSubscriptionService(c.env);
     const subscription = await subscriptionService.createSubscription(userId, parseResult.data);
 
     return formatResponse(c, { subscription }, 201);
@@ -51,7 +51,7 @@ export const getTeamSubscriptions = async (c: Context<{ Bindings: Env }>) => {
     const userId = c.get('jwtPayload').sub;
     const teamId = c.req.param('teamId');
 
-    const subscriptionService = getService(c.env, 'subscriptionService');
+    const subscriptionService = createSubscriptionService(c.env);
     const subscriptions = await subscriptionService.getTeamSubscriptions(teamId, userId);
 
     const activeSubscription = subscriptions.find(
@@ -81,7 +81,7 @@ export const getSubscriptionById = async (c: Context<{ Bindings: Env }>) => {
     const userId = c.get('jwtPayload').sub;
     const subscriptionId = c.req.param('subscriptionId');
 
-    const subscriptionService = getService(c.env, 'subscriptionService');
+    const subscriptionService = createSubscriptionService(c.env);
     const subscription = await subscriptionService.getSubscriptionById(subscriptionId, userId);
 
     if (!subscription) {
@@ -120,7 +120,7 @@ export const updateSubscription = async (c: Context<{ Bindings: Env }>) => {
       return formatError(c, 'Invalid input', 'ValidationError', 400);
     }
 
-    const subscriptionService = getService(c.env, 'subscriptionService');
+    const subscriptionService = createSubscriptionService(c.env);
     const subscription = await subscriptionService.updateSubscription(
       subscriptionId,
       userId,
@@ -161,7 +161,7 @@ export const cancelSubscription = async (c: Context<{ Bindings: Env }>) => {
     const userId = c.get('jwtPayload').sub;
     const subscriptionId = c.req.param('subscriptionId');
 
-    const subscriptionService = getService(c.env, 'subscriptionService');
+    const subscriptionService = createSubscriptionService(c.env);
     const subscription = await subscriptionService.cancelSubscription(subscriptionId, userId);
 
     if (!subscription) {

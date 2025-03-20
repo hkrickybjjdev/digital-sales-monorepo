@@ -2,7 +2,7 @@ import { Context } from 'hono';
 
 import { Env } from '../../../types';
 import { formatResponse, formatError, format500Error } from '../../../utils/apiResponse';
-import { getService } from '../di/container';
+import { createPageService } from '../factory';
 import { createPageSchema, savePageDraftSchema, publishPageSchema } from '../models/schemas';
 
 // Create a new page
@@ -19,7 +19,7 @@ export const createPage = async (c: Context<{ Bindings: Env }>) => {
     const data = parseResult.data;
 
     try {
-      const pageService = getService(c.env, 'pageService');
+      const pageService = createPageService(c.env);
       const page = await pageService.createPage(data);
       return formatResponse(c, { page }, 201);
     } catch (serviceError) {
@@ -39,7 +39,7 @@ export const getPageById = async (c: Context<{ Bindings: Env }>) => {
       return formatError(c, 'Invalid page ID', 'ValidationError', 400);
     }
 
-    const pageService = getService(c.env, 'pageService');
+    const pageService = createPageService(c.env);
     const page = await pageService.getPageById(id);
 
     if (!page) {
@@ -57,7 +57,7 @@ export const getPageById = async (c: Context<{ Bindings: Env }>) => {
 export const getPageBySlug = async (c: Context<{ Bindings: Env }>) => {
   try {
     const slug = c.req.param('slug');
-    const pageService = getService(c.env, 'pageService');
+    const pageService = createPageService(c.env);
     const page = await pageService.getPageBySlug(slug);
 
     if (!page) {
@@ -80,7 +80,7 @@ export const getPageWithVersionById = async (c: Context<{ Bindings: Env }>) => {
     }
 
     const languageCode = c.req.query('languageCode') || 'en';
-    const pageService = getService(c.env, 'pageService');
+    const pageService = createPageService(c.env);
     const pageWithVersion = await pageService.getPageWithVersionDetails(id, languageCode);
 
     if (!pageWithVersion) {
@@ -104,7 +104,7 @@ export const getPageWithVersionBySlug = async (c: Context<{ Bindings: Env }>) =>
   try {
     const slug = c.req.param('slug');
     const languageCode = c.req.query('languageCode') || 'en';
-    const pageService = getService(c.env, 'pageService');
+    const pageService = createPageService(c.env);
     const pageWithVersion = await pageService.getPageBySlugWithVersionDetails(slug, languageCode);
 
     if (!pageWithVersion) {
@@ -137,7 +137,7 @@ export const savePageDraft = async (c: Context<{ Bindings: Env }>) => {
     const data = parseResult.data;
 
     try {
-      const pageService = getService(c.env, 'pageService');
+      const pageService = createPageService(c.env);
       const pageVersion = await pageService.savePageDraft(data);
       return formatResponse(c, { pageVersion });
     } catch (serviceError) {
@@ -166,7 +166,7 @@ export const publishPage = async (c: Context<{ Bindings: Env }>) => {
     const data = parseResult.data;
 
     try {
-      const pageService = getService(c.env, 'pageService');
+      const pageService = createPageService(c.env);
       const pageVersion = await pageService.publishPage(data);
       return formatResponse(c, { pageVersion });
     } catch (serviceError) {
@@ -190,7 +190,7 @@ export const deletePage = async (c: Context<{ Bindings: Env }>) => {
     }
 
     try {
-      const pageService = getService(c.env, 'pageService');
+      const pageService = createPageService(c.env);
       const success = await pageService.deletePage(id);
       if (!success) {
         return formatError(c, 'Failed to delete page', 'ServiceError', 500);

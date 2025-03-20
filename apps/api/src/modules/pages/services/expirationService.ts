@@ -1,5 +1,4 @@
 import { RequestContext } from '../../../database/sqlDatabase';
-import { Env } from '../../../types';
 import { ExpirationSetting } from '../models/schemas';
 import {
   IExpirationSettingRepository,

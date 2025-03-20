@@ -2,7 +2,7 @@ import { Context } from 'hono';
 
 import { Env } from '../../../types';
 import { formatResponse, formatError, format500Error } from '../../../utils/apiResponse';
-import { getService } from '../di/container';
+import { createExpirationService } from '../factory';
 import { expirationSettingSchema } from '../models/schemas';
 
 // Create a new expiration setting
@@ -19,7 +19,7 @@ export const createExpirationSetting = async (c: Context<{ Bindings: Env }>) => 
     }
 
     const data = parseResult.data;
-    const expirationService = getService(c.env, 'expirationService');
+    const expirationService = createExpirationService(c.env);
 
     try {
       const expirationSetting = await expirationService.createExpirationSetting(
@@ -47,7 +47,7 @@ export const getExpirationSettingById = async (c: Context<{ Bindings: Env }>) =>
       return formatError(c, 'Invalid expiration setting ID', 'ValidationError', 400);
     }
 
-    const expirationService = getService(c.env, 'expirationService');
+    const expirationService = createExpirationService(c.env);
     const expirationSetting = await expirationService.getExpirationSettingById(id);
 
     if (!expirationSetting) {
@@ -81,7 +81,7 @@ export const updateExpirationSetting = async (c: Context<{ Bindings: Env }>) => 
     }
 
     const updates = parseResult.data;
-    const expirationService = getService(c.env, 'expirationService');
+    const expirationService = createExpirationService(c.env);
 
     try {
       const expirationSetting = await expirationService.updateExpirationSetting(id, updates);
@@ -108,7 +108,7 @@ export const deleteExpirationSetting = async (c: Context<{ Bindings: Env }>) => 
       return formatError(c, 'Invalid expiration setting ID', 'ValidationError', 400);
     }
 
-    const expirationService = getService(c.env, 'expirationService');
+    const expirationService = createExpirationService(c.env);
 
     try {
       const success = await expirationService.deleteExpirationSetting(id);
@@ -131,7 +131,7 @@ export const deleteExpirationSetting = async (c: Context<{ Bindings: Env }>) => 
 // Manually process expirations - should be called from a scheduled task in a real app
 export const processExpirations = async (c: Context<{ Bindings: Env }>) => {
   try {
-    const expirationService = getService(c.env, 'expirationService');
+    const expirationService = createExpirationService(c.env);
     await expirationService.processExpirations();
     return formatResponse(c, { success: true, message: 'Expirations processed successfully' });
   } catch (error) {

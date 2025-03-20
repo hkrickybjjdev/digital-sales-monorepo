@@ -2,14 +2,14 @@ import { Context } from 'hono';
 
 import { Env } from '../../../types';
 import { formatResponse, formatError, format500Error } from '../../../utils/apiResponse';
-import { getService } from '../di/container';
+import {createTeamService} from "../factory";
 import { createTeamSchema, updateTeamSchema } from '../models/schemas';
 
 // Get all teams for the current user
 export const getTeams = async (c: Context<{ Bindings: Env }>) => {
   try {
     const userId = c.get('jwtPayload').sub;
-    const teamService = getService(c.env, 'teamService');
+    const teamService = createTeamService(c.env);
 
     const teams = await teamService.getUserTeams(userId);
     return formatResponse(c, { teams });
@@ -25,7 +25,7 @@ export const getTeam = async (c: Context<{ Bindings: Env }>) => {
     const userId = c.get('jwtPayload').sub;
     const teamId = c.req.param('teamId');
 
-    const teamService = getService(c.env, 'teamService');
+    const teamService = createTeamService(c.env);
 
     // Check if the user has access to this team
     const hasAccess = await teamService.checkTeamPermission(teamId, userId, [
@@ -64,7 +64,7 @@ export const createTeam = async (c: Context<{ Bindings: Env }>) => {
 
     const data = parseResult.data;
 
-    const teamService = getService(c.env, 'teamService');
+    const teamService = createTeamService(c.env);
 
     try {
       const team = await teamService.createTeam(userId, data);
@@ -96,7 +96,7 @@ export const updateTeam = async (c: Context<{ Bindings: Env }>) => {
 
     const data = parseResult.data;
 
-    const teamService = getService(c.env, 'teamService');
+    const teamService = createTeamService(c.env);
 
     try {
       const team = await teamService.updateTeam(teamId, userId, data);
@@ -123,7 +123,7 @@ export const deleteTeam = async (c: Context<{ Bindings: Env }>) => {
     const userId = c.get('jwtPayload').sub;
     const teamId = c.req.param('teamId');
 
-    const teamService = getService(c.env, 'teamService');
+    const teamService = createTeamService(c.env);
 
     try {
       const result = await teamService.deleteTeam(teamId, userId);
@@ -153,7 +153,7 @@ export const getTeamMembers = async (c: Context<{ Bindings: Env }>) => {
     const userId = c.get('jwtPayload').sub;
     const teamId = c.req.param('teamId');
 
-    const teamService = getService(c.env, 'teamService');
+    const teamService = createTeamService(c.env);
 
     try {
       const members = await teamService.getTeamMembersWithUserInfo(teamId, userId);

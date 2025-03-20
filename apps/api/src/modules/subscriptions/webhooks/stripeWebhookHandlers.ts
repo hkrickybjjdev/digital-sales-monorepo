@@ -3,7 +3,7 @@ import Stripe from 'stripe';
 
 import { Env } from '../../../types';
 import { formatResponse, formatError } from '../../../utils/apiResponse';
-import { getService } from '../di/container';
+import { createPlanService, createSubscriptionRepository, createSubscriptionService } from '../factory';
 
 /**
  * Handle Stripe webhook events
@@ -117,7 +117,7 @@ async function handleSubscriptionCreated(env: Env, subscriptionId: string, teamI
     const priceId = item.price.id;
 
     // Find the corresponding plan in our system
-    const plans = await getService(env, 'planService').getPlans();
+    const plans = await createPlanService(env).getPlans();
     const matchingPlan = plans.find(plan => plan.prices?.some(price => price.id === priceId));
 
     if (!matchingPlan) {
@@ -143,7 +143,7 @@ async function handleSubscriptionCreated(env: Env, subscriptionId: string, teamI
     };
 
     // Save to database
-    await getService(env, 'subscriptionRepository').createSubscription(subscription);
+    await createSubscriptionRepository(env).createSubscription(subscription);
 
     console.log(`Subscription ${subscriptionId} created for team ${teamId}`);
   } catch (error) {
@@ -158,10 +158,10 @@ async function handleSubscriptionCreated(env: Env, subscriptionId: string, teamI
 async function handleSubscriptionUpdated(env: Env, stripeSubscription: Stripe.Subscription) {
   try {
     // Find the subscription in our database
-    const subscriptions = await getService(
-      env,
-      'subscriptionRepository'
-    ).findByStripeSubscriptionId(stripeSubscription.id);
+    const subscriptionRepository = createSubscriptionRepository(env);
+    const subscriptions = await subscriptionRepository.findByStripeSubscriptionId(
+      stripeSubscription.id
+    );
 
     if (!subscriptions.length) {
       console.log(`No subscription found for Stripe subscription ${stripeSubscription.id}`);
@@ -177,7 +177,7 @@ async function handleSubscriptionUpdated(env: Env, stripeSubscription: Stripe.Su
         updatedAt: Date.now(),
       };
 
-      await getService(env, 'subscriptionRepository').updateSubscription(
+      await subscriptionRepository.updateSubscription(
         subscription.id,
         updateData
       );
@@ -196,10 +196,8 @@ async function handleSubscriptionUpdated(env: Env, stripeSubscription: Stripe.Su
 async function handleSubscriptionDeleted(env: Env, stripeSubscription: Stripe.Subscription) {
   try {
     // Find the subscription in our database
-    const subscriptions = await getService(
-      env,
-      'subscriptionRepository'
-    ).findByStripeSubscriptionId(stripeSubscription.id);
+    const subscriptionRepository = createSubscriptionRepository(env);
+    const subscriptions = await subscriptionRepository.findByStripeSubscriptionId(stripeSubscription.id);
 
     if (!subscriptions.length) {
       console.log(`No subscription found for Stripe subscription ${stripeSubscription.id}`);
@@ -215,7 +213,7 @@ async function handleSubscriptionDeleted(env: Env, stripeSubscription: Stripe.Su
         updatedAt: Date.now(),
       };
 
-      await getService(env, 'subscriptionRepository').updateSubscription(
+      await subscriptionRepository.updateSubscription(
         subscription.id,
         updateData
       );

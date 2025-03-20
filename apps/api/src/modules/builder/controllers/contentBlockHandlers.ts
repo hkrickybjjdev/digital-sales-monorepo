@@ -2,7 +2,7 @@ import { Context } from 'hono';
 
 import { Env } from '../../../types';
 import { formatResponse, formatError, format500Error } from '../../../utils/apiResponse';
-import { getService } from '../di/container';
+import {createPredefinedContentBlockService} from "../factory";
 import { predefinedContentBlockSchema } from '../models/schemas';
 
 /**
@@ -11,7 +11,7 @@ import { predefinedContentBlockSchema } from '../models/schemas';
  */
 export const getAllContentBlocks = async (c: Context<{ Bindings: Env }>) => {
   try {
-    const service = getService(c.env, 'predefinedContentBlockService');
+    const service = createPredefinedContentBlockService(c.env);
     const blocks = await service.getAll();
 
     return formatResponse(c, { blocks });
@@ -29,7 +29,7 @@ export const getContentBlockByType = async (c: Context<{ Bindings: Env }>) => {
   try {
     const type = c.req.param('type');
 
-    const service = getService(c.env, 'predefinedContentBlockService');
+    const service = createPredefinedContentBlockService(c.env);
     const block = await service.getByType(type);
 
     if (!block) {
@@ -59,7 +59,7 @@ export const createContentBlock = async (c: Context<{ Bindings: Env }>) => {
 
     const blockData = parseResult.data;
 
-    const service = getService(c.env, 'predefinedContentBlockService');
+    const service = createPredefinedContentBlockService(c.env);
 
     try {
       await service.createBlock(blockData);
@@ -103,7 +103,7 @@ export const updateContentBlock = async (c: Context<{ Bindings: Env }>) => {
       );
     }
 
-    const service = getService(c.env, 'predefinedContentBlockService');
+    const service = createPredefinedContentBlockService(c.env);
 
     try {
       await service.updateBlock(type, blockData);
@@ -128,7 +128,7 @@ export const deleteContentBlock = async (c: Context<{ Bindings: Env }>) => {
   try {
     const type = c.req.param('type');
 
-    const service = getService(c.env, 'predefinedContentBlockService');
+    const service = createPredefinedContentBlockService(c.env);
 
     try {
       await service.deleteBlock(type);
@@ -153,7 +153,7 @@ export const getContentBlocksByCategory = async (c: Context<{ Bindings: Env }>) 
   try {
     const category = c.req.param('category');
 
-    const service = getService(c.env, 'predefinedContentBlockService');
+    const service = createPredefinedContentBlockService(c.env);
     const blocks = await service.getByCategory(category);
 
     return formatResponse(c, { blocks });
@@ -169,7 +169,7 @@ export const getContentBlocksByCategory = async (c: Context<{ Bindings: Env }>) 
  */
 export const getPublicContentBlocks = async (c: Context<{ Bindings: Env }>) => {
   try {
-    const service = getService(c.env, 'predefinedContentBlockService');
+    const service = createPredefinedContentBlockService(c.env);
     const blocks = await service.getPublicBlocks();
 
     return formatResponse(c, { blocks });

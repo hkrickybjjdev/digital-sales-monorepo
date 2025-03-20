@@ -18,7 +18,6 @@ The module follows Clean Architecture principles with distinct layers:
 3. **Service Layer**: Implements business logic and domain rules
 4. **Controller Layer**: Handles HTTP requests/responses and input validation
 5. **API/Router Layer**: Exposes functionality through REST endpoints
-6. **DI (Dependency Injection) Layer**: Manages dependencies between components
 
 ## Components
 
@@ -42,9 +41,11 @@ The module follows Clean Architecture principles with distinct layers:
 - `contentBlockHandlers.ts`: Contains handler functions for content block HTTP requests
 - `pageSettingsHandlers.ts`: Contains handler functions for page settings HTTP requests
 
-### Dependency Injection
+### Factory Pattern
 
-- `Container`: Manages singleton instances of repositories and services
+- `factory.ts`: Provides factory functions to create repository and service instances
+- Creates dependencies on-demand for optimal worker performance
+- Ensures proper statelessness for serverless functions
 
 ## API Endpoints
 

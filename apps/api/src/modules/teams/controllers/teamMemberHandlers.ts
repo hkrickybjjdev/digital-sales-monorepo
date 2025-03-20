@@ -2,7 +2,7 @@ import { Context } from 'hono';
 
 import { Env } from '../../../types';
 import { formatResponse, formatError, format500Error } from '../../../utils/apiResponse';
-import { getService } from '../di/container';
+import {createTeamMemberService} from "../factory";
 import { addTeamMemberSchema, updateTeamMemberSchema } from '../models/schemas';
 
 // Add a member to a team
@@ -19,7 +19,7 @@ export const addTeamMember = async (c: Context<{ Bindings: Env }>) => {
     }
 
     const data = parseResult.data;
-    const teamMemberService = getService(c.env, 'teamMemberService');
+    const teamMemberService = createTeamMemberService(c.env);
 
     try {
       const member = await teamMemberService.addTeamMember(teamId, userId, data);
@@ -57,7 +57,7 @@ export const updateTeamMember = async (c: Context<{ Bindings: Env }>) => {
     }
 
     const data = parseResult.data;
-    const teamMemberService = getService(c.env, 'teamMemberService');
+    const teamMemberService = createTeamMemberService(c.env);
 
     try {
       const member = await teamMemberService.updateTeamMember(teamId, memberId, userId, data);
@@ -93,7 +93,7 @@ export const removeTeamMember = async (c: Context<{ Bindings: Env }>) => {
     const teamId = c.req.param('teamId');
     const memberId = c.req.param('memberId');
 
-    const teamMemberService = getService(c.env, 'teamMemberService');
+    const teamMemberService = createTeamMemberService(c.env);
 
     try {
       const result = await teamMemberService.removeTeamMember(teamId, memberId, userId);

@@ -15,9 +15,8 @@ import {
   ResetResponse,
 } from '../models/schemas';
 import { PasswordResetRepository } from '../repositories/passwordResetRepository';
-import { UserRepository } from '../repositories/userRepository';
 
-import { IAuthService, IWebhookService, IEmailService } from './interfaces';
+import { IAuthService, IWebhookService, IEmailService, IUserRepository } from './interfaces';
 
 export class AuthService implements IAuthService {
   private jwtSecret: string;
@@ -26,7 +25,7 @@ export class AuthService implements IAuthService {
 
   constructor(
     private readonly env: Env,
-    private readonly userRepository: UserRepository,
+    private readonly userRepository: IUserRepository,
     private readonly passwordResetRepository: PasswordResetRepository,
     private readonly webhookService: IWebhookService,
     private readonly emailService: IEmailService

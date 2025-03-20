@@ -2,14 +2,14 @@ import { Context } from 'hono';
 
 import { Env } from '../../../types';
 import { formatResponse, formatError, format500Error } from '../../../utils/apiResponse';
-import { getService } from '../di/container';
+import { createPlanService } from '../factory';
 
 /**
  * Get all available plans with their pricing options
  */
 export const getPlans = async (c: Context<{ Bindings: Env }>) => {
   try {
-    const planService = getService(c.env, 'planService');
+    const planService = createPlanService(c.env);
     const plans = await planService.getPlans();
 
     return formatResponse(c, { plans });
@@ -26,7 +26,7 @@ export const getPlanById = async (c: Context<{ Bindings: Env }>) => {
   try {
     const planId = c.req.param('planId');
 
-    const planService = getService(c.env, 'planService');
+    const planService = createPlanService(c.env);
     const plan = await planService.getPlanById(planId);
 
     if (!plan) {

@@ -253,28 +253,29 @@ npm run test:e2e:ui
 
 The backend follows a modular monolith architecture pattern, organizing functionality into domain-driven modules while maintaining a single deployment unit for simplicity and performance.
 
-### Dependency Injection
+### Factory-Based Dependency Management
 
-The API uses a simple dependency injection pattern to improve testability, maintainability, and decoupling of components. Currently implemented in the Auth module, this pattern:
+The API uses a factory-based dependency management approach optimized for Cloudflare Workers. This approach prioritizes statelessness and optimizes for cold starts by creating dependencies directly in handler functions.
 
-1. **Defines Interfaces**: Service and repository contracts are defined in interface files
-2. **Creates Singletons**: Stateless services are implemented as singletons to improve performance
-3. **Uses Containers**: Module-specific DI containers manage instance creation and dependencies
-4. **Environment Aware**: Handles environment changes in serverless contexts
+#### Key Principles
 
-#### DI Container Structure
+1. **Statelessness**: Each request handler creates its own dependencies to ensure proper statelessness
+2. **Optimized Cold Starts**: Only the dependencies needed for a specific handler are initialized
+3. **Simplified Testing**: Dependencies can be easily mocked for testing
+
+#### Factory Pattern Structure
 
 ```typescript
-// Module-specific container interface
-interface AuthContainer {
-  userRepository: IUserRepository;
-  authService: IAuthService;
+// Factory functions for creating services
+export function createUserRepository(env: Env): IUserRepository {
+  return new UserRepository(env);
 }
 
-// Factory function to get container
-function getAuthContainer(env: Env): AuthContainer {
-  // Create or retrieve singleton instances
-  // Return container with all dependencies
+export function createAuthService(env: Env): IAuthService {
+  const userRepository = createUserRepository(env);
+  const passwordResetRepository = createPasswordResetRepository(env);
+  // Create other dependencies as needed
+  return new AuthService(env, userRepository, passwordResetRepository);
 }
 ```
 
@@ -282,15 +283,15 @@ function getAuthContainer(env: Env): AuthContainer {
 
 ```typescript
 // In a handler function
-const container = getAuthContainer(c.env);
-const result = await container.authService.login(data);
+const authService = createAuthService(c.env);
+const result = await authService.login(data);
 ```
 
 #### Benefits
+- **Cold Start Optimization**: Dependencies created on-demand only when needed
+- **True Statelessness**: No shared state between requests
 - **Testability**: Easy to mock dependencies for unit testing
 - **Maintainability**: Clear dependency graph and separation of concerns
-- **Flexibility**: Simple to swap implementations that follow the same interface
-- **Performance**: Singleton pattern for stateless services reduces instantiation overhead
 
 ## Getting Started
 
@@ -334,8 +335,7 @@ modules/
   │   │   └── interfaces.ts # Service and repository interfaces
   │   ├── models/           # Zod schemas and type definitions
   │   ├── utils/            # Module-specific utilities
-  │   ├── di/               # Dependency injection containers
-  │   │   └── container.ts  # DI container implementation
+  │   ├── factory.ts        # Factory functions for creating dependencies
   │   ├── v2/               # v2 API implementation
   │   └── index.ts          # Route definitions and module exports
   ├── payments/             # Stripe integration
@@ -613,3 +613,47 @@ When creating or updating a repository class, follow these steps:
    - `transaction()` - For atomic operations
 
 See the [Database Service README](src/database/README.md) for detailed usage examples.
+
+## Dependency Management
+
+The API uses a factory-based dependency management approach optimized for Cloudflare Workers. This approach prioritizes statelessness and optimizes for cold starts by creating dependencies directly in handler functions.
+
+### Key Principles
+
+1. **Statelessness**: Each request handler creates its own dependencies to ensure proper statelessness
+2. **Optimized Cold Starts**: Only the dependencies needed for a specific handler are initialized
+3. **Simplified Testing**: Dependencies can be easily mocked for testing
+
+### Example Usage
+
+```typescript
+// Import the factory functions
+import { createAuthService } from '../factory';
+
+// In a handler function
+export const login = async (c: Context<{ Bindings: Env }>) => {
+  try {
+    // Validate input
+    // ...
+    
+    // Create the auth service directly in the handler
+    const authService = createAuthService(c.env);
+    const result = await authService.login(data);
+    
+    // Process result
+    // ...
+  } catch (error) {
+    // Error handling
+  }
+};
+```
+
+### Migrating Existing Code
+
+To help migrate from the older container-based approach to the new factory approach, use:
+
+```bash
+npm run migrate:dependencies src/modules/your-module
+```
+
+This will update the module files to use the direct dependency creation pattern. Always review and test changes before committing.

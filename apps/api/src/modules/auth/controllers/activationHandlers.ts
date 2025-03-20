@@ -2,7 +2,7 @@ import { Context } from 'hono';
 
 import { Env } from '../../../types';
 import { formatResponse, formatError, format500Error } from '../../../utils/apiResponse';
-import { getService } from '../di/container';
+import {createAuthService} from "../factory";
 import { resendActivationSchema } from '../models/schemas';
 
 /**
@@ -18,7 +18,7 @@ export const activateAccount = async (c: Context<{ Bindings: Env }>) => {
     }
 
     // Use the getService helper
-    const authService = getService(c.env, 'authService');
+    const authService = createAuthService(c.env);
     const result = await authService.activateUser(token);
 
     if (!result.success) {
@@ -49,7 +49,7 @@ export const resendActivation = async (c: Context<{ Bindings: Env }>) => {
     const data = parseResult.data;
 
     // Use the getService helper
-    const authService = getService(c.env, 'authService');
+    const authService = createAuthService(c.env);
     const result = await authService.resendActivationEmail(data);
 
     // Always return a success response to avoid email enumeration

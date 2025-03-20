@@ -2,13 +2,13 @@ import { Context } from 'hono';
 
 import { Env } from '../../../types';
 import { formatResponse, formatError } from '../../../utils/apiResponse';
-import { getService } from '../di/container';
 import {
   UserCreatedWebhookSchema,
   UserUpdatedWebhookSchema,
   UserDeletedWebhookSchema,
 } from '../models/webhookSchemas';
 import { TeamsWebhookService } from '../services/webhookService';
+import { createTeamMemberService, createTeamService } from '../factory';
 
 /**
  * Validate webhook signature
@@ -73,7 +73,7 @@ export async function handleUserCreated(c: Context<{ Bindings: Env }>) {
     const { user } = payload.data;
 
     // Get team services
-    const teamService = getService(c.env, 'teamService');
+    const teamService = createTeamService(c.env);
 
     // Create a new team for the user
     const team = await teamService.createTeam(user.id, {
@@ -132,7 +132,7 @@ export async function handleUserUpdated(c: Context<{ Bindings: Env }>) {
     const { user } = payload.data;
 
     // Get team services
-    const teamService = getService(c.env, 'teamService');
+    const teamService = createTeamService(c.env);
 
     // Find all teams where the user is a member
     // This would typically be a more direct query in a real implementation
@@ -189,8 +189,8 @@ export async function handleUserDeleted(c: Context<{ Bindings: Env }>) {
     const { user } = payload.data;
 
     // Get services
-    const teamService = getService(c.env, 'teamService');
-    const teamMemberService = getService(c.env, 'teamMemberService');
+    const teamService = createTeamService(c.env);
+    const teamMemberService = createTeamMemberService(c.env);
 
     // Find all teams where the user is a member
     const teams = await teamService.getUserTeams(user.id);

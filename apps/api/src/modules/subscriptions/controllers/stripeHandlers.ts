@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 import { Env } from '../../../types';
 import { formatResponse, formatError, format500Error } from '../../../utils/apiResponse';
-import { getService } from '../di/container';
+import { createSubscriptionRepository, createStripeService } from '../factory';
 
 // Schema for create checkout session request
 const createCheckoutSessionSchema = z.object({
@@ -43,7 +43,7 @@ export const createCheckoutSession = async (c: Context<{ Bindings: Env }>) => {
       parseResult.data.cancelUrl || `${baseUrl}/teams/${teamId}/billing?canceled=true`;
 
     // Check if user has access to the team
-    const subscriptionRepository = getService(c.env, 'subscriptionRepository');
+    const subscriptionRepository = createSubscriptionRepository(c.env);
     const hasAccess = await subscriptionRepository.checkUserTeamAccess(teamId, userId);
 
     if (!hasAccess) {
@@ -51,7 +51,7 @@ export const createCheckoutSession = async (c: Context<{ Bindings: Env }>) => {
     }
 
     // Create checkout session
-    const stripeService = getService(c.env, 'stripeService');
+    const stripeService = createStripeService(c.env);
     const session = await stripeService.createCheckoutSession({
       teamId,
       lookupKey,
@@ -88,8 +88,8 @@ export const createPortalSession = async (c: Context<{ Bindings: Env }>) => {
     const { sessionId } = parseResult.data;
 
     // Get services
-    const stripeService = getService(c.env, 'stripeService');
-    const subscriptionRepository = getService(c.env, 'subscriptionRepository');
+    const stripeService = createStripeService(c.env);
+    const subscriptionRepository = createSubscriptionRepository(c.env);
 
     // Retrieve the checkout session to get customer ID
     const checkoutSession = await stripeService.retrieveCheckoutSession(sessionId);

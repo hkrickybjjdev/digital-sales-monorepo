@@ -2,7 +2,7 @@ import { Context } from 'hono';
 
 import { Env } from '../../../types';
 import { formatResponse, formatError, format500Error } from '../../../utils/apiResponse';
-import { getService } from '../di/container';
+import {createPageSettingsDefinitionService} from "../factory";
 import { pageSettingsDefinitionSchema } from '../models/schemas';
 
 /**
@@ -11,7 +11,7 @@ import { pageSettingsDefinitionSchema } from '../models/schemas';
  */
 export const getAllPageSettings = async (c: Context<{ Bindings: Env }>) => {
   try {
-    const service = getService(c.env, 'pageSettingsDefinitionService');
+    const service = createPageSettingsDefinitionService(c.env);
     const settings = await service.getAll();
 
     return formatResponse(c, { settings });
@@ -29,7 +29,7 @@ export const getPageSettingByName = async (c: Context<{ Bindings: Env }>) => {
   try {
     const name = c.req.param('name');
 
-    const service = getService(c.env, 'pageSettingsDefinitionService');
+    const service = createPageSettingsDefinitionService(c.env);
     const setting = await service.getByName(name);
 
     if (!setting) {
@@ -59,7 +59,7 @@ export const createPageSetting = async (c: Context<{ Bindings: Env }>) => {
 
     const settingData = parseResult.data;
 
-    const service = getService(c.env, 'pageSettingsDefinitionService');
+    const service = createPageSettingsDefinitionService(c.env);
 
     try {
       await service.createDefinition(settingData);
@@ -103,7 +103,7 @@ export const updatePageSetting = async (c: Context<{ Bindings: Env }>) => {
       );
     }
 
-    const service = getService(c.env, 'pageSettingsDefinitionService');
+    const service = createPageSettingsDefinitionService(c.env);
 
     try {
       await service.updateDefinition(name, settingData);
@@ -128,7 +128,7 @@ export const deletePageSetting = async (c: Context<{ Bindings: Env }>) => {
   try {
     const name = c.req.param('name');
 
-    const service = getService(c.env, 'pageSettingsDefinitionService');
+    const service = createPageSettingsDefinitionService(c.env);
 
     try {
       await service.deleteDefinition(name);
@@ -153,7 +153,7 @@ export const getPageSettingsByCategory = async (c: Context<{ Bindings: Env }>) =
   try {
     const category = c.req.param('category');
 
-    const service = getService(c.env, 'pageSettingsDefinitionService');
+    const service = createPageSettingsDefinitionService(c.env);
     const settings = await service.getByCategory(category);
 
     return formatResponse(c, { settings });
@@ -171,7 +171,7 @@ export const getPageSettingsByGroup = async (c: Context<{ Bindings: Env }>) => {
   try {
     const group = c.req.param('group');
 
-    const service = getService(c.env, 'pageSettingsDefinitionService');
+    const service = createPageSettingsDefinitionService(c.env);
     const settings = await service.getByGroup(group);
 
     return formatResponse(c, { settings });

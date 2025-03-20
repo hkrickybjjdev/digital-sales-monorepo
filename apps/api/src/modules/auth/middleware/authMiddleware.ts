@@ -3,7 +3,7 @@ import { verify } from 'hono/jwt';
 
 import { Env } from '../../../types';
 import { formatError } from '../../../utils/apiResponse';
-import { getService } from '../di/container';
+import { createUserRepository } from '../factory';
 
 /*
 TODO:
@@ -28,8 +28,8 @@ export async function validateJWT(c: Context<{ Bindings: Env }>, next: Next) {
     // Verify JWT
     const payload = await verify(token, c.env.JWT_SECRET);
 
-    // Check if session exists and is valid using DI container
-    const userRepository = getService(c.env, 'userRepository');
+    // Create user repository directly in the middleware
+    const userRepository = createUserRepository(c.env);
     const session = await userRepository.getSessionById(payload.sid);
 
     if (!session) {
