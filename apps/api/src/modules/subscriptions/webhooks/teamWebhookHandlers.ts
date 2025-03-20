@@ -2,8 +2,8 @@ import { Context } from 'hono';
 
 import { Env } from '../../../types';
 import { formatResponse, formatError } from '../../../utils/apiResponse';
-import { TeamCreatedWebhookSchema, TeamDeletedWebhookSchema } from '../models/webhookSchemas';
 import { createPlanService, createSubscriptionService } from '../factory';
+import { TeamCreatedWebhookSchema, TeamDeletedWebhookSchema } from '../models/webhookSchemas';
 
 /**
  * Validate webhook signature
@@ -117,17 +117,11 @@ export async function handleTeamDeleted(c: Context<{ Bindings: Env }>) {
 
     // Get all subscriptions for the team
     const subscriptionService = createSubscriptionService(c.env);
-    const subscriptions = await subscriptionService.getTeamSubscriptions(
-      team.id,
-      team.userId
-    );
+    const subscriptions = await subscriptionService.getTeamSubscriptions(team.id, team.userId);
 
     // Cancel each subscription
     for (const subscription of subscriptions) {
-      await subscriptionService.cancelSubscription(
-        subscription.id,
-        team.userId
-      );
+      await subscriptionService.cancelSubscription(subscription.id, team.userId);
     }
 
     return formatResponse(c, {

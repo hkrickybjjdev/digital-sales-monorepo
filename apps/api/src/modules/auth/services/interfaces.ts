@@ -55,7 +55,7 @@ export interface IUserRepository {
   deleteExpiredSessions(): Promise<void>;
   activateUser(userId: string): Promise<void>;
   setActivationToken(userId: string, token: string, expiresAt: number): Promise<void>;
-  updateUserPassword(userId: string, passwordHash: string,): Promise<boolean>
+  updateUserPassword(userId: string, passwordHash: string): Promise<boolean>;
 }
 
 /**

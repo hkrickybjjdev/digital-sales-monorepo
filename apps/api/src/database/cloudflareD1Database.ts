@@ -249,13 +249,3 @@ export class CloudflareD1Database implements SQLDatabase {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 }
-
-/**
- * For backwards compatibility, maintaining the DatabaseService class
- * that extends the CloudflareD1Database implementation
- */
-export class DatabaseService extends CloudflareD1Database {
-  constructor(env: Env, retryConfig?: RetryConfig) {
-    super(env.DB, retryConfig);
-  }
-}

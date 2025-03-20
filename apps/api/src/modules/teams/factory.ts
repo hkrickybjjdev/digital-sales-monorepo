@@ -1,3 +1,5 @@
+import { createDatabase } from '@/database/databaseFactory';
+
 import { Env } from './../../types';
 import { ITeamRepository, ITeamMemberRepository } from './repositories/interfaces';
 import { TeamMemberRepository } from './repositories/teamMemberRepository';
@@ -14,28 +16,32 @@ import { TeamService } from './services/teamService';
  * Create a iTeamRepository instance
  */
 export function createITeamRepository(env: Env): ITeamRepository {
-  return new TeamRepository(env);
+  const dbService = createDatabase(env);
+  return new TeamRepository(dbService);
 }
 
 /**
  * Create a iTeamMemberRepository instance
  */
 export function createITeamMemberRepository(env: Env): ITeamMemberRepository {
-  return new TeamMemberRepository(env);
+  const dbService = createDatabase(env);
+  return new TeamMemberRepository(dbService);
 }
 
 /**
  * Create a teamMemberRepository instance
  */
 export function createTeamMemberRepository(env: Env): TeamMemberRepository {
-  return new TeamMemberRepository(env);
+  const dbService = createDatabase(env);
+  return new TeamMemberRepository(dbService);
 }
 
 /**
  * Create a teamRepository instance
  */
 export function createTeamRepository(env: Env): TeamRepository {
-  return new TeamRepository(env);
+  const dbService = createDatabase(env);
+  return new TeamRepository(dbService);
 }
 
 /**

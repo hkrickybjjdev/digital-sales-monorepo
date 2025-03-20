@@ -1,17 +1,11 @@
-import { DatabaseFactory } from '../../../database/databaseFactory';
 import { SQLDatabase, RequestContext } from '../../../database/sqlDatabase';
-import { Env } from '../../../types';
 import { generateUUID } from '../../../utils/utils';
 import { ContentBlockTranslation } from '../models/schemas';
 
 import { IContentBlockTranslationRepository } from './interfaces';
 
 export class ContentBlockTranslationRepository implements IContentBlockTranslationRepository {
-  private dbService: SQLDatabase;
-
-  constructor(env: Env) {
-    this.dbService = DatabaseFactory.getInstance(env);
-  }
+  constructor(private readonly dbService: SQLDatabase) {}
 
   async createContentBlockTranslation(
     translation: Omit<ContentBlockTranslation, 'id' | 'createdAt' | 'updatedAt'>,

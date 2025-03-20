@@ -1,15 +1,9 @@
-import { DatabaseFactory } from '../../../database/databaseFactory';
 import { SQLDatabase, RequestContext } from '../../../database/sqlDatabase';
-import { Env } from '../../../types';
 import { Subscription } from '../models/schemas';
 import { ISubscriptionRepository } from '../services/interfaces';
 
 export class SubscriptionRepository implements ISubscriptionRepository {
-  private dbService: SQLDatabase;
-
-  constructor(env: Env) {
-    this.dbService = DatabaseFactory.getInstance(env);
-  }
+  constructor(private readonly dbService: SQLDatabase) {}
 
   async createSubscription(
     subscription: Subscription,

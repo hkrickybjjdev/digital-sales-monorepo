@@ -2,7 +2,7 @@ import { Context } from 'hono';
 
 import { Env } from '../../../types';
 import { formatResponse, formatError, format500Error } from '../../../utils/apiResponse';
-import {createAuthService} from "../factory";
+import { createAuthService } from '../factory';
 import { resendActivationSchema } from '../models/schemas';
 
 /**

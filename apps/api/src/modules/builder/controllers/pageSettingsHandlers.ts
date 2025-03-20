@@ -2,7 +2,7 @@ import { Context } from 'hono';
 
 import { Env } from '../../../types';
 import { formatResponse, formatError, format500Error } from '../../../utils/apiResponse';
-import {createPageSettingsDefinitionService} from "../factory";
+import { createPageSettingsDefinitionService } from '../factory';
 import { pageSettingsDefinitionSchema } from '../models/schemas';
 
 /**

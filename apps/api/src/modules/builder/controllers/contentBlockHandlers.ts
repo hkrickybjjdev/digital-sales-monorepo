@@ -2,7 +2,7 @@ import { Context } from 'hono';
 
 import { Env } from '../../../types';
 import { formatResponse, formatError, format500Error } from '../../../utils/apiResponse';
-import {createPredefinedContentBlockService} from "../factory";
+import { createPredefinedContentBlockService } from '../factory';
 import { predefinedContentBlockSchema } from '../models/schemas';
 
 /**

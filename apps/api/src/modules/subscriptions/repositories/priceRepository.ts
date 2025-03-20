@@ -1,15 +1,9 @@
-import { DatabaseFactory } from '../../../database/databaseFactory';
 import { SQLDatabase } from '../../../database/sqlDatabase';
-import { Env } from '../../../types';
 import { Price } from '../models/schemas';
 import { IPriceRepository } from '../services/interfaces';
 
 export class PriceRepository implements IPriceRepository {
-  private dbService: SQLDatabase;
-
-  constructor(env: Env) {
-    this.dbService = DatabaseFactory.getInstance(env);
-  }
+  constructor(private readonly dbService: SQLDatabase) {}
 
   async getPricesByPlanId(planId: string): Promise<Price[]> {
     return this.getPricesForPlan(planId);

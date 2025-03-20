@@ -1,3 +1,5 @@
+import { createDatabase } from '@/database/databaseFactory';
+
 import { Env } from './../../types';
 import { PlanRepository } from './repositories/planRepository';
 import { SubscriptionRepository } from './repositories/subscriptionRepository';
@@ -20,14 +22,16 @@ import { SubscriptionService } from './services/subscriptionService';
  * Create a planRepository instance
  */
 export function createPlanRepository(env: Env): PlanRepository {
-  return new PlanRepository(env);
+  const dbService = createDatabase(env);
+  return new PlanRepository(dbService);
 }
 
 /**
  * Create a subscriptionRepository instance
  */
 export function createSubscriptionRepository(env: Env): SubscriptionRepository {
-  return new SubscriptionRepository(env);
+  const dbService = createDatabase(env);
+  return new SubscriptionRepository(dbService);
 }
 
 /**

@@ -1,6 +1,5 @@
 import { AuditHelpers } from '@/utils/auditHelpers';
 
-import { DatabaseFactory } from '../../../database/databaseFactory';
 import { SQLDatabase, RequestContext } from '../../../database/sqlDatabase';
 import { Env } from '../../../types';
 import { generateUUID } from '../../../utils/utils';
@@ -8,11 +7,9 @@ import { User, Session } from '../models/schemas';
 import { IUserRepository } from '../services/interfaces';
 
 export class UserRepository implements IUserRepository {
-  private dbService: SQLDatabase;
   private auditHelpers: AuditHelpers;
 
-  constructor(env: Env) {
-    this.dbService = DatabaseFactory.getInstance(env);
+  constructor(private readonly dbService: SQLDatabase) {
     this.auditHelpers = new AuditHelpers(this.dbService);
   }
 

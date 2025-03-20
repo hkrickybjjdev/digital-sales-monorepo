@@ -1,17 +1,11 @@
-import { DatabaseFactory } from '../../../database/databaseFactory';
 import { SQLDatabase, RequestContext } from '../../../database/sqlDatabase';
-import { Env } from '../../../types';
 import { generateUUID } from '../../../utils/utils';
 import { PageVersionTranslation } from '../models/schemas';
 
 import { IPageVersionTranslationRepository } from './interfaces';
 
 export class PageVersionTranslationRepository implements IPageVersionTranslationRepository {
-  private dbService: SQLDatabase;
-
-  constructor(env: Env) {
-    this.dbService = DatabaseFactory.getInstance(env);
-  }
+  constructor(private readonly dbService: SQLDatabase) {}
 
   async createPageVersionTranslation(
     translation: Omit<PageVersionTranslation, 'id' | 'createdAt' | 'updatedAt'>,

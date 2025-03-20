@@ -1,4 +1,3 @@
-import { DatabaseFactory } from '../../../database/databaseFactory';
 import { SQLDatabase, RequestContext } from '../../../database/sqlDatabase';
 import { Env } from '../../../types';
 import { generateUUID } from '../../../utils/utils';
@@ -7,11 +6,7 @@ import { ContentBlock } from '../models/schemas';
 import { IContentBlockRepository } from './interfaces';
 
 export class ContentBlockRepository implements IContentBlockRepository {
-  private dbService: SQLDatabase;
-
-  constructor(env: Env) {
-    this.dbService = DatabaseFactory.getInstance(env);
-  }
+  constructor(private readonly dbService: SQLDatabase) {}
 
   async createContentBlock(
     contentBlock: Omit<ContentBlock, 'id' | 'createdAt' | 'updatedAt'>,

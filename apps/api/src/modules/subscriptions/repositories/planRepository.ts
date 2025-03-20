@@ -1,15 +1,9 @@
-import { DatabaseFactory } from '../../../database/databaseFactory';
 import { SQLDatabase } from '../../../database/sqlDatabase';
-import { Env } from '../../../types';
 import { Plan, Price } from '../models/schemas';
 import { IPlanRepository } from '../services/interfaces';
 
 export class PlanRepository implements IPlanRepository {
-  private dbService: SQLDatabase;
-
-  constructor(env: Env) {
-    this.dbService = DatabaseFactory.getInstance(env);
-  }
+  constructor(private readonly dbService: SQLDatabase) {}
 
   async getPlans(visibleOnly = true): Promise<Plan[]> {
     return this.getAllPlans(visibleOnly);

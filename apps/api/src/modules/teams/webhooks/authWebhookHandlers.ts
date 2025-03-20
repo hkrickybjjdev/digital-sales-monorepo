@@ -2,13 +2,13 @@ import { Context } from 'hono';
 
 import { Env } from '../../../types';
 import { formatResponse, formatError } from '../../../utils/apiResponse';
+import { createTeamMemberService, createTeamService } from '../factory';
 import {
   UserCreatedWebhookSchema,
   UserUpdatedWebhookSchema,
   UserDeletedWebhookSchema,
 } from '../models/webhookSchemas';
 import { TeamsWebhookService } from '../services/webhookService';
-import { createTeamMemberService, createTeamService } from '../factory';
 
 /**
  * Validate webhook signature

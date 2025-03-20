@@ -3,7 +3,11 @@ import Stripe from 'stripe';
 
 import { Env } from '../../../types';
 import { formatResponse, formatError } from '../../../utils/apiResponse';
-import { createPlanService, createSubscriptionRepository, createSubscriptionService } from '../factory';
+import {
+  createPlanService,
+  createSubscriptionRepository,
+  createSubscriptionService,
+} from '../factory';
 
 /**
  * Handle Stripe webhook events
@@ -177,10 +181,7 @@ async function handleSubscriptionUpdated(env: Env, stripeSubscription: Stripe.Su
         updatedAt: Date.now(),
       };
 
-      await subscriptionRepository.updateSubscription(
-        subscription.id,
-        updateData
-      );
+      await subscriptionRepository.updateSubscription(subscription.id, updateData);
     }
 
     console.log(`Subscription ${stripeSubscription.id} updated`);
@@ -197,7 +198,9 @@ async function handleSubscriptionDeleted(env: Env, stripeSubscription: Stripe.Su
   try {
     // Find the subscription in our database
     const subscriptionRepository = createSubscriptionRepository(env);
-    const subscriptions = await subscriptionRepository.findByStripeSubscriptionId(stripeSubscription.id);
+    const subscriptions = await subscriptionRepository.findByStripeSubscriptionId(
+      stripeSubscription.id
+    );
 
     if (!subscriptions.length) {
       console.log(`No subscription found for Stripe subscription ${stripeSubscription.id}`);
@@ -213,10 +216,7 @@ async function handleSubscriptionDeleted(env: Env, stripeSubscription: Stripe.Su
         updatedAt: Date.now(),
       };
 
-      await subscriptionRepository.updateSubscription(
-        subscription.id,
-        updateData
-      );
+      await subscriptionRepository.updateSubscription(subscription.id, updateData);
     }
 
     console.log(`Subscription ${stripeSubscription.id} marked as cancelled`);

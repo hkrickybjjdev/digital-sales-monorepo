@@ -2,7 +2,7 @@ import { Context } from 'hono';
 
 import { Env } from '../../../types';
 import { formatResponse, formatError, format500Error } from '../../../utils/apiResponse';
-import {createTeamService} from "../factory";
+import { createTeamService } from '../factory';
 import { createTeamSchema, updateTeamSchema } from '../models/schemas';
 
 // Get all teams for the current user

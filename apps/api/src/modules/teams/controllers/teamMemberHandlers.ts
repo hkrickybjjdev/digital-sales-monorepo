@@ -2,7 +2,7 @@ import { Context } from 'hono';
 
 import { Env } from '../../../types';
 import { formatResponse, formatError, format500Error } from '../../../utils/apiResponse';
-import {createTeamMemberService} from "../factory";
+import { createTeamMemberService } from '../factory';
 import { addTeamMemberSchema, updateTeamMemberSchema } from '../models/schemas';
 
 // Add a member to a team

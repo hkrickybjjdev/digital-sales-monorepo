@@ -1,3 +1,5 @@
+import { createDatabase } from '@/database/databaseFactory';
+
 import { Env } from './../../types';
 import { ContentBlockRepository } from './repositories/contentBlockRepository';
 import { ContentBlockTranslationRepository } from './repositories/contentBlockTranslationRepository';
@@ -25,42 +27,52 @@ import { PageService } from './services/pageService';
  * Create a contentBlockRepository instance
  */
 export function createContentBlockRepository(env: Env): ContentBlockRepository {
-  return new ContentBlockRepository(env);
+  const dbService = createDatabase(env);
+  return new ContentBlockRepository(dbService);
 }
 
 /**
  * Create a contentBlockTranslationRepository instance
  */
-export function createContentBlockTranslationRepository(env: Env): ContentBlockTranslationRepository {
-  return new ContentBlockTranslationRepository(env);
+export function createContentBlockTranslationRepository(
+  env: Env
+): ContentBlockTranslationRepository {
+  const dbService = createDatabase(env);
+  return new ContentBlockTranslationRepository(dbService);
 }
 
 /**
  * Create a expirationSettingRepository instance
  */
 export function createExpirationSettingRepository(env: Env): ExpirationSettingRepository {
-  return new ExpirationSettingRepository(env);
+  const dbService = createDatabase(env);
+  return new ExpirationSettingRepository(dbService);
 }
 
 /**
  * Create a pageRepository instance
  */
 export function createPageRepository(env: Env): IPageRepository {
-  return new PageRepository(env);
+  const dbService = createDatabase(env);
+  return new PageRepository(dbService);
 }
 
 /**
  * Create a pageVersionRepository instance
  */
 export function createPageVersionRepository(env: Env): IPageVersionRepository {
-  return new PageVersionRepository(env);
+  const dbService = createDatabase(env);
+  return new PageVersionRepository(dbService);
 }
 
 /**
  * Create a pageVersionTranslationRepository instance
  */
-export function createPageVersionTranslationRepository(env: Env): IPageVersionTranslationRepository {
-  return new PageVersionTranslationRepository(env);
+export function createPageVersionTranslationRepository(
+  env: Env
+): IPageVersionTranslationRepository {
+  const dbService = createDatabase(env);
+  return new PageVersionTranslationRepository(dbService);
 }
 
 /**
@@ -83,5 +95,12 @@ export function createPageService(env: Env): IPageService {
   const contentBlockRepository = createContentBlockRepository(env);
   const contentBlockTranslationRepository = createContentBlockTranslationRepository(env);
   const expirationSettingRepository = createExpirationSettingRepository(env);
-  return new PageService(pageRepository, pageVersionRepository, pageVersionTranslationRepository, contentBlockRepository, contentBlockTranslationRepository, expirationSettingRepository);
+  return new PageService(
+    pageRepository,
+    pageVersionRepository,
+    pageVersionTranslationRepository,
+    contentBlockRepository,
+    contentBlockTranslationRepository,
+    expirationSettingRepository
+  );
 }
