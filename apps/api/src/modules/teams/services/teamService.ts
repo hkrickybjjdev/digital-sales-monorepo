@@ -1,4 +1,3 @@
-import { Env } from '../../../types';
 import {
   Team,
   CreateTeamRequest,
@@ -9,26 +8,16 @@ import {
 import { ITeamRepository, ITeamMemberRepository } from '../repositories/interfaces';
 
 import { ITeamService } from './interfaces';
-import { TeamsWebhookService } from './webhookService';
+import { ITeamsWebhookService } from './webhookService';
 
 export class TeamService implements ITeamService {
-  private teamRepository: ITeamRepository;
-  private teamMemberRepository: ITeamMemberRepository;
-  private maxTeamsPerUser: number;
-  private env: Env;
-  private webhookService: TeamsWebhookService;
-
+  
   constructor(
-    teamRepository: ITeamRepository,
-    teamMemberRepository: ITeamMemberRepository,
-    env: Env,
-    maxTeamsPerUser: number = 5
-  ) {
-    this.teamRepository = teamRepository;
-    this.teamMemberRepository = teamMemberRepository;
-    this.env = env;
-    this.maxTeamsPerUser = maxTeamsPerUser;
-    this.webhookService = new TeamsWebhookService(env);
+    private readonly teamRepository: ITeamRepository,
+    private readonly teamMemberRepository: ITeamMemberRepository,    
+    private readonly webhookService: ITeamsWebhookService,
+    private readonly maxTeamsPerUser: number = 5
+  ) {  
   }
 
   async createTeam(userId: string, data: CreateTeamRequest): Promise<Team> {

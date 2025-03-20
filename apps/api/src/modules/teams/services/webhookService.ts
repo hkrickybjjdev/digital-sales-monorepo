@@ -1,10 +1,29 @@
 import { Env } from '../../../types';
 
 /**
+ * Interface for Teams webhook service operations
+ */
+export interface ITeamsWebhookService {
+  triggerTeamCreated(team: {
+    id: string;
+    name: string;
+    userId: string; // Owner ID
+    createdAt: number;
+  }): Promise<void>;
+  
+  triggerTeamDeleted(team: {
+    id: string;
+    name: string;
+    userId: string; // Owner/Deleter ID
+    createdAt: number;
+  }): Promise<void>;
+}
+
+/**
  * Service responsible for triggering webhook events from the teams module
  * to other modules like subscriptions.
  */
-export class TeamsWebhookService {
+export class TeamsWebhookService implements ITeamsWebhookService {
   private env: Env;
 
   constructor(env: Env) {

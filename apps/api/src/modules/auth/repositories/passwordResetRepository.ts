@@ -3,7 +3,25 @@ import { Env } from '../../../types';
 import { generateUUID } from '../../../utils/utils';
 import { PasswordReset } from '../models/schemas';
 
-export class PasswordResetRepository {
+/**
+ * Interface for password reset repository operations
+ */
+export interface IPasswordResetRepository {
+  createPasswordReset(
+    userId: string,
+    token: string,
+    expiryTimeInMinutes?: number,
+    context?: RequestContext
+  ): Promise<PasswordReset>;
+  
+  getPasswordResetByToken(token: string): Promise<PasswordReset | null>;
+  
+  markTokenAsUsed(token: string, context?: RequestContext): Promise<boolean>;
+  
+  invalidateUserTokens(userId: string, context?: RequestContext): Promise<boolean>;
+}
+
+export class PasswordResetRepository implements IPasswordResetRepository {
   constructor(private readonly dbService: SQLDatabase) {}
 
   async createPasswordReset(

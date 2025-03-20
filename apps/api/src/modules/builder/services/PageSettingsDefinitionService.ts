@@ -5,10 +5,8 @@ import { PageSettingsDefinitionRepository } from '../repositories/PageSettingsDe
  * Service class for business logic related to PageSettingsDefinition entities
  */
 export class PageSettingsDefinitionService {
-  private repository: PageSettingsDefinitionRepository;
-
-  constructor(repository: PageSettingsDefinitionRepository) {
-    this.repository = repository;
+  
+  constructor(private readonly repository: PageSettingsDefinitionRepository) {    
   }
 
   /**

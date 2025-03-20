@@ -5,10 +5,8 @@ import { PredefinedContentBlockRepository } from '../repositories/PredefinedCont
  * Service class for business logic related to PredefinedContentBlock entities
  */
 export class PredefinedContentBlockService {
-  private repository: PredefinedContentBlockRepository;
-
-  constructor(repository: PredefinedContentBlockRepository) {
-    this.repository = repository;
+  
+  constructor(private readonly repository: PredefinedContentBlockRepository) {    
   }
 
   /**

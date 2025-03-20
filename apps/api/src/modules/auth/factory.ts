@@ -1,7 +1,7 @@
 import { createDatabase } from '../../database/databaseFactory';
 import { Env } from '../../types';
 
-import { PasswordResetRepository } from './repositories/passwordResetRepository';
+import { PasswordResetRepository, IPasswordResetRepository } from './repositories/passwordResetRepository';
 import { UserRepository } from './repositories/userRepository';
 import { AuthService } from './services/authService';
 import { EmailService } from './services/emailService';
@@ -16,7 +16,7 @@ import { WebhookService } from './services/webhookService';
 // Interface for the auth module's services
 export interface AuthServices {
   userRepository: IUserRepository;
-  passwordResetRepository: PasswordResetRepository;
+  passwordResetRepository: IPasswordResetRepository;
   authService: IAuthService;
   webhookService: IWebhookService;
   emailService: IEmailService;
@@ -30,7 +30,7 @@ export interface AuthServices {
 /**
  * Create a user repository instance
  */
-export function createUserRepository(env: Env): UserRepository {
+export function createUserRepository(env: Env): IUserRepository {
   const dbService = createDatabase(env);
   return new UserRepository(dbService);
 }
@@ -38,7 +38,7 @@ export function createUserRepository(env: Env): UserRepository {
 /**
  * Create a password reset repository instance
  */
-export function createPasswordResetRepository(env: Env): PasswordResetRepository {
+export function createPasswordResetRepository(env: Env): IPasswordResetRepository {
   const dbService = createDatabase(env);
   return new PasswordResetRepository(dbService);
 }
@@ -46,21 +46,21 @@ export function createPasswordResetRepository(env: Env): PasswordResetRepository
 /**
  * Create a webhook service instance
  */
-export function createWebhookService(env: Env): WebhookService {
+export function createWebhookService(env: Env): IWebhookService {
   return new WebhookService(env);
 }
 
 /**
  * Create an email service instance
  */
-export function createEmailService(env: Env): EmailService {
+export function createEmailService(env: Env): IEmailService {
   return new EmailService(env);
 }
 
 /**
  * Create an auth service instance with all dependencies
  */
-export function createAuthService(env: Env): AuthService {
+export function createAuthService(env: Env): IAuthService {
   const userRepository = createUserRepository(env);
   const passwordResetRepository = createPasswordResetRepository(env);
   const webhookService = createWebhookService(env);
@@ -73,28 +73,4 @@ export function createAuthService(env: Env): AuthService {
     webhookService,
     emailService
   );
-}
-
-/**
- * Helper function to create an individual service
- * This maintains backward compatibility with existing code
- */
-export function getService<K extends keyof AuthServices>(
-  env: Env,
-  serviceName: K
-): AuthServices[K] {
-  switch (serviceName) {
-    case 'userRepository':
-      return createUserRepository(env) as unknown as AuthServices[K];
-    case 'passwordResetRepository':
-      return createPasswordResetRepository(env) as unknown as AuthServices[K];
-    case 'webhookService':
-      return createWebhookService(env) as unknown as AuthServices[K];
-    case 'emailService':
-      return createEmailService(env) as unknown as AuthServices[K];
-    case 'authService':
-      return createAuthService(env) as unknown as AuthServices[K];
-    default:
-      throw new Error(`Service ${String(serviceName)} not found`);
-  }
 }

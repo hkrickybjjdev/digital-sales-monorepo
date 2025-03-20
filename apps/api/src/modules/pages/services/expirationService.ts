@@ -9,18 +9,12 @@ import {
 import { IExpirationService } from './interfaces';
 
 export class ExpirationService implements IExpirationService {
-  private expirationSettingRepository: IExpirationSettingRepository;
-  private pageRepository: IPageRepository;
-  private pageVersionRepository: IPageVersionRepository;
-
+  
   constructor(
-    expirationSettingRepository: IExpirationSettingRepository,
-    pageRepository: IPageRepository,
-    pageVersionRepository: IPageVersionRepository
-  ) {
-    this.expirationSettingRepository = expirationSettingRepository;
-    this.pageRepository = pageRepository;
-    this.pageVersionRepository = pageVersionRepository;
+    private readonly expirationSettingRepository: IExpirationSettingRepository,
+    private readonly pageRepository: IPageRepository,
+    private readonly pageVersionRepository: IPageVersionRepository
+  ) {    
   }
 
   /**

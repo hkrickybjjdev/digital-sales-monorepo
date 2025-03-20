@@ -4,18 +4,12 @@ import { ITeamRepository, ITeamMemberRepository } from '../repositories/interfac
 import { ITeamMemberService } from './interfaces';
 
 export class TeamMemberService implements ITeamMemberService {
-  private teamRepository: ITeamRepository;
-  private teamMemberRepository: ITeamMemberRepository;
-  private maxMembersPerTeam: number;
-
+  
   constructor(
-    teamRepository: ITeamRepository,
-    teamMemberRepository: ITeamMemberRepository,
-    maxMembersPerTeam: number = 10
+    private readonly teamRepository: ITeamRepository,
+    private readonly teamMemberRepository: ITeamMemberRepository,
+    private readonly maxMembersPerTeam: number = 10
   ) {
-    this.teamRepository = teamRepository;
-    this.teamMemberRepository = teamMemberRepository;
-    this.maxMembersPerTeam = maxMembersPerTeam;
   }
 
   async addTeamMember(

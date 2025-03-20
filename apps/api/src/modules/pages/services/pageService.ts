@@ -4,7 +4,6 @@ import {
   PageVersion,
   PageVersionTranslation,
   ContentBlock,
-  ContentBlockTranslation,
   CreatePageRequest,
   SavePageDraftRequest,
   PublishPageRequest,
@@ -23,27 +22,15 @@ import {
 import { IPageService } from './interfaces';
 
 export class PageService implements IPageService {
-  private pageRepository: IPageRepository;
-  private pageVersionRepository: IPageVersionRepository;
-  private pageVersionTranslationRepository: IPageVersionTranslationRepository;
-  private contentBlockRepository: IContentBlockRepository;
-  private contentBlockTranslationRepository: IContentBlockTranslationRepository;
-  private expirationSettingRepository: IExpirationSettingRepository;
 
   constructor(
-    pageRepository: IPageRepository,
-    pageVersionRepository: IPageVersionRepository,
-    pageVersionTranslationRepository: IPageVersionTranslationRepository,
-    contentBlockRepository: IContentBlockRepository,
-    contentBlockTranslationRepository: IContentBlockTranslationRepository,
-    expirationSettingRepository: IExpirationSettingRepository
+    private readonly pageRepository: IPageRepository,
+    private readonly pageVersionRepository: IPageVersionRepository,
+    private readonly pageVersionTranslationRepository: IPageVersionTranslationRepository,
+    private readonly contentBlockRepository: IContentBlockRepository,
+    private readonly contentBlockTranslationRepository: IContentBlockTranslationRepository,
+    private readonly expirationSettingRepository: IExpirationSettingRepository
   ) {
-    this.pageRepository = pageRepository;
-    this.pageVersionRepository = pageVersionRepository;
-    this.pageVersionTranslationRepository = pageVersionTranslationRepository;
-    this.contentBlockRepository = contentBlockRepository;
-    this.contentBlockTranslationRepository = contentBlockTranslationRepository;
-    this.expirationSettingRepository = expirationSettingRepository;
   }
 
   /**

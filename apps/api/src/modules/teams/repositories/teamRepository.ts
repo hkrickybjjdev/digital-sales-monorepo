@@ -1,5 +1,4 @@
 import { SQLDatabase, RequestContext } from '../../../database/sqlDatabase';
-import { Env } from '../../../types';
 import { generateUUID } from '../../../utils/utils';
 import { Team, TeamWithMemberCount } from '../models/schemas';
 
