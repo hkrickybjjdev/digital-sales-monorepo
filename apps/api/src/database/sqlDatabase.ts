@@ -1,4 +1,4 @@
-import { RetryConfig } from './cloudflareD1Database';
+import { RetryConfig } from '../utils/utils';
 
 export interface QueryParams {
   sql: string;
