@@ -1,4 +1,4 @@
-import { RetryConfig } from '../utils/utils';
+import { RetryConfig } from '../utils/retry';
 
 export interface QueryParams {
   sql: string;

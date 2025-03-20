@@ -1,4 +1,5 @@
-import { RetryConfig } from '@/utils/utils';
+import { RetryConfig } from '@/utils/retry';
+
 import { Env } from '../types';
 
 import { CloudflareD1Database } from './cloudflareD1Database';

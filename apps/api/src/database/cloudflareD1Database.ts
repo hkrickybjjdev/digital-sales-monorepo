@@ -4,7 +4,7 @@ import {
   RetryConfig,
   isRetryableDatabaseError,
   withRetry,
-} from '../utils/utils';
+} from '../utils/retry';
 
 import { AuditInfo, QueryParams, RequestContext, SQLDatabase } from './sqlDatabase';
 

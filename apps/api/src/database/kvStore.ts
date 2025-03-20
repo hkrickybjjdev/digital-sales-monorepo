@@ -1,4 +1,4 @@
-import { DEFAULT_RETRY_CONFIG, RetryConfig, isRetryableKVError, withRetry } from '../utils/utils';
+import { DEFAULT_RETRY_CONFIG, RetryConfig, isRetryableKVError, withRetry } from '../utils/retry';
 
 /**
  * Interface for key-value storage operations

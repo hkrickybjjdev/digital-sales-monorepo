@@ -7,6 +7,7 @@ This directory contains the centralized database service for the API. This servi
 - **Consistency**: Common database access patterns are standardized
 - **Error Handling**: Consistent error handling for database operations
 - **Transactions**: Simplified transaction management
+- **Retry Capability**: Automatic retry with exponential backoff for transient failures
 
 ## How to Use
 
@@ -139,9 +140,9 @@ The core interface that defines the contract for all database implementations:
 export interface SQLDatabase {
   queryOne<T>(query: QueryParams): Promise<T | null>;
   queryMany<T>(query: QueryParams): Promise<T[]>;
-  execute(query: QueryParams, retryOptions?: RetryConfig): Promise<unknown>;
-  executeWithAudit(query: QueryParams, auditInfo: AuditInfo, context?: RequestContext): Promise<unknown>;
-  createAuditLog(auditInfo: AuditInfo, context?: RequestContext): Promise<void>;
+  execute(query: QueryParams, retryOptions?: RetryConfig): Promise<boolean>;
+  executeWithAudit(query: QueryParams, auditInfo: AuditInfo, context?: RequestContext): Promise<boolean>;
+  createAuditLog(auditInfo: AuditInfo, context?: RequestContext): Promise<boolean>;
   transaction<T>(callback: (tx: SQLDatabase) => Promise<T>): Promise<T>;
   getRawDatabase(): unknown;
 }
@@ -157,6 +158,23 @@ export class CloudflareD1Database implements SQLDatabase {
 }
 ```
 
+### KVStore (`kvStore.ts`)
+
+Interface and implementation for key-value storage operations:
+
+```typescript
+export interface KeyValueStore {
+  get<T>(key: string): Promise<T | null>;
+  put<T>(key: string, value: T): Promise<boolean>;
+  delete(key: string): Promise<boolean>;
+  list(prefix: string): Promise<string[]>;
+}
+
+export class CloudflareKVStore implements KeyValueStore {
+  // Implementation for Cloudflare KV
+}
+```
+
 ### DatabaseFactory (`databaseFactory.ts`)
 
 Factory class that manages the creation and dependency injection of database implementations:
@@ -168,6 +186,54 @@ export class DatabaseFactory {
   // ...
 }
 ```
+
+## Retry Capability and Exponential Backoff
+
+Both the CloudflareD1Database and CloudflareKVStore implementations include built-in retry capability with exponential backoff for handling transient failures. This functionality is centralized in utility functions.
+
+### Retry Configuration
+
+```typescript
+interface RetryConfig {
+  maxAttempts?: number;      // Maximum retry attempts before giving up
+  initialDelayMs?: number;   // Initial delay before first retry
+  maxDelayMs?: number;       // Maximum delay cap
+  backoffFactor?: number;    // Multiplier for increasing delay on each retry
+}
+```
+
+Default configuration:
+- 3 maximum attempts
+- 100ms initial delay
+- 5000ms maximum delay cap
+- Backoff factor of 2 (exponential growth)
+
+### Using Retry Options
+
+You can customize retry behavior when calling database methods:
+
+```typescript
+// Custom retry settings for a specific high-priority operation
+const result = await db.queryOne<User>(
+  {
+    sql: 'SELECT * FROM Users WHERE id = ?',
+    params: [userId]
+  },
+  {
+    maxAttempts: 5,      // Try up to 5 times
+    initialDelayMs: 50,  // Start with a shorter delay
+    backoffFactor: 3     // More aggressive backoff
+  }
+);
+```
+
+### Centralized Implementation
+
+The retry logic is implemented in the shared utility functions:
+
+- `withRetry<T>`: Generic function to handle retry logic with exponential backoff
+- `isRetryableDatabaseError`: Detects which database errors should be retried
+- `isRetryableKVError`: Detects which KV storage errors should be retried
 
 ## Usage Examples
 
@@ -216,6 +282,7 @@ DatabaseFactory.setImplementation((env) => new PostgreSQLDatabase(env.POSTGRES_C
 
 - **Type-safety**: Full TypeScript support with generics for query results
 - **Query retry**: Built-in retry mechanism for transient database errors 
+- **Exponential backoff**: Smart handling of retries with increasing delays
 - **Audit logging**: Integrated audit logging for database operations
 - **Transactions**: Support for database transactions
 - **Error handling**: Consistent error handling across database operations
@@ -226,3 +293,5 @@ DatabaseFactory.setImplementation((env) => new PostgreSQLDatabase(env.POSTGRES_C
 2. Use the DatabaseFactory to get database instances
 3. For testing, create mock implementations of the SQLDatabase interface
 4. Use transactions for operations that need to be atomic
+5. Configure retry options based on the criticality of the operation
+6. Use shorter retry delays for user-facing operations and longer delays for background tasks
