@@ -54,7 +54,7 @@ export interface SQLDatabase {
   /**
    * Create an audit log entry without executing a database operation
    */
-  createAuditLog(auditInfo: AuditInfo, context?: RequestContext): Promise<void>;
+  createAuditLog(auditInfo: AuditInfo, context?: RequestContext): Promise<boolean>;
 
   /**
    * Begin a database transaction
