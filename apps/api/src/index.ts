@@ -33,6 +33,7 @@ app.use(
     origin: [
       'https://tempopages.com',
       'https://console.tempopages.com',
+      'http://localhost:3000',
       /\.tempopages\.com$/,
     ] as string[],
     allowMethods: ['POST', 'GET', 'PUT', 'DELETE', 'OPTIONS'],
