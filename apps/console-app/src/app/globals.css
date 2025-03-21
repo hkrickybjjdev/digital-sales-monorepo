@@ -120,3 +120,7 @@
     @apply bg-background text-foreground;
   }
 }
+
+html {
+  @apply text-[14pt] sm:text-[14pt];
+}
