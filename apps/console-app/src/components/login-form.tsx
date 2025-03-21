@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useState } from "react"
+import { API_CONFIG } from "@/lib/config"
 
 export function LoginForm({
   className,
@@ -22,12 +23,17 @@ export function LoginForm({
     setError(null)
 
     try {
-      const response = await fetch("http://localhost:8787/api/v1/auth/login", {
+      const apiUrl = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.AUTH.LOGIN}`
+
+      const response = await fetch(apiUrl, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
+          ...API_CONFIG.DEFAULT_HEADERS,
         },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ 
+          email: email.trim(),
+          password: password.trim()
+        }),
       })
 
       if (!response.ok) {
@@ -35,16 +41,23 @@ export function LoginForm({
         throw new Error(errorData?.message || "Login failed")
       }
 
-      const data = await response.json()
-      // Handle successful login (e.g., store token, redirect)
-      console.log("Login successful:", data)
+      const data = await response.json() as { token?: string, expiresAt?:number }
       
-      // You can add redirection logic here
+      // Store authentication token in secure HTTP-only cookie via server response
+      // or in memory (not localStorage) if needed client-side
+      
+      // Success handling without logging sensitive data
+      if (data.token) {
+        // Redirect to dashboard or authenticated area
+        window.location.href = "/dashboard"
+      }
 
     } catch (err) {
       setError(err instanceof Error ? err.message : "An unknown error occurred")
     } finally {
       setIsLoading(false)
+      // Clear password from memory when done
+      setPassword("")
     }
   }
 
