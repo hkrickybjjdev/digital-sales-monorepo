@@ -23,12 +23,11 @@ export function LoginForm({
     setError(null)
 
     try {
-      const apiUrl = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.AUTH.LOGIN}`
-
-      const response = await fetch(apiUrl, {
+      // Use the Next.js API route instead of calling the external API directly
+      const response = await fetch('/api/v1/auth/login', {
         method: "POST",
         headers: {
-          ...API_CONFIG.DEFAULT_HEADERS,
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ 
           email: email.trim(),
@@ -41,15 +40,16 @@ export function LoginForm({
         throw new Error(errorData?.message || "Login failed")
       }
 
-      const data = await response.json() as { token?: string, expiresAt?:number }
+      const data = await response.json() as { success?: boolean, user?: any }
       
-      // Store authentication token in secure HTTP-only cookie via server response
-      // or in memory (not localStorage) if needed client-side
+      // Authentication is now handled by the API route with HTTP-only cookies
+      // No need to store tokens manually
       
-      // Success handling without logging sensitive data
-      if (data.token) {
+      if (data.success) {
         // Redirect to dashboard or authenticated area
         window.location.href = "/dashboard"
+      } else {
+        throw new Error("Login failed")
       }
 
     } catch (err) {
