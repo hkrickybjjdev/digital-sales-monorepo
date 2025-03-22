@@ -43,7 +43,7 @@ const data = {
       icon: PanelsTopLeft,
     },
     {
-      title: "Mini Shops",
+      title: "Pop-up Shops",
       url: "#",
       icon: Store,
       comingSoon: true,
