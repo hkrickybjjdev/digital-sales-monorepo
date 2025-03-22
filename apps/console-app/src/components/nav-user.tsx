@@ -7,6 +7,7 @@ import {
   MoreVerticalIcon,
   UserCircleIcon,
 } from "lucide-react"
+import { useRouter } from "next/navigation"
 
 import {
   Avatar,
@@ -39,6 +40,31 @@ export function NavUser({
   }
 }) {
   const { isMobile } = useSidebar()
+  const router = useRouter()
+
+  const handleLogout = async () => {
+    try {
+
+      // Get the auth token from cookies      
+      const response = await fetch('/api/v1/auth/logout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+      })
+
+      if (response.ok) {
+        // Redirect to login page or home page after successful logout
+        router.push('/login')
+        // Force a refresh to clear any client-side state
+        router.refresh()
+      } else {
+        console.error('Logout failed')
+      }
+    } catch (error) {
+      console.error('Logout error:', error)
+    }
+  }
 
   return (
     <SidebarMenu>
@@ -98,7 +124,7 @@ export function NavUser({
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={handleLogout}>
               <LogOutIcon />
               Log out
             </DropdownMenuItem>
