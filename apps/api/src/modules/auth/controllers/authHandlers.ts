@@ -111,3 +111,35 @@ export const getCurrentUser = async (c: Context<{ Bindings: Env }>) => {
     return format500Error(error as Error);
   }
 };
+
+export const validateToken = async (c: Context<{ Bindings: Env }>) => {
+  try {
+    // Extract JWT from Authorization header
+    const authHeader = c.req.header('Authorization');
+
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return formatError(c, 'Invalid token format', 'Unauthorized', 401);
+    }
+
+    const token = authHeader.substring(7); // Remove "Bearer " prefix
+
+    // Create the auth service
+    const authService = createAuthService(c.env);
+    
+    // Validate the token without side effects
+    const result = await authService.validateToken(token);
+
+    if (!result.valid) {
+      return formatError(c, result.error || 'Invalid token', 'Unauthorized', 401);
+    }
+
+    // Return success with minimal information
+    return formatResponse(c, { 
+      valid: true,
+      user: result.payload?.sub ? { id: result.payload.sub } : undefined
+    });
+  } catch (error) {
+    console.error('Token validation error:', error);
+    return format500Error(error as Error);
+  }
+};
