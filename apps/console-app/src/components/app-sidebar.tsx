@@ -7,13 +7,14 @@ import {
   CameraIcon,
   FileCodeIcon,
   FileTextIcon,
-  FolderIcon,
   HelpCircleIcon,
   LayoutDashboardIcon,
-  ListIcon,
   SearchIcon,
   SettingsIcon,
-  UsersIcon,
+  PanelsTopLeft,
+  Store,
+  FileMusic,
+  ShoppingBasket
 } from "lucide-react"
 
 import { NavMain } from "@/components/nav-main"
@@ -42,25 +43,30 @@ const data = {
       icon: LayoutDashboardIcon,
     },
     {
-      title: "Lifecycle",
+      title: "Pages",
       url: "#",
-      icon: ListIcon,
+      icon: PanelsTopLeft,
+    },
+    {
+      title: "Mini Shops",
+      url: "#",
+      icon: Store,
+    },
+    {
+      title: "Products",
+      url: "#",
+      icon: FileMusic,
+    },
+    {
+      title: "Orders",
+      url: "#",
+      icon: ShoppingBasket,
     },
     {
       title: "Analytics",
       url: "#",
       icon: BarChartIcon,
-    },
-    {
-      title: "Projects",
-      url: "#",
-      icon: FolderIcon,
-    },
-    {
-      title: "Team",
-      url: "#",
-      icon: UsersIcon,
-    },
+    }    
   ],
   navClouds: [
     {
@@ -141,7 +147,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             >
               <a href="#">
                 <ArrowUpCircleIcon className="h-5 w-5" />
-                <span className="text-base font-semibold">Acme Inc.</span>
+                <span className="text-base font-semibold">PageDash</span>
               </a>
             </SidebarMenuButton>
           </SidebarMenuItem>
