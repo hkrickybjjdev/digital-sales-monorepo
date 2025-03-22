@@ -10,6 +10,8 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
+import { cn } from "@/lib/utils"
+import { Badge } from "@/components/ui/badge"
 
 export function NavMain({
   items,
@@ -18,6 +20,7 @@ export function NavMain({
     title: string
     url: string
     icon?: LucideIcon
+    comingSoon?: boolean
   }[]
 }) {
   return (
@@ -45,9 +48,23 @@ export function NavMain({
         <SidebarMenu>
           {items.map((item) => (
             <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton tooltip={item.title}>
-                {item.icon && <item.icon />}
-                <span>{item.title}</span>
+              <SidebarMenuButton 
+                tooltip={item.comingSoon ? `${item.title} (Coming Soon)` : item.title}
+                disabled={item.comingSoon}
+                className={item.comingSoon ? "cursor-not-allowed" : ""}
+              >
+                <div className={cn("flex items-center gap-2", item.comingSoon && "opacity-70")}>
+                  {item.icon && <item.icon className="h-4 w-4" />}
+                  <span>{item.title}</span>
+                  {item.comingSoon && (
+                    <Badge 
+                      variant="outline" 
+                      className="ml-1 px-1.5 py-0 text-[9px] border-amber-500/70 text-amber-600 whitespace-nowrap"
+                    >
+                      Coming Soon
+                    </Badge>
+                  )}
+                </div>
               </SidebarMenuButton>
             </SidebarMenuItem>
           ))}

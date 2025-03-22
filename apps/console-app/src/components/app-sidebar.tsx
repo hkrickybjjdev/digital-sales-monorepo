@@ -46,16 +46,19 @@ const data = {
       title: "Mini Shops",
       url: "#",
       icon: Store,
+      comingSoon: true,
     },
     {
       title: "Products",
       url: "#",
       icon: FileMusic,
+      comingSoon: true,
     },
     {
       title: "Orders",
       url: "#",
       icon: ShoppingBasket,
+      comingSoon: true,
     },
     {
       title: "Analytics",
