@@ -1,36 +1,37 @@
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
+import type { NextRequest } from 'next/server';
 import { API_CONFIG } from '@/lib/config';
 
-type LoginRequestBody = {
+interface LoginRequestBody {
   email: string;
   password: string;
-};
+}
 
-type LoginResponseData = {
+interface AuthResponse {  
   token?: string;
-  expiresAt?: number;
   user?: {
+    id: string;
     email: string;
     [key: string]: any;
   };
-  message?: string;
-};
+  expiresAt: number
+}
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
-    // Get credentials from request body
+    // Parse request body
     const body = await request.json() as LoginRequestBody;
-    const { email, password } = body;
     
-    if (!email || !password) {
-      return NextResponse.json(
-        { message: 'Email and password are required' },
-        { status: 400 }
-      );
+    // Validate request body
+    if (!body.email || !body.password) {
+      return NextResponse.json({ 
+        success: false, 
+        message: 'Email and password are required' 
+      }, { status: 400 });
     }
     
-    // Call the actual external API
+    // Make a request to the actual backend service to authenticate the user
+    // Replace with your actual backend API endpoint
     const externalApiUrl = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.AUTH.LOGIN}`;
     
     const response = await fetch(externalApiUrl, {
@@ -38,50 +39,64 @@ export async function POST(request: Request) {
       headers: {
         ...API_CONFIG.DEFAULT_HEADERS,
       },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({
+        email: body.email,
+        password: body.password
+      })
     });
     
     // Get response data
-    const data = await response.json() as LoginResponseData;
+    const data = await response.json() as AuthResponse;
     
-    // If external API returns an error
+    // Check if the login was successful
     if (!response.ok) {
-      return NextResponse.json(
-        { message: data.message || 'Login failed' },
-        { status: response.status }
-      );
+      return NextResponse.json({ 
+        success: false, 
+        message: 'Invalid email or password' 
+      }, { status: 401 });
     }
     
-    // Set secure HTTP-only cookie with the token
-    if (data.token) {
-      // Create a response with success data
-      const responseWithCookies = NextResponse.json({ 
-        success: true,
-        user: data.user || { email } // Return user data if available
-      });
-      
-      // Set HTTP-only secure cookie on the response object
-      responseWithCookies.cookies.set('auth-token', data.token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        maxAge: data.expiresAt ? Math.floor((data.expiresAt - Date.now()) / 1000) : 60 * 60 * 24, // 24 hours default
-        path: '/',
-        sameSite: 'strict'
-      });
-      
-      return responseWithCookies;
+    // Create the response
+    const authToken = data.token;
+    
+    if (!authToken) {
+      return NextResponse.json({ 
+        success: false, 
+        message: 'No token received from authentication service' 
+      }, { status: 500 });
     }
     
-    return NextResponse.json(
-      { message: 'Authentication failed' },
-      { status: 401 }
-    );
+    // Create response object
+    const res = NextResponse.json({ 
+      success: true, 
+      message: 'Login successful',
+      user: data.user 
+    });
+    
+    // Set auth token in HTTP-only cookie
+    // Set cookie options
+    // - httpOnly: Prevents JavaScript from reading the cookie
+    // - secure: Cookie is only sent over HTTPS (in production)
+    // - sameSite: Strict to prevent CSRF attacks
+    // - path: Cookie is available on all paths
+    // - maxAge: Cookie expires after 7 days (in seconds)
+    res.cookies.set({
+      name: 'auth-token',
+      value: authToken,
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      path: '/',
+      maxAge: data.expiresAt ? Math.floor((data.expiresAt - Date.now()) / 1000) : 60 * 60 * 24, // 24 hours default
+    });
+    
+    return res;
     
   } catch (error) {
-    console.error('Login API error:', error);
-    return NextResponse.json(
-      { message: 'An unexpected error occurred' },
-      { status: 500 }
-    );
+    console.error('Login error:', error);
+    return NextResponse.json({ 
+      success: false, 
+      message: 'Server error during login' 
+    }, { status: 500 });
   }
 } 

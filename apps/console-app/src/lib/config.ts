@@ -5,7 +5,7 @@
 // API configuration
 export const API_CONFIG = {
   // Base API URLs
-  BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8787',
+  BASE_URL: 'http://localhost:8787',
   
   // API endpoints
   ENDPOINTS: {
@@ -17,7 +17,7 @@ export const API_CONFIG = {
       RESET_PASSWORD: '/api/v1/auth/reset-password',
     },
     USERS: {
-      PROFILE: '/api/v1/users/profile',
+      PROFILE: '/api/v1/auth/me',
     },
   },
   

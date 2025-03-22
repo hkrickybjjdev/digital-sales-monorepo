@@ -688,49 +688,6 @@ export class AuthService implements IAuthService {
   }
 
   /**
-   * Validate a token without doing anything else
-   */
-  async validateToken(token: string): Promise<{ valid: boolean; error?: string; payload?: any }> {
-    try {
-      if (!token) {
-        return { valid: false, error: 'No token provided' };
-      }
-
-      // Verify the JWT format and signature
-      const payload = await this.verifyTokenSignature(token);
-      if (!payload) {
-        return { valid: false, error: 'Invalid token format or signature' };
-      }
-
-      // Check if session exists and is valid
-      const session = await this.userRepository.getSessionById(payload.sid);
-      if (!session) {
-        return { valid: false, error: 'Session not found' };
-      }
-
-      // Check if session has expired
-      if (Date.now() > session.expiresAt) {
-        // We'll delete expired sessions but not in this pure validation flow
-        return { valid: false, error: 'Session expired' };
-      }
-
-      // Return success with the payload
-      return { 
-        valid: true,
-        payload: {
-          ...payload,
-          // Do not return sensitive information
-          exp: undefined,
-          iat: undefined
-        }
-      };
-    } catch (error) {
-      console.error('Token validation error:', error);
-      return { valid: false, error: 'Invalid or expired token' };
-    }
-  }
-
-  /**
    * Verify the JWT token signature and format
    */
   private async verifyTokenSignature(token: string): Promise<any | null> {

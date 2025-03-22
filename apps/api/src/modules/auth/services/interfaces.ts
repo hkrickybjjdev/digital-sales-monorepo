@@ -29,7 +29,6 @@ export interface IAuthService {
   resendActivationEmail(data: ResendActivationRequest): Promise<ActivationResponse>;
   forgotPassword(request: ForgotPasswordRequest): Promise<ResetResponse>;
   resetPassword(request: ResetPasswordRequest): Promise<ResetResponse>;
-  validateToken(token: string): Promise<{ valid: boolean; error?: string; payload?: any }>;
 }
 
 /**

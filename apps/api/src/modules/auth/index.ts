@@ -17,7 +17,6 @@ authModule.get('/activate/:token', activationHandlers.activateAccount);
 authModule.post('/resend-activation', activationHandlers.resendActivation);
 authModule.post('/forgot-password', passwordResetHandlers.forgotPassword);
 authModule.post('/reset-password', passwordResetHandlers.resetPassword);
-authModule.get('/validate', authHandlers.validateToken);
 
 // Protected routes that require JWT authentication
 authModule.use('/me', validateJWT);
