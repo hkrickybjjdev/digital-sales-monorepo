@@ -1,4 +1,10 @@
 import { Env } from '../types';
+import {
+  DEFAULT_RETRY_CONFIG,
+  RetryConfig,
+  isRetryableDatabaseError,
+  withRetry,
+} from '../utils/retry';
 
 import { AuditInfo, QueryParams, RequestContext, SQLDatabase } from './sqlDatabase';
 
@@ -11,22 +17,6 @@ interface AuditLog extends AuditInfo {
   createdAt: number;
   updatedAt: number;
   // outcome is already in AuditInfo
-}
-
-// Default retry configuration
-const DEFAULT_RETRY_CONFIG = {
-  maxAttempts: 3,
-  initialDelayMs: 100,
-  maxDelayMs: 5000,
-  backoffFactor: 2,
-};
-
-// Interface for retry configuration
-export interface RetryConfig {
-  maxAttempts?: number;
-  initialDelayMs?: number;
-  maxDelayMs?: number;
-  backoffFactor?: number;
 }
 
 /**
@@ -44,58 +34,70 @@ export class CloudflareD1Database implements SQLDatabase {
   /**
    * Execute a query that returns a single row or null
    */
-  async queryOne<T>(query: QueryParams): Promise<T | null> {
-    const { sql, params = [] } = query;
-    const stmt = this.db.prepare(sql);
-    const boundStmt = this.bindParams(stmt, params);
-    const result = await boundStmt.first();
-    return result as T | null;
+  async queryOne<T>(query: QueryParams, retryOptions?: RetryConfig): Promise<T | null> {
+    try {
+      return await withRetry(
+        async () => {
+          const { sql, params = [] } = query;
+          const stmt = this.db.prepare(sql);
+          const boundStmt = this.bindParams(stmt, params);
+          const result = await boundStmt.first();
+          return result as T | null;
+        },
+        isRetryableDatabaseError,
+        { ...this.retryConfig, ...retryOptions }
+      );
+    } catch (error) {
+      console.error('Error in queryOne:', error);
+      return null;
+    }
   }
 
   /**
    * Execute a query that returns multiple rows
    */
-  async queryMany<T>(query: QueryParams): Promise<T[]> {
-    const { sql, params = [] } = query;
-    const stmt = this.db.prepare(sql);
-    const boundStmt = this.bindParams(stmt, params);
-    const result = await boundStmt.all();
-    return result.results as T[];
+  async queryMany<T>(query: QueryParams, retryOptions?: RetryConfig): Promise<T[]> {
+    try {
+      return (
+        (await withRetry(
+          async () => {
+            const { sql, params = [] } = query;
+            const stmt = this.db.prepare(sql);
+            const boundStmt = this.bindParams(stmt, params);
+            const result = await boundStmt.all();
+            return result.results as T[];
+          },
+          isRetryableDatabaseError,
+          { ...this.retryConfig, ...retryOptions }
+        )) || []
+      );
+    } catch (error) {
+      console.error('Error in queryMany:', error);
+      return [];
+    }
   }
 
   /**
    * Execute a query that doesn't return any data (INSERT, UPDATE, DELETE)
    * Now with retry capability and exponential backoff
    */
-  async execute(query: QueryParams, retryOptions?: RetryConfig): Promise<D1Result> {
-    const config = { ...this.retryConfig, ...retryOptions };
-    let lastError: Error | null = null;
-    let delayMs = config.initialDelayMs!;
-
-    for (let attempt = 1; attempt <= config.maxAttempts!; attempt++) {
-      try {
-        const { sql, params = [] } = query;
-        const stmt = this.db.prepare(sql);
-        const boundStmt = this.bindParams(stmt, params);
-        return await boundStmt.run();
-      } catch (error) {
-        lastError = error as Error;
-
-        // If this is the last attempt, or the error is not retryable, throw it
-        if (attempt >= config.maxAttempts! || !this.isRetryableError(error)) {
-          throw error;
-        }
-
-        // Wait before the next retry with exponential backoff
-        await this.delay(delayMs);
-
-        // Increase delay for next attempt with exponential backoff
-        delayMs = Math.min(delayMs * config.backoffFactor!, config.maxDelayMs!);
-      }
+  async execute(query: QueryParams, retryOptions?: RetryConfig): Promise<boolean> {
+    try {
+      await withRetry(
+        async () => {
+          const { sql, params = [] } = query;
+          const stmt = this.db.prepare(sql);
+          const boundStmt = this.bindParams(stmt, params);
+          await boundStmt.run();
+        },
+        isRetryableDatabaseError,
+        { ...this.retryConfig, ...retryOptions }
+      );
+      return true;
+    } catch (error) {
+      console.error('Error in execute:', error);
+      return false;
     }
-
-    // This should never be reached, but TypeScript requires a return statement
-    throw lastError;
   }
 
   /**
@@ -105,29 +107,31 @@ export class CloudflareD1Database implements SQLDatabase {
     query: QueryParams,
     auditInfo: AuditInfo,
     context?: RequestContext
-  ): Promise<D1Result> {
-    const result = await this.execute(query);
+  ): Promise<boolean> {
+    const saved = await this.execute(query);
 
-    // Log the action to the audit log table
-    await this.logAudit({
-      ...auditInfo,
-      ipAddress: context?.ipAddress,
-      userAgent: context?.userAgent,
-      sessionId: context?.sessionId,
-      timestamp: Date.now(),
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-    });
+    if (saved) {
+      // Log the action to the audit log table
+      await this.logAudit({
+        ...auditInfo,
+        ipAddress: context?.ipAddress,
+        userAgent: context?.userAgent,
+        sessionId: context?.sessionId,
+        timestamp: Date.now(),
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      });
+    }
 
-    return result;
+    return saved;
   }
 
   /**
    * Create an audit log entry without executing a database operation
    * This is useful for logging events that don't modify the database
    */
-  async createAuditLog(auditInfo: AuditInfo, context?: RequestContext): Promise<void> {
-    await this.logAudit({
+  async createAuditLog(auditInfo: AuditInfo, context?: RequestContext): Promise<boolean> {
+    return await this.logAudit({
       ...auditInfo,
       ipAddress: context?.ipAddress,
       userAgent: context?.userAgent,
@@ -164,7 +168,7 @@ export class CloudflareD1Database implements SQLDatabase {
   /**
    * Log an action to the audit log
    */
-  private async logAudit(auditLog: AuditLog): Promise<void> {
+  private async logAudit(auditLog: AuditLog): Promise<boolean> {
     const {
       userId,
       eventType,
@@ -180,7 +184,7 @@ export class CloudflareD1Database implements SQLDatabase {
       outcome,
     } = auditLog;
 
-    await this.execute({
+    return await this.execute({
       sql: `
         INSERT INTO AuditLog (
           userId, eventType, resourceType, resourceId, 
@@ -214,38 +218,5 @@ export class CloudflareD1Database implements SQLDatabase {
       return stmt;
     }
     return stmt.bind(...params);
-  }
-
-  /**
-   * Helper method to determine if an error is retryable
-   * Override this method to customize which errors should be retried
-   */
-  protected isRetryableError(error: any): boolean {
-    // Common transient errors that should be retried
-    // Examples: connection issues, deadlocks, etc.
-    const retryableErrors = [
-      'database is locked',
-      'busy',
-      'connection',
-      'timeout',
-      'network',
-      'SQLITE_BUSY',
-      'SQLITE_LOCKED',
-    ];
-
-    if (error && error.message) {
-      return retryableErrors.some(retryErr =>
-        error.message.toLowerCase().includes(retryErr.toLowerCase())
-      );
-    }
-
-    return false;
-  }
-
-  /**
-   * Helper method to wait for the specified delay
-   */
-  private delay(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
   }
 }

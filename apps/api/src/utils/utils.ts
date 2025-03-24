@@ -10,3 +10,10 @@ export function generateUUID(): string {
 export function generateShortID(size: number): string {
   return nanoid(size);
 }
+
+/**
+ * Helper method to wait for the specified delay
+ */
+export function delay(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}

@@ -688,4 +688,18 @@ export class AuthService implements IAuthService {
       };
     }
   }
+
+  /**
+   * Verify the JWT token signature and format
+   */
+  private async verifyTokenSignature(token: string): Promise<any | null> {
+    try {
+      const secret = new TextEncoder().encode(this.jwtSecret);
+      const { payload } = await jose.jwtVerify(token, secret);
+      return payload;
+    } catch (error) {
+      console.error('JWT verification error:', error);
+      return null;
+    }
+  }
 }
