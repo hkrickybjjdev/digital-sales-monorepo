@@ -4,6 +4,7 @@ import { Env } from '../../../types';
 import { formatResponse, formatError, format500Error } from '../../../utils/apiResponse';
 import { createAuthService, createUserRepository } from '../factory';
 import { loginSchema, registerSchema } from '../models/schemas';
+import { createTeamService } from '@/modules/teams/factory';
 
 // Export a single handler function
 export const login = async (c: Context<{ Bindings: Env }>) => {
@@ -113,8 +114,14 @@ export const getCurrentUser = async (c: Context<{ Bindings: Env }>) => {
       activationToken: undefined,
       activationTokenExpiresAt: undefined
     };
-    
-    return formatResponse(c, sanitizedUser);
+
+    // Fetch user's teams
+    const teamService = createTeamService(c.env);
+    const teams = await teamService.getUserTeams(userId);
+
+    // Add teams to the response
+    return formatResponse(c, { ...sanitizedUser, teams });
+      
   } catch (error) {
     console.error('Get current user error:', error);
     return format500Error(error as Error);
