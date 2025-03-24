@@ -105,7 +105,7 @@ export const getCurrentUser = async (c: Context<{ Bindings: Env }>) => {
       return formatError(c, 'User not found', 'ResourceNotFound', 404);
     }
 
-    return formatResponse(c, { user });
+    return formatResponse(c, user);
   } catch (error) {
     console.error('Get current user error:', error);
     return format500Error(error as Error);
