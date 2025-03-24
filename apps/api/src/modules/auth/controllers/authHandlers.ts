@@ -105,7 +105,16 @@ export const getCurrentUser = async (c: Context<{ Bindings: Env }>) => {
       return formatError(c, 'User not found', 'ResourceNotFound', 404);
     }
 
-    return formatResponse(c, user);
+    // Create a new object without sensitive data
+    const sanitizedUser = {
+      ...user,
+      emailVerified: undefined,
+      failedAttempts: undefined,
+      activationToken: undefined,
+      activationTokenExpiresAt: undefined
+    };
+    
+    return formatResponse(c, sanitizedUser);
   } catch (error) {
     console.error('Get current user error:', error);
     return format500Error(error as Error);
