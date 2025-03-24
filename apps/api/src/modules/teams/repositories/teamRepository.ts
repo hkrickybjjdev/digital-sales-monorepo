@@ -1,5 +1,5 @@
 import { SQLDatabase, RequestContext } from '../../../database/sqlDatabase';
-import { generateUUID } from '../../../utils/utils';
+import { generateUUID, generateShortID } from '../../../utils/utils';
 import { Team, TeamWithMemberCount } from '../models/schemas';
 
 import { ITeamRepository } from './interfaces';
@@ -8,25 +8,26 @@ export class TeamRepository implements ITeamRepository {
   constructor(private readonly dbService: SQLDatabase) {}
 
   async createTeam(
-    team: Omit<Team, 'id' | 'createdAt' | 'updatedAt'>,
+    team: Omit<Team, 'id' | 'createdAt' | 'updatedAt' | 'slug'>,
     context?: RequestContext
   ): Promise<Team> {
     const id = generateUUID();
     const now = Date.now();
+    const slug = generateShortID(10);
 
     await this.dbService.executeWithAudit(
       {
         sql: `
-        INSERT INTO "Team" (id, name, createdAt, updatedAt)
-        VALUES (?, ?, ?, ?)
+        INSERT INTO "Team" (id, name, slug, createdAt, updatedAt)
+        VALUES (?, ?, ?, ?, ?)
       `,
-        params: [id, team.name, now, now],
+        params: [id, team.name, slug, now, now],
       },
       {
         eventType: 'team_created',
         resourceType: 'Team',
         resourceId: id,
-        details: JSON.stringify({ name: team.name }),
+        details: JSON.stringify({ name: team.name, slug }),
         outcome: 'success',
       },
       context
@@ -35,6 +36,7 @@ export class TeamRepository implements ITeamRepository {
     return {
       id,
       name: team.name,
+      slug,
       createdAt: now,
       updatedAt: now,
     };
@@ -55,6 +57,7 @@ export class TeamRepository implements ITeamRepository {
         SELECT 
           t.id, 
           t.name, 
+          t.slug,
           t.createdAt, 
           t.updatedAt,
           COUNT(tm.id) as memberCount

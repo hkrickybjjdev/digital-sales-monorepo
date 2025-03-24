@@ -34,6 +34,7 @@ erDiagram
     TEAM {
         string id PK      
         string name        
+        string slug
         timestamp createdAt
         timestamp updatedAt
     }
@@ -177,6 +178,7 @@ Represents a team of users working together.
 |-------|------|-------------|
 | id | UUID | Primary identifier |
 | name | String | Team name |
+| slug | String | Unique URL slug for the team |
 | createdAt | Timestamp | Creation date |
 | updatedAt | Timestamp | Last update date |
 

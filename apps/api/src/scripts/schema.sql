@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS "PasswordReset" (
 CREATE TABLE IF NOT EXISTS "Team" (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
+  slug TEXT NOT NULL UNIQUE,
   createdAt INTEGER NOT NULL,
   updatedAt INTEGER NOT NULL
 );
@@ -122,6 +123,7 @@ CREATE INDEX IF NOT EXISTS idx_subscription_planId ON "Subscription"(planId);
 CREATE INDEX IF NOT EXISTS idx_subscription_status ON "Subscription"(status);
 
 CREATE INDEX IF NOT EXISTS idx_team_name ON "Team"(name);
+CREATE INDEX IF NOT EXISTS idx_team_slug ON "Team"(slug);
 CREATE INDEX IF NOT EXISTS idx_teammember_teamId ON "TeamMember"(teamId);
 CREATE INDEX IF NOT EXISTS idx_teammember_userId ON "TeamMember"(userId);
 CREATE INDEX IF NOT EXISTS idx_teammember_role ON "TeamMember"(role);

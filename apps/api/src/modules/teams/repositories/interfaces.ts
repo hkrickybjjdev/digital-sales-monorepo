@@ -7,7 +7,7 @@ export interface ITeamRepository {
   /**
    * Create a new team
    */
-  createTeam(team: Omit<Team, 'id' | 'createdAt' | 'updatedAt'>): Promise<Team>;
+  createTeam(team: Omit<Team, 'id' | 'createdAt' | 'updatedAt' | 'slug'>): Promise<Team>;
 
   /**
    * Get a team by its ID

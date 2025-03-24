@@ -4,6 +4,7 @@ import { z } from 'zod';
 export const teamSchema = z.object({
   id: z.string(),
   name: z.string(),
+  slug: z.string(),
   createdAt: z.number(),
   updatedAt: z.number(),
 });
