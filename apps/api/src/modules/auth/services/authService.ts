@@ -13,6 +13,7 @@ import {
   ForgotPasswordRequest,
   ResetPasswordRequest,
   ResetResponse,
+  RegisterResponse,
 } from '../models/schemas';
 import { IPasswordResetRepository } from '../repositories/passwordResetRepository';
 
@@ -38,7 +39,7 @@ export class AuthService implements IAuthService {
   /**
    * Register a new user
    */
-  async register(data: RegisterRequest): Promise<{ error?: string } & Partial<AuthResponse>> {
+  async register(data: RegisterRequest): Promise<{ error?: string } & Partial<RegisterResponse>> {
     // Check if user already exists
     const existingUser = await this.userRepository.getUserByEmail(data.email);
     if (existingUser) {
@@ -68,6 +69,8 @@ export class AuthService implements IAuthService {
     // Generate activation link
     const activationLink = `${this.baseUrl}/api/v1/auth/activate/${activationToken}`;
 
+    console.log(`Activation link for ${data.email}: ${activationLink}`);
+
     // Send activation email
     try {
       await this.emailService.sendActivationEmail(user.email, user.name, activationLink);
@@ -90,12 +93,11 @@ export class AuthService implements IAuthService {
     }
 
     // Return user info without generating a JWT (since the account is not activated yet)
-    return {
-      user: {
+    return {      
         id: user.id,
         email: user.email,
         name: user.name,
-      },
+      
     };
   }
 

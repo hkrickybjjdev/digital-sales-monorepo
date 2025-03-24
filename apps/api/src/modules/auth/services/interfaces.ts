@@ -9,6 +9,7 @@ import {
   ResetResponse,
   ForgotPasswordRequest,
   ResetPasswordRequest,
+  RegisterResponse,
 } from '../models/schemas';
 
 /**
@@ -16,7 +17,7 @@ import {
  * Defines the contract that any auth service implementation should follow
  */
 export interface IAuthService {
-  register(data: RegisterRequest): Promise<{ error?: string } & Partial<AuthResponse>>;
+  register(data: RegisterRequest): Promise<{ error?: string } & Partial<RegisterResponse>>;
   login(data: LoginRequest): Promise<{ error?: string } & Partial<AuthResponse>>;
   getUserById(id: string): Promise<Omit<User, 'passwordHash'> | null>;
   updateUser(

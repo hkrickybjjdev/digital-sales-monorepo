@@ -40,6 +40,12 @@ export const authResponseSchema = z.object({
   expiresAt: z.number(),
 });
 
+export const registerResponseSchema = z.object({  
+  id: z.string(),
+  email: z.string().email(),
+  name: z.string()  
+});
+
 // Password reset request schema
 export const forgotPasswordSchema = z.object({
   email: z.string().email(),
@@ -62,6 +68,7 @@ export type User = z.infer<typeof userSchema>;
 export type LoginRequest = z.infer<typeof loginSchema>;
 export type RegisterRequest = z.infer<typeof registerSchema>;
 export type AuthResponse = z.infer<typeof authResponseSchema>;
+export type RegisterResponse = z.infer<typeof registerResponseSchema>;
 export type ForgotPasswordRequest = z.infer<typeof forgotPasswordSchema>;
 export type ResetPasswordRequest = z.infer<typeof resetPasswordSchema>;
 export type ResetResponse = z.infer<typeof resetResponseSchema>;

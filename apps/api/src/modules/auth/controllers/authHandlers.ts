@@ -52,7 +52,7 @@ export const logout = async (c: Context<{ Bindings: Env }>) => {
     const userRepository = createUserRepository(c.env);
     await userRepository.deleteSession(sessionId);
 
-    return formatResponse(c, { success: true, message: 'Logged out successfully' });
+    return formatResponse(c, {});
   } catch (error) {
     console.error('Logout error:', error);
     return format500Error(error as Error);
